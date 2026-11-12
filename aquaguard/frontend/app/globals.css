@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+/* AquaGuard design tokens (section 9). Light theme only — no dark backgrounds or glow effects. */
+@theme {
+  --color-bg: #f5f9fc;
+  --color-sidebar: #ffffff;
+  --color-card: #ffffff;
+  --color-border: #e2e8f0;
+  --color-primary: #0d9488;
+  --color-primary-dark: #0b7a70;
+  --color-primary-soft: #e6f6f4;
+  --color-secondary: #38bdf8;
+  --color-success: #20c997;
+  --color-warning: #f5b942;
+  --color-risk: #f06464;
+  --color-ink: #172b3a;
+  --color-muted: #64748b;
+
+  --color-prov-observed: #15803d;
+  --color-prov-historical: #475569;
+  --color-prov-predicted: #0369a1;
+  --color-prov-estimated: #92600a;
+  --color-prov-simulated: #0d9488;
+
+  --font-sans: var(--font-inter), "Hind Siliguri", system-ui, sans-serif;
+  --font-bangla: var(--font-hind), "Hind Siliguri", system-ui, sans-serif;
+  --radius-card: 12px;
+}
+
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+}
+
+:lang(bn),
+.font-bangla {
+  font-family: var(--font-bangla);
+}
+
+/* Visible keyboard focus everywhere */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: 0 1px 2px rgb(23 43 58 / 0.04), 0 1px 3px rgb(23 43 58 / 0.04);
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #eef2f6 25%, #f6f8fb 37%, #eef2f6 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+}
+
+input[type="range"] {
+  accent-color: var(--color-primary);
+}
+
+.maplibregl-ctrl-attrib {
+  font-size: 11px;
+}

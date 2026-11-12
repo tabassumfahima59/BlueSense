@@ -1,0 +1,283 @@
+# AquaGuard parameters — the ONLY place model/engine assumptions live.
+# Each entry: value, unit, source, assumption (true = a modelling choice, not a published figure).
+# Values "derived" from a dataset are re-checked against data/processed by backend/tests/test_parameters.py.
+
+water_balance:
+  runoff_coefficient:
+    value: 0.2133
+    unit: "-"
+    source: "Derived: FAO AQUASTAT 'Surface water produced internally' (83.91 km3/yr, var 4155) / 'Long-term average annual precipitation in volume' (393.42 km3/yr, var 4150), reference year 2018"
+    assumption: true
+    note: "National ratio applied uniformly to every division (assumption A-04)."
+  environmental_reserve_share:
+    value: 0.4978
+    unit: "fraction of surface supply"
+    source: "Derived: FAO AQUASTAT 'Environmental Flow Requirements' (600.3 km3/yr, var 4549) / 'Total renewable surface water' (1205.91 km3/yr, var 4185), reference year 2018"
+    assumption: true
+  domestic_per_capita_lpcd:
+    value: 57.52
+    unit: "L/person/day"
+    source: "Derived: FAO AQUASTAT 'Municipal water withdrawal per capita (total population)' 20.995 m3/inhab/yr (var 4457) x 1000 / 365"
+    assumption: false
+  industrial_withdrawal_mcm:
+    value: 770.0
+    unit: "MCM/yr"
+    source: "FAO AQUASTAT 'Industrial water withdrawal' 0.77 km3/yr (var 4252), last non-imputed year 2008"
+    assumption: false
+    note: "Split to divisions by 2022 population share (assumption A-06)."
+  surface_inflow_mcm:
+    value: 1122000.0
+    unit: "MCM/yr"
+    source: "FAO AQUASTAT 'Surface water: total external renewable' 1122 km3/yr (var 4176), reference year 2018"
+    assumption: false
+    note: "Split to divisions by area share (assumption A-05); monthly shape from GloFAS discharge."
+  groundwater_renewable_mcm:
+    value: 21122.0
+    unit: "MCM/yr"
+    source: "FAO AQUASTAT 'Total renewable groundwater' 21.122 km3/yr (var 4187), reference year 2018"
+    assumption: false
+    note: "Split by area share; usable in any month in proportion to monthly demand (aquifer storage buffer, assumption A-07)."
+  distribution_loss_rate:
+    value: 0.20
+    unit: "fraction of conveyed volume"
+    source: "Assumption — no national distribution-loss statistic in AquaGuard's sources. Replace with utility non-revenue-water data."
+    assumption: true
+    note: "Applied to piped domestic and industrial conveyance. Irrigation losses are inside irrigation_efficiency."
+  irrigation_efficiency:
+    value: 0.78
+    unit: "-"
+    source: "Derived: FAO AQUASTAT 'Irrigation water requirement' 24.56 km3 (var 4260) / 'Agricultural water withdrawal' 31.5 km3 (var 4250), 2008"
+    assumption: true
+  balance_tolerance_mcm:
+    value: 0.01
+    unit: "MCM"
+    source: "AquaGuard specification (water budgets must balance within 0.01 MCM)"
+    assumption: false
+  dry_season_months:
+    value: [12, 1, 2, 3, 4]
+    unit: "month numbers"
+    source: "Assumption: Rabi / Boro dry season December-April"
+    assumption: true
+
+stress_classes:
+  # WRI Aqueduct baseline water stress categories (Kuzma et al. 2023, Aqueduct 4.0 technical note).
+  source: "WRI Aqueduct 4.0 baseline water stress categories"
+  classes:
+    - {name: "Low", max: 0.10}
+    - {name: "Low-medium", max: 0.20}
+    - {name: "Medium-high", max: 0.40}
+    - {name: "High", max: 0.80}
+    - {name: "Extremely high", max: null}
+
+dryness_classes:
+  # Standardized anomaly classes used for SPI / SPEI (McKee et al. 1993; Vicente-Serrano et al. 2010).
+  source: "SPI/SPEI dryness classes (McKee et al. 1993)"
+  classes:
+    - {name: "Extremely dry", max: -2.0}
+    - {name: "Severely dry", max: -1.5}
+    - {name: "Moderately dry", max: -1.0}
+    - {name: "Near normal or wet", max: null}
+
+risk:
+  # Combined scarcity risk (docs/METHODS.md §5): level = max(stress level, dryness level)
+  stress_level: {"Low": 0, "Low-medium": 1, "Medium-high": 2, "High": 3, "Extremely high": 4}
+  dryness_level: {"Near normal or wet": 0, "Moderately dry": 2, "Severely dry": 3, "Extremely dry": 4}
+  labels: ["Low", "Low-medium", "Medium-high", "High", "Extremely high"]
+  source: "AquaGuard rule (assumption): the higher of the WRI stress level and the SPEI-style dryness level"
+  assumption: true
+
+alerts:
+  stress_high:
+    value: 0.40
+    unit: "stress ratio"
+    source: "WRI Aqueduct 'High' threshold"
+    assumption: false
+  dryness_z:
+    value: -1.0
+    unit: "z-score"
+    source: "SPI/SPEI 'moderately dry' threshold"
+    assumption: false
+  rainfall_deficit_pct:
+    value: -30.0
+    unit: "%"
+    source: "Assumption: last-30-day rainfall at least 30% below the 1991-2020 normal for the same days"
+    assumption: true
+  unmet_demand_share:
+    value: 0.05
+    unit: "fraction of demand"
+    source: "Assumption: alert when more than 5% of dry-season demand is unmet"
+    assumption: true
+  loss_rate_high:
+    value: 0.25
+    unit: "fraction"
+    source: "Assumption: alert when distribution loss rate exceeds 25%"
+    assumption: true
+  gw_trend_negative_cm_yr:
+    value: -0.5
+    unit: "cm/yr"
+    source: "Assumption: alert when the GRACE storage trend falls below -0.5 cm/yr and its 95% CI excludes 0"
+    assumption: true
+
+fao56:
+  source: "Allen, Pereira, Raes & Smith (1998), FAO Irrigation and Drainage Paper 56"
+  effective_rainfall_method: "USDA-SCS monthly (P <= 250: Pe = P(125 - 0.2P)/125; else 125 + 0.1P)"
+  crops:
+    boro_rice:
+      label: "Rice (Boro)"
+      kc: {ini: 1.05, mid: 1.20, end: 0.75}
+      kc_source: "FAO-56 Table 12, rice: Kc_ini 1.05, Kc_mid 1.20, Kc_end 0.90-0.60 (midpoint 0.75 used)"
+      stages_days: {ini: 30, dev: 30, mid: 60, late: 30}
+      stages_source: "Assumption (150-day Boro season, FAO-56 Table 11 rice 30/30/60/30 pattern); verify against BRRI variety durations"
+      planting: {month: 1, day: 15}
+      planting_source: "Assumption: mid-January transplanting (typical Boro window Dec-Feb)"
+      zr_m: 0.75
+      p: 0.20
+      zr_p_source: "FAO-56 Table 22, rice: Zr 0.5-1.0 m (midpoint), p 0.20"
+      ponded: true
+      irrigated_area_kha: 4341
+      irrigated_area_source: "FAO AQUASTAT 'Harvested irrigated temporary crop area: Rice' (var 4346), 2008; assigned to Boro (assumption A-09)"
+    aman_rice:
+      label: "Rice (Aman)"
+      kc: {ini: 1.05, mid: 1.20, end: 0.75}
+      kc_source: "FAO-56 Table 12, rice"
+      stages_days: {ini: 30, dev: 30, mid: 50, late: 30}
+      stages_source: "Assumption (140-day Aman season); verify against BRRI variety durations"
+      planting: {month: 7, day: 15}
+      planting_source: "Assumption: mid-July transplanting"
+      zr_m: 0.75
+      p: 0.20
+      zr_p_source: "FAO-56 Table 22, rice"
+      ponded: true
+      irrigated_area_kha: 0
+      irrigated_area_source: "Aman is mainly rain-fed; AQUASTAT irrigated rice is assigned to Boro (assumption A-09). Advisor only."
+    aus_rice:
+      label: "Rice (Aus)"
+      kc: {ini: 1.05, mid: 1.20, end: 0.75}
+      kc_source: "FAO-56 Table 12, rice"
+      stages_days: {ini: 20, dev: 30, mid: 40, late: 20}
+      stages_source: "Assumption (110-day Aus season); verify against BRRI variety durations"
+      planting: {month: 4, day: 15}
+      planting_source: "Assumption: mid-April sowing/transplanting"
+      zr_m: 0.75
+      p: 0.20
+      zr_p_source: "FAO-56 Table 22, rice"
+      ponded: true
+      irrigated_area_kha: 0
+      irrigated_area_source: "Not separated in AQUASTAT; advisor only."
+    wheat:
+      label: "Wheat (spring)"
+      kc: {ini: 0.30, mid: 1.15, end: 0.32}
+      kc_source: "FAO-56 Table 12, spring wheat: Kc_ini 0.3, Kc_mid 1.15, Kc_end 0.25-0.4 (midpoint)"
+      stages_days: {ini: 20, dev: 25, mid: 60, late: 30}
+      stages_source: "Assumption (135-day rabi wheat, stage pattern after FAO-56 Table 11 spring wheat); verify against BARI guidance"
+      planting: {month: 11, day: 20}
+      planting_source: "Assumption: late-November sowing"
+      zr_m: 1.25
+      p: 0.55
+      zr_p_source: "FAO-56 Table 22, spring wheat: Zr 1.0-1.5 m (midpoint), p 0.55"
+      ponded: false
+      irrigated_area_kha: 313
+      irrigated_area_source: "FAO AQUASTAT 'Harvested irrigated temporary crop area: Wheat' (var 4345), 2008"
+    maize:
+      label: "Maize (grain)"
+      kc: {ini: 0.30, mid: 1.20, end: 0.48}
+      kc_source: "FAO-56 Table 12, maize (field, grain): Kc_ini 0.3, Kc_mid 1.20, Kc_end 0.60-0.35 (midpoint)"
+      stages_days: {ini: 25, dev: 40, mid: 45, late: 30}
+      stages_source: "Assumption (140-day rabi maize); verify against FAO-56 Table 11 / BARI guidance"
+      planting: {month: 11, day: 15}
+      planting_source: "Assumption: mid-November sowing"
+      zr_m: 1.35
+      p: 0.55
+      zr_p_source: "FAO-56 Table 22, maize: Zr 1.0-1.7 m (midpoint), p 0.55"
+      ponded: false
+      irrigated_area_kha: 90
+      irrigated_area_source: "FAO AQUASTAT 'Harvested irrigated temporary crop area: Maize' (var 4348), 2008"
+    potato:
+      label: "Potato"
+      kc: {ini: 0.50, mid: 1.15, end: 0.75}
+      kc_source: "FAO-56 Table 12, potato: Kc_ini 0.50, Kc_mid 1.15, Kc_end 0.75"
+      stages_days: {ini: 25, dev: 30, mid: 30, late: 20}
+      stages_source: "Assumption (105-day season); verify against FAO-56 Table 11 / BARI guidance"
+      planting: {month: 11, day: 15}
+      planting_source: "Assumption: mid-November planting"
+      zr_m: 0.50
+      p: 0.35
+      zr_p_source: "FAO-56 Table 22, potato: Zr 0.4-0.6 m (midpoint), p 0.35"
+      ponded: false
+      irrigated_area_kha: 263
+      irrigated_area_source: "FAO AQUASTAT 'Harvested irrigated temporary crop area: Potatoes' (var 4352), 2008"
+  rice:
+    land_preparation_mm:
+      value: 200
+      unit: "mm per season"
+      source: "Brouwer & Heibloem (1986) FAO Irrigation Water Management Training Manual No. 3, indicative land-preparation need; verify locally"
+      assumption: true
+    percolation_mm_day:
+      value: 2.0
+      unit: "mm/day"
+      source: "Assumption at the low (clay soil) end of percolation+seepage ranges in Brouwer & Heibloem (1986); verify locally"
+      assumption: true
+    ponding_depth_mm:
+      value: 50
+      unit: "mm"
+      source: "IRRI Alternate Wetting and Drying guidance: re-flood to about 5 cm"
+      assumption: true
+    awd_saving_fraction:
+      value: 0.15
+      unit: "fraction of rice irrigation"
+      source: "Assumption at the low end of savings reported for safe AWD (IRRI); verify locally"
+      assumption: true
+  soils:
+    # FAO-56 Table 19 ranges; midpoints used.
+    source: "FAO-56 Table 19 (typical soil water characteristics), range midpoints"
+    sand:            {label: "Sand",            theta_fc: 0.12, theta_wp: 0.045}
+    loamy_sand:      {label: "Loamy sand",      theta_fc: 0.15, theta_wp: 0.065}
+    sandy_loam:      {label: "Sandy loam",      theta_fc: 0.23, theta_wp: 0.11}
+    loam:            {label: "Loam",            theta_fc: 0.25, theta_wp: 0.12}
+    silt_loam:       {label: "Silt loam",       theta_fc: 0.29, theta_wp: 0.15}
+    silt:            {label: "Silt",            theta_fc: 0.32, theta_wp: 0.17}
+    silty_clay_loam: {label: "Silty clay loam", theta_fc: 0.335, theta_wp: 0.205}
+    silty_clay:      {label: "Silty clay",      theta_fc: 0.36, theta_wp: 0.23}
+    clay:            {label: "Clay",            theta_fc: 0.36, theta_wp: 0.22}
+
+flow_sim:
+  source: "AquaGuard hypothetical demonstration network (all values Simulated)"
+  hazen_williams_c: {value: 130, unit: "-", source: "Typical Hazen-Williams C for ductile iron / PVC mains (assumption)", assumption: true}
+  leakage_exponent_n1: {value: 1.0, unit: "-", source: "FAVAD N1 default 1.0 (Thornton & Lambert 2005); configurable 0.5-1.5", assumption: true}
+  default_pump_flow_m3s: {value: 0.50, unit: "m3/s", source: "Hypothetical", assumption: true}
+  default_setpoint_m: {value: 45.0, unit: "m of head", source: "Hypothetical", assumption: true}
+  reservoir_level_m: {value: 10.0, unit: "m", source: "Hypothetical", assumption: true}
+  elevations_m: {pump: 0.0, junction: 2.0, residential: 4.0, agricultural: 1.0, industrial: 3.0}
+  pipes:
+    - {id: trunk,  from: pump,     to: junction,     length_m: 3000, diameter_m: 0.70}
+    - {id: res,    from: junction, to: residential,  length_m: 2000, diameter_m: 0.50}
+    - {id: agr,    from: junction, to: agricultural, length_m: 2500, diameter_m: 0.45}
+    - {id: ind,    from: junction, to: industrial,   length_m: 1500, diameter_m: 0.40}
+  demand_split: {residential: 0.5, agricultural: 0.3, industrial: 0.2}
+  min_service_pressure_m: {residential: 15.0, agricultural: 10.0, industrial: 20.0}
+  leak_k_per_severity:
+    value: 0.00025
+    unit: "m3/s per m^N1 at severity 1"
+    source: "Hypothetical leak orifice coefficient chosen so that one severity-1 leak loses a few percent of pump flow"
+    assumption: true
+  baseline_background_leakage_fraction:
+    value: 1.0
+    unit: "multiplier on distribution_loss_rate"
+    source: "Background leakage is calibrated so that, at the default set-point, total loss % equals the platform loss rate"
+    assumption: true
+
+grace:
+  pixel_resolution: "about 300 km effective (mascon solution); regional trend only, not well depth"
+
+scenario_ranges:
+  rainfallChangePct: [-50, 50]
+  temperatureChangeC: [-2, 4]
+  demandChangePct: [-30, 50]
+  groundwaterAvailabilityPct: [-50, 20]
+  irrigationEfficiency: [0.30, 0.90]
+  pipelineLossPct: [0, 50]
+
+demand_projection:
+  base_year: 2022
+  horizon_years: [2025, 2030, 2035, 2040, 2045, 2050]
+  method: "Domestic scales with World Bank projected population; agriculture held at the FAO-56 climatological requirement for the AQUASTAT irrigated area; industry held constant (no cited growth path). Estimated (projection)."

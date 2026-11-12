@@ -1,0 +1,245 @@
+{
+  "generatedAt": "2026-11-12T16:42:52+00:00",
+  "trainedAt": "2026-11-12T16:42:28+00:00",
+  "target": "D = P - ET0 (mm/month)",
+  "split": "train: target year <= 2016; validation: 2017-2020; test: 2021+",
+  "horizons": {
+    "1": {
+      "selectedModel": "random_forest",
+      "testPeriod": "2021-01 to 2026-10",
+      "samples": 560,
+      "regression": {
+        "climatology": {
+          "mae": 83.53,
+          "rmse": 125.791,
+          "r2": 0.6113
+        },
+        "persistence": {
+          "mae": 117.485,
+          "rmse": 171.145,
+          "r2": 0.2804
+        },
+        "random_forest": {
+          "mae": 79.789,
+          "rmse": 118.542,
+          "r2": 0.6548
+        },
+        "xgboost": {
+          "mae": 80.552,
+          "rmse": 120.757,
+          "r2": 0.6418
+        }
+      },
+      "classification": {
+        "classes": [
+          "Extremely dry",
+          "Severely dry",
+          "Moderately dry",
+          "Near normal or wet"
+        ],
+        "confusionMatrix": [
+          [
+            0,
+            0,
+            0,
+            9
+          ],
+          [
+            0,
+            0,
+            0,
+            23
+          ],
+          [
+            0,
+            0,
+            0,
+            61
+          ],
+          [
+            0,
+            0,
+            0,
+            467
+          ]
+        ],
+        "confusionAxes": "rows = actual class, columns = predicted class",
+        "macroF1": 0.2274,
+        "macroF1Climatology": 0.2274,
+        "actualClassCounts": {
+          "Extremely dry": 9,
+          "Severely dry": 23,
+          "Moderately dry": 61,
+          "Near normal or wet": 467
+        }
+      },
+      "interval": {
+        "nominal": 0.9,
+        "testCoverage": 0.8393,
+        "method": "5th-95th percentile of validation residuals per target month (90% interval)"
+      },
+      "validationRmse": {
+        "random_forest": 124.717,
+        "xgboost": 134.95
+      }
+    },
+    "3": {
+      "selectedModel": "random_forest",
+      "testPeriod": "2021-01 to 2026-10",
+      "samples": 560,
+      "regression": {
+        "climatology": {
+          "mae": 83.53,
+          "rmse": 125.791,
+          "r2": 0.6113
+        },
+        "persistence": {
+          "mae": 209.192,
+          "rmse": 279.177,
+          "r2": -0.9147
+        },
+        "random_forest": {
+          "mae": 81.984,
+          "rmse": 121.09,
+          "r2": 0.6398
+        },
+        "xgboost": {
+          "mae": 83.842,
+          "rmse": 124.371,
+          "r2": 0.62
+        }
+      },
+      "classification": {
+        "classes": [
+          "Extremely dry",
+          "Severely dry",
+          "Moderately dry",
+          "Near normal or wet"
+        ],
+        "confusionMatrix": [
+          [
+            0,
+            0,
+            0,
+            9
+          ],
+          [
+            0,
+            0,
+            0,
+            23
+          ],
+          [
+            0,
+            0,
+            0,
+            61
+          ],
+          [
+            0,
+            0,
+            0,
+            467
+          ]
+        ],
+        "confusionAxes": "rows = actual class, columns = predicted class",
+        "macroF1": 0.2274,
+        "macroF1Climatology": 0.2274,
+        "actualClassCounts": {
+          "Extremely dry": 9,
+          "Severely dry": 23,
+          "Moderately dry": 61,
+          "Near normal or wet": 467
+        }
+      },
+      "interval": {
+        "nominal": 0.9,
+        "testCoverage": 0.8161,
+        "method": "5th-95th percentile of validation residuals per target month (90% interval)"
+      },
+      "validationRmse": {
+        "random_forest": 129.581,
+        "xgboost": 137.407
+      }
+    },
+    "6": {
+      "selectedModel": "random_forest",
+      "testPeriod": "2021-01 to 2026-10",
+      "samples": 560,
+      "regression": {
+        "climatology": {
+          "mae": 83.53,
+          "rmse": 125.791,
+          "r2": 0.6113
+        },
+        "persistence": {
+          "mae": 296.001,
+          "rmse": 351.578,
+          "r2": -2.0366
+        },
+        "random_forest": {
+          "mae": 84.712,
+          "rmse": 125.108,
+          "r2": 0.6155
+        },
+        "xgboost": {
+          "mae": 88.892,
+          "rmse": 131.795,
+          "r2": 0.5733
+        }
+      },
+      "classification": {
+        "classes": [
+          "Extremely dry",
+          "Severely dry",
+          "Moderately dry",
+          "Near normal or wet"
+        ],
+        "confusionMatrix": [
+          [
+            0,
+            0,
+            0,
+            9
+          ],
+          [
+            0,
+            0,
+            0,
+            23
+          ],
+          [
+            0,
+            0,
+            0,
+            61
+          ],
+          [
+            0,
+            0,
+            1,
+            466
+          ]
+        ],
+        "confusionAxes": "rows = actual class, columns = predicted class",
+        "macroF1": 0.2271,
+        "macroF1Climatology": 0.2274,
+        "actualClassCounts": {
+          "Extremely dry": 9,
+          "Severely dry": 23,
+          "Moderately dry": 61,
+          "Near normal or wet": 467
+        }
+      },
+      "interval": {
+        "nominal": 0.9,
+        "testCoverage": 0.8321,
+        "method": "5th-95th percentile of validation residuals per target month (90% interval)"
+      },
+      "validationRmse": {
+        "random_forest": 123.522,
+        "xgboost": 131.21
+      }
+    }
+  }
+}

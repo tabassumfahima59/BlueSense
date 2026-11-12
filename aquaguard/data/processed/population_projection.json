@@ -1,0 +1,210 @@
+{
+  "source_id": "worldbank_pep",
+  "lastUpdated": "2026-07-01",
+  "series": [
+    {
+      "year": 2000,
+      "population": 134544304
+    },
+    {
+      "year": 2001,
+      "population": 136805810
+    },
+    {
+      "year": 2002,
+      "population": 138933658
+    },
+    {
+      "year": 2003,
+      "population": 140970351
+    },
+    {
+      "year": 2004,
+      "population": 142902856
+    },
+    {
+      "year": 2005,
+      "population": 144715786
+    },
+    {
+      "year": 2006,
+      "population": 146405973
+    },
+    {
+      "year": 2007,
+      "population": 147989278
+    },
+    {
+      "year": 2008,
+      "population": 149474264
+    },
+    {
+      "year": 2009,
+      "population": 150873714
+    },
+    {
+      "year": 2010,
+      "population": 152201981
+    },
+    {
+      "year": 2011,
+      "population": 153591076
+    },
+    {
+      "year": 2012,
+      "population": 155070101
+    },
+    {
+      "year": 2013,
+      "population": 156532141
+    },
+    {
+      "year": 2014,
+      "population": 157964929
+    },
+    {
+      "year": 2015,
+      "population": 159383179
+    },
+    {
+      "year": 2016,
+      "population": 160811932
+    },
+    {
+      "year": 2017,
+      "population": 162186147
+    },
+    {
+      "year": 2018,
+      "population": 163523103
+    },
+    {
+      "year": 2019,
+      "population": 164913055
+    },
+    {
+      "year": 2020,
+      "population": 166298024
+    },
+    {
+      "year": 2021,
+      "population": 167658854
+    },
+    {
+      "year": 2022,
+      "population": 169384897
+    },
+    {
+      "year": 2023,
+      "population": 171466990
+    },
+    {
+      "year": 2024,
+      "population": 173562364
+    },
+    {
+      "year": 2025,
+      "population": 175686899
+    },
+    {
+      "year": 2026,
+      "population": 177818044
+    },
+    {
+      "year": 2027,
+      "population": 179930175
+    },
+    {
+      "year": 2028,
+      "population": 182014774
+    },
+    {
+      "year": 2029,
+      "population": 184064620
+    },
+    {
+      "year": 2030,
+      "population": 186072407
+    },
+    {
+      "year": 2031,
+      "population": 188025198
+    },
+    {
+      "year": 2032,
+      "population": 189904568
+    },
+    {
+      "year": 2033,
+      "population": 191717185
+    },
+    {
+      "year": 2034,
+      "population": 193461166
+    },
+    {
+      "year": 2035,
+      "population": 195130372
+    },
+    {
+      "year": 2036,
+      "population": 196740575
+    },
+    {
+      "year": 2037,
+      "population": 198288196
+    },
+    {
+      "year": 2038,
+      "population": 199776948
+    },
+    {
+      "year": 2039,
+      "population": 201208774
+    },
+    {
+      "year": 2040,
+      "population": 202589429
+    },
+    {
+      "year": 2041,
+      "population": 203939079
+    },
+    {
+      "year": 2042,
+      "population": 205259486
+    },
+    {
+      "year": 2043,
+      "population": 206545483
+    },
+    {
+      "year": 2044,
+      "population": 207801055
+    },
+    {
+      "year": 2045,
+      "population": 209029594
+    },
+    {
+      "year": 2046,
+      "population": 210231190
+    },
+    {
+      "year": 2047,
+      "population": 211402170
+    },
+    {
+      "year": 2048,
+      "population": 212537928
+    },
+    {
+      "year": 2049,
+      "population": 213638540
+    },
+    {
+      "year": 2050,
+      "population": 214709097
+    }
+  ]
+}

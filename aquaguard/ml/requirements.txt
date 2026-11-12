@@ -1,0 +1,4 @@
+# AquaGuard offline ML / ingestion pipeline (in addition to backend/requirements.txt)
+-r ../backend/requirements.txt
+shap==0.54.1
+h5py==3.16.0

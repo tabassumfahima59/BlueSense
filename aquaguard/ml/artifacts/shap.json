@@ -1,0 +1,1506 @@
+{
+  "generatedAt": "2026-11-12T16:42:58+00:00",
+  "method": "shap.TreeExplainer on the operational model",
+  "horizons": {
+    "1": {
+      "model": "random_forest",
+      "rows": 400,
+      "global": [
+        {
+          "feature": "clim_d_target",
+          "label": "Normal D for target month",
+          "meanAbsShap": 107.276
+        },
+        {
+          "feature": "d_lag11",
+          "label": "D (P - ET0), 11 month(s) ago",
+          "meanAbsShap": 24.641
+        },
+        {
+          "feature": "clim_sd_target",
+          "label": "Variability of D (target month)",
+          "meanAbsShap": 14.092
+        },
+        {
+          "feature": "p_lag11",
+          "label": "Rainfall, 11 month(s) ago",
+          "meanAbsShap": 12.801
+        },
+        {
+          "feature": "p_lag5",
+          "label": "Rainfall, 5 month(s) ago",
+          "meanAbsShap": 8.546
+        },
+        {
+          "feature": "d_lag5",
+          "label": "D (P - ET0), 5 month(s) ago",
+          "meanAbsShap": 3.866
+        },
+        {
+          "feature": "d_roll12",
+          "label": "D, 12-month mean",
+          "meanAbsShap": 3.69
+        },
+        {
+          "feature": "division_id",
+          "label": "Division",
+          "meanAbsShap": 3.178
+        },
+        {
+          "feature": "p_lag0",
+          "label": "Rainfall, latest month",
+          "meanAbsShap": 2.694
+        },
+        {
+          "feature": "et0_lag7",
+          "label": "ET0, 7 month(s) ago",
+          "meanAbsShap": 2.564
+        },
+        {
+          "feature": "d_lag0",
+          "label": "D (P - ET0), latest month",
+          "meanAbsShap": 2.394
+        },
+        {
+          "feature": "d_lag10",
+          "label": "D (P - ET0), 10 month(s) ago",
+          "meanAbsShap": 2.346
+        }
+      ],
+      "local": {
+        "barishal": {
+          "baseValue": 96.9,
+          "prediction": -52.921,
+          "contributions": [
+            {
+              "feature": "clim_d_target",
+              "label": "Normal D for target month",
+              "shap": -95.835,
+              "value": -53.025
+            },
+            {
+              "feature": "d_lag11",
+              "label": "D (P - ET0), 11 month(s) ago",
+              "shap": -23.701,
+              "value": -96.97
+            },
+            {
+              "feature": "p_lag11",
+              "label": "Rainfall, 11 month(s) ago",
+              "shap": -11.953,
+              "value": 4.3
+            },
+            {
+              "feature": "p_lag5",
+              "label": "Rainfall, 5 month(s) ago",
+              "shap": -6.108,
+              "value": 145.3
+            },
+            {
+              "feature": "clim_sd_target",
+              "label": "Variability of D (target month)",
+              "shap": -5.303,
+              "value": 75.644
+            },
+            {
+              "feature": "d_lag10",
+              "label": "D (P - ET0), 10 month(s) ago",
+              "shap": -2.388,
+              "value": -83.86
+            },
+            {
+              "feature": "tmean_lag0",
+              "label": "Mean temperature, latest month",
+              "shap": 2.358,
+              "value": 28.19
+            },
+            {
+              "feature": "d_roll12",
+              "label": "D, 12-month mean",
+              "shap": -2.353,
+              "value": 29.901
+            }
+          ]
+        },
+        "chattogram": {
+          "baseValue": 96.9,
+          "prediction": -50.38,
+          "contributions": [
+            {
+              "feature": "clim_d_target",
+              "label": "Normal D for target month",
+              "shap": -98.209,
+              "value": -49.962
+            },
+            {
+              "feature": "d_lag11",
+              "label": "D (P - ET0), 11 month(s) ago",
+              "shap": -22.135,
+              "value": -90.35
+            },
+            {
+              "feature": "p_lag11",
+              "label": "Rainfall, 11 month(s) ago",
+              "shap": -13.178,
+              "value": 22.1
+            },
+            {
+              "feature": "d_lag5",
+              "label": "D (P - ET0), 5 month(s) ago",
+              "shap": 6.377,
+              "value": -34.37
+            },
+            {
+              "feature": "clim_sd_target",
+              "label": "Variability of D (target month)",
+              "shap": -6.026,
+              "value": 74.732
+            },
+            {
+              "feature": "p_lag5",
+              "label": "Rainfall, 5 month(s) ago",
+              "shap": -3.476,
+              "value": 107.7
+            },
+            {
+              "feature": "d_lag10",
+              "label": "D (P - ET0), 10 month(s) ago",
+              "shap": -3.34,
+              "value": -92.58
+            },
+            {
+              "feature": "sm_lag0",
+              "label": "Soil moisture (latest month)",
+              "shap": -2.514,
+              "value": 0.135
+            }
+          ]
+        },
+        "dhaka": {
+          "baseValue": 96.9,
+          "prediction": -66.68,
+          "contributions": [
+            {
+              "feature": "clim_d_target",
+              "label": "Normal D for target month",
+              "shap": -98.332,
+              "value": -71.145
+            },
+            {
+              "feature": "d_lag11",
+              "label": "D (P - ET0), 11 month(s) ago",
+              "shap": -22.954,
+              "value": -95.98
+            },
+            {
+              "feature": "p_lag11",
+              "label": "Rainfall, 11 month(s) ago",
+              "shap": -13.329,
+              "value": 12.4
+            },
+            {
+              "feature": "clim_sd_target",
+              "label": "Variability of D (target month)",
+              "shap": -12.657,
+              "value": 41.984
+            },
+            {
+              "feature": "p_lag5",
+              "label": "Rainfall, 5 month(s) ago",
+              "shap": -6.605,
+              "value": 165.6
+            },
+            {
+              "feature": "d_lag5",
+              "label": "D (P - ET0), 5 month(s) ago",
+              "shap": -2.362,
+              "value": 29.46
+            },
+            {
+              "feature": "et0_lag4",
+              "label": "ET0, 4 month(s) ago",
+              "shap": 2.359,
+              "value": 141.5
+            },
+            {
+              "feature": "tmean_lag0",
+              "label": "Mean temperature, latest month",
+              "shap": 2.252,
+              "value": 29.765
+            }
+          ]
+        },
+        "khulna": {
+          "baseValue": 96.9,
+          "prediction": -59.104,
+          "contributions": [
+            {
+              "feature": "clim_d_target",
+              "label": "Normal D for target month",
+              "shap": -99.313,
+              "value": -65.337
+            },
+            {
+              "feature": "d_lag11",
+              "label": "D (P - ET0), 11 month(s) ago",
+              "shap": -21.577,
+              "value": -97.77
+            },
+            {
+              "feature": "p_lag11",
+              "label": "Rainfall, 11 month(s) ago",
+              "shap": -12.863,
+              "value": 6.1
+            },
+            {
+              "feature": "clim_sd_target",
+              "label": "Variability of D (target month)",
+              "shap": -11.53,
+              "value": 57.129
+            },
+            {
+              "feature": "p_lag5",
+              "label": "Rainfall, 5 month(s) ago",
+              "shap": -5.101,
+              "value": 118.8
+            },
+            {
+              "feature": "d_lag5",
+              "label": "D (P - ET0), 5 month(s) ago",
+              "shap": 4.539,
+              "value": -30.15
+            },
+            {
+              "feature": "d_lag10",
+              "label": "D (P - ET0), 10 month(s) ago",
+              "shap": -2.952,
+              "value": -89.62
+            },
+            {
+              "feature": "et0_lag4",
+              "label": "ET0, 4 month(s) ago",
+              "shap": 2.472,
+              "value": 132.96
+            }
+          ]
+        },
+        "mymensingh": {
+          "baseValue": 96.9,
+          "prediction": -61.597,
+          "contributions": [
+            {
+              "feature": "clim_d_target",
+              "label": "Normal D for target month",
+              "shap": -98.806,
+              "value": -65.303
+            },
+            {
+              "feature": "d_lag11",
+              "label": "D (P - ET0), 11 month(s) ago",
+              "shap": -24.019,
+              "value": -58.07
+            },
+            {
+              "feature": "p_lag11",
+              "label": "Rainfall, 11 month(s) ago",
+              "shap": -13.747,
+              "value": 28.6
+            },
+            {
+              "feature": "clim_sd_target",
+              "label": "Variability of D (target month)",
+              "shap": -11.682,
+              "value": 48.622
+            },
+            {
+              "feature": "p_lag5",
+              "label": "Rainfall, 5 month(s) ago",
+              "shap": -6.824,
+              "value": 370.8
+            },
+            {
+              "feature": "d_lag5",
+              "label": "D (P - ET0), 5 month(s) ago",
+              "shap": -3.123,
+              "value": 252.12
+            },
+            {
+              "feature": "tmean_lag0",
+              "label": "Mean temperature, latest month",
+              "shap": 2.524,
+              "value": 27.287
+            },
+            {
+              "feature": "et0_lag4",
+              "label": "ET0, 4 month(s) ago",
+              "shap": 2.374,
+              "value": 128.57
+            }
+          ]
+        },
+        "rajshahi": {
+          "baseValue": 96.9,
+          "prediction": -75.641,
+          "contributions": [
+            {
+              "feature": "clim_d_target",
+              "label": "Normal D for target month",
+              "shap": -103.114,
+              "value": -82.682
+            },
+            {
+              "feature": "d_lag11",
+              "label": "D (P - ET0), 11 month(s) ago",
+              "shap": -23.746,
+              "value": -74.79
+            },
+            {
+              "feature": "p_lag11",
+              "label": "Rainfall, 11 month(s) ago",
+              "shap": -14.184,
+              "value": 24.5
+            },
+            {
+              "feature": "clim_sd_target",
+              "label": "Variability of D (target month)",
+              "shap": -13.218,
+              "value": 31.935
+            },
+            {
+              "feature": "p_lag5",
+              "label": "Rainfall, 5 month(s) ago",
+              "shap": -7.119,
+              "value": 215.7
+            },
+            {
+              "feature": "et0_lag7",
+              "label": "ET0, 7 month(s) ago",
+              "shap": -2.736,
+              "value": 135.57
+            },
+            {
+              "feature": "d_lag5",
+              "label": "D (P - ET0), 5 month(s) ago",
+              "shap": -2.513,
+              "value": 76.74
+            },
+            {
+              "feature": "et0_lag4",
+              "label": "ET0, 4 month(s) ago",
+              "shap": 2.097,
+              "value": 143.02
+            }
+          ]
+        },
+        "rangpur": {
+          "baseValue": 96.9,
+          "prediction": -66.23,
+          "contributions": [
+            {
+              "feature": "clim_d_target",
+              "label": "Normal D for target month",
+              "shap": -103.671,
+              "value": -82.348
+            },
+            {
+              "feature": "d_lag11",
+              "label": "D (P - ET0), 11 month(s) ago",
+              "shap": -23.756,
+              "value": -29.99
+            },
+            {
+              "feature": "p_lag11",
+              "label": "Rainfall, 11 month(s) ago",
+              "shap": -13.808,
+              "value": 50.8
+            },
+            {
+              "feature": "clim_sd_target",
+              "label": "Variability of D (target month)",
+              "shap": -13.241,
+              "value": 19.719
+            },
+            {
+              "feature": "p_lag5",
+              "label": "Rainfall, 5 month(s) ago",
+              "shap": -6.728,
+              "value": 297.0
+            },
+            {
+              "feature": "d_lag5",
+              "label": "D (P - ET0), 5 month(s) ago",
+              "shap": -3.061,
+              "value": 177.89
+            },
+            {
+              "feature": "et0_lag4",
+              "label": "ET0, 4 month(s) ago",
+              "shap": 1.854,
+              "value": 125.98
+            },
+            {
+              "feature": "et0_lag11",
+              "label": "ET0, 11 month(s) ago",
+              "shap": 1.745,
+              "value": 80.79
+            }
+          ]
+        },
+        "sylhet": {
+          "baseValue": 96.9,
+          "prediction": -54.382,
+          "contributions": [
+            {
+              "feature": "clim_d_target",
+              "label": "Normal D for target month",
+              "shap": -110.198,
+              "value": -58.013
+            },
+            {
+              "feature": "d_lag11",
+              "label": "D (P - ET0), 11 month(s) ago",
+              "shap": -24.387,
+              "value": -41.32
+            },
+            {
+              "feature": "p_lag11",
+              "label": "Rainfall, 11 month(s) ago",
+              "shap": -14.268,
+              "value": 46.3
+            },
+            {
+              "feature": "clim_sd_target",
+              "label": "Variability of D (target month)",
+              "shap": -12.532,
+              "value": 54.993
+            },
+            {
+              "feature": "p_lag5",
+              "label": "Rainfall, 5 month(s) ago",
+              "shap": -8.742,
+              "value": 517.0
+            },
+            {
+              "feature": "division_id",
+              "label": "Division",
+              "shap": 5.339,
+              "value": 7.0
+            },
+            {
+              "feature": "d_roll12",
+              "label": "D, 12-month mean",
+              "shap": 4.993,
+              "value": 218.472
+            },
+            {
+              "feature": "et0_lag7",
+              "label": "ET0, 7 month(s) ago",
+              "shap": 3.374,
+              "value": 80.02
+            }
+          ]
+        }
+      }
+    },
+    "3": {
+      "model": "random_forest",
+      "rows": 400,
+      "global": [
+        {
+          "feature": "clim_d_target",
+          "label": "Normal D for target month",
+          "meanAbsShap": 106.905
+        },
+        {
+          "feature": "p_lag9",
+          "label": "Rainfall, 9 month(s) ago",
+          "meanAbsShap": 18.358
+        },
+        {
+          "feature": "d_lag9",
+          "label": "D (P - ET0), 9 month(s) ago",
+          "meanAbsShap": 16.289
+        },
+        {
+          "feature": "clim_sd_target",
+          "label": "Variability of D (target month)",
+          "meanAbsShap": 15.016
+        },
+        {
+          "feature": "p_lag3",
+          "label": "Rainfall, 3 month(s) ago",
+          "meanAbsShap": 7.973
+        },
+        {
+          "feature": "d_lag3",
+          "label": "D (P - ET0), 3 month(s) ago",
+          "meanAbsShap": 4.342
+        },
+        {
+          "feature": "division_id",
+          "label": "Division",
+          "meanAbsShap": 3.735
+        },
+        {
+          "feature": "d_roll12",
+          "label": "D, 12-month mean",
+          "meanAbsShap": 3.065
+        },
+        {
+          "feature": "tmean_lag2",
+          "label": "Mean temperature, 2 month(s) ago",
+          "meanAbsShap": 2.956
+        },
+        {
+          "feature": "target_month_sin",
+          "label": "Target month (sin)",
+          "meanAbsShap": 2.85
+        },
+        {
+          "feature": "p_lag10",
+          "label": "Rainfall, 10 month(s) ago",
+          "meanAbsShap": 2.616
+        },
+        {
+          "feature": "et0_lag9",
+          "label": "ET0, 9 month(s) ago",
+          "meanAbsShap": 2.486
+        }
+      ],
+      "local": {
+        "barishal": {
+          "baseValue": 97.55,
+          "prediction": -70.928,
+          "contributions": [
+            {
+              "feature": "clim_d_target",
+              "label": "Normal D for target month",
+              "shap": -110.688,
+              "value": -93.434
+            },
+            {
+              "feature": "p_lag9",
+              "label": "Rainfall, 9 month(s) ago",
+              "shap": -16.881,
+              "value": 0.0
+            },
+            {
+              "feature": "d_lag9",
+              "label": "D (P - ET0), 9 month(s) ago",
+              "shap": -15.207,
+              "value": -88.49
+            },
+            {
+              "feature": "clim_sd_target",
+              "label": "Variability of D (target month)",
+              "shap": -14.415,
+              "value": 14.031
+            },
+            {
+              "feature": "p_lag3",
+              "label": "Rainfall, 3 month(s) ago",
+              "shap": -5.633,
+              "value": 406.2
+            },
+            {
+              "feature": "d_lag3",
+              "label": "D (P - ET0), 3 month(s) ago",
+              "shap": -3.453,
+              "value": 299.49
+            },
+            {
+              "feature": "et0_lag5",
+              "label": "ET0, 5 month(s) ago",
+              "shap": -2.495,
+              "value": 144.81
+            },
+            {
+              "feature": "p_lag10",
+              "label": "Rainfall, 10 month(s) ago",
+              "shap": -1.991,
+              "value": 0.0
+            }
+          ]
+        },
+        "chattogram": {
+          "baseValue": 97.55,
+          "prediction": -79.421,
+          "contributions": [
+            {
+              "feature": "clim_d_target",
+              "label": "Normal D for target month",
+              "shap": -115.223,
+              "value": -99.898
+            },
+            {
+              "feature": "p_lag9",
+              "label": "Rainfall, 9 month(s) ago",
+              "shap": -17.472,
+              "value": 0.0
+            },
+            {
+              "feature": "d_lag9",
+              "label": "D (P - ET0), 9 month(s) ago",
+              "shap": -15.3,
+              "value": -93.06
+            },
+            {
+              "feature": "clim_sd_target",
+              "label": "Variability of D (target month)",
+              "shap": -14.651,
+              "value": 12.762
+            },
+            {
+              "feature": "p_lag3",
+              "label": "Rainfall, 3 month(s) ago",
+              "shap": -4.787,
+              "value": 840.9
+            },
+            {
+              "feature": "d_lag3",
+              "label": "D (P - ET0), 3 month(s) ago",
+              "shap": -2.554,
+              "value": 740.26
+            },
+            {
+              "feature": "et0_lag5",
+              "label": "ET0, 5 month(s) ago",
+              "shap": -2.317,
+              "value": 142.07
+            },
+            {
+              "feature": "tmean_lag2",
+              "label": "Mean temperature, 2 month(s) ago",
+              "shap": -2.152,
+              "value": 27.59
+            }
+          ]
+        },
+        "dhaka": {
+          "baseValue": 97.55,
+          "prediction": -77.973,
+          "contributions": [
+            {
+              "feature": "clim_d_target",
+              "label": "Normal D for target month",
+              "shap": -109.361,
+              "value": -89.526
+            },
+            {
+              "feature": "p_lag9",
+              "label": "Rainfall, 9 month(s) ago",
+              "shap": -17.017,
+              "value": 0.0
+            },
+            {
+              "feature": "d_lag9",
+              "label": "D (P - ET0), 9 month(s) ago",
+              "shap": -15.787,
+              "value": -99.51
+            },
+            {
+              "feature": "clim_sd_target",
+              "label": "Variability of D (target month)",
+              "shap": -14.397,
+              "value": 13.438
+            },
+            {
+              "feature": "p_lag3",
+              "label": "Rainfall, 3 month(s) ago",
+              "shap": -5.663,
+              "value": 436.5
+            },
+            {
+              "feature": "d_lag3",
+              "label": "D (P - ET0), 3 month(s) ago",
+              "shap": -3.407,
+              "value": 312.15
+            },
+            {
+              "feature": "et0_lag5",
+              "label": "ET0, 5 month(s) ago",
+              "shap": -2.339,
+              "value": 136.14
+            },
+            {
+              "feature": "et0_lag2",
+              "label": "ET0, 2 month(s) ago",
+              "shap": 2.159,
+              "value": 133.76
+            }
+          ]
+        },
+        "khulna": {
+          "baseValue": 97.55,
+          "prediction": -73.957,
+          "contributions": [
+            {
+              "feature": "clim_d_target",
+              "label": "Normal D for target month",
+              "shap": -108.679,
+              "value": -92.685
+            },
+            {
+              "feature": "p_lag9",
+              "label": "Rainfall, 9 month(s) ago",
+              "shap": -16.833,
+              "value": 0.0
+            },
+            {
+              "feature": "d_lag9",
+              "label": "D (P - ET0), 9 month(s) ago",
+              "shap": -15.251,
+              "value": -97.28
+            },
+            {
+              "feature": "clim_sd_target",
+              "label": "Variability of D (target month)",
+              "shap": -14.62,
+              "value": 17.049
+            },
+            {
+              "feature": "p_lag3",
+              "label": "Rainfall, 3 month(s) ago",
+              "shap": -5.705,
+              "value": 407.1
+            },
+            {
+              "feature": "d_lag3",
+              "label": "D (P - ET0), 3 month(s) ago",
+              "shap": -3.438,
+              "value": 296.84
+            },
+            {
+              "feature": "et0_lag5",
+              "label": "ET0, 5 month(s) ago",
+              "shap": -2.221,
+              "value": 148.95
+            },
+            {
+              "feature": "target_month_sin",
+              "label": "Target month (sin)",
+              "shap": -1.989,
+              "value": 0.5
+            }
+          ]
+        },
+        "mymensingh": {
+          "baseValue": 97.55,
+          "prediction": -67.071,
+          "contributions": [
+            {
+              "feature": "clim_d_target",
+              "label": "Normal D for target month",
+              "shap": -104.821,
+              "value": -81.6
+            },
+            {
+              "feature": "p_lag9",
+              "label": "Rainfall, 9 month(s) ago",
+              "shap": -16.948,
+              "value": 0.0
+            },
+            {
+              "feature": "d_lag9",
+              "label": "D (P - ET0), 9 month(s) ago",
+              "shap": -14.613,
+              "value": -77.69
+            },
+            {
+              "feature": "clim_sd_target",
+              "label": "Variability of D (target month)",
+              "shap": -13.516,
+              "value": 14.795
+            },
+            {
+              "feature": "p_lag3",
+              "label": "Rainfall, 3 month(s) ago",
+              "shap": -4.683,
+              "value": 579.1
+            },
+            {
+              "feature": "d_lag3",
+              "label": "D (P - ET0), 3 month(s) ago",
+              "shap": -2.893,
+              "value": 458.61
+            },
+            {
+              "feature": "et0_lag5",
+              "label": "ET0, 5 month(s) ago",
+              "shap": -2.302,
+              "value": 118.68
+            },
+            {
+              "feature": "et0_lag10",
+              "label": "ET0, 10 month(s) ago",
+              "shap": 1.921,
+              "value": 71.95
+            }
+          ]
+        },
+        "rajshahi": {
+          "baseValue": 97.55,
+          "prediction": -70.655,
+          "contributions": [
+            {
+              "feature": "clim_d_target",
+              "label": "Normal D for target month",
+              "shap": -104.229,
+              "value": -82.887
+            },
+            {
+              "feature": "p_lag9",
+              "label": "Rainfall, 9 month(s) ago",
+              "shap": -16.982,
+              "value": 0.0
+            },
+            {
+              "feature": "d_lag9",
+              "label": "D (P - ET0), 9 month(s) ago",
+              "shap": -14.432,
+              "value": -84.23
+            },
+            {
+              "feature": "clim_sd_target",
+              "label": "Variability of D (target month)",
+              "shap": -13.738,
+              "value": 15.969
+            },
+            {
+              "feature": "p_lag3",
+              "label": "Rainfall, 3 month(s) ago",
+              "shap": -6.113,
+              "value": 292.8
+            },
+            {
+              "feature": "d_lag3",
+              "label": "D (P - ET0), 3 month(s) ago",
+              "shap": -3.202,
+              "value": 162.25
+            },
+            {
+              "feature": "et0_lag5",
+              "label": "ET0, 5 month(s) ago",
+              "shap": -2.571,
+              "value": 138.96
+            },
+            {
+              "feature": "p_lag10",
+              "label": "Rainfall, 10 month(s) ago",
+              "shap": -1.948,
+              "value": 0.2
+            }
+          ]
+        },
+        "rangpur": {
+          "baseValue": 97.55,
+          "prediction": -65.382,
+          "contributions": [
+            {
+              "feature": "clim_d_target",
+              "label": "Normal D for target month",
+              "shap": -101.548,
+              "value": -72.95
+            },
+            {
+              "feature": "p_lag9",
+              "label": "Rainfall, 9 month(s) ago",
+              "shap": -16.785,
+              "value": 0.1
+            },
+            {
+              "feature": "d_lag9",
+              "label": "D (P - ET0), 9 month(s) ago",
+              "shap": -14.377,
+              "value": -67.69
+            },
+            {
+              "feature": "clim_sd_target",
+              "label": "Variability of D (target month)",
+              "shap": -12.965,
+              "value": 26.603
+            },
+            {
+              "feature": "p_lag3",
+              "label": "Rainfall, 3 month(s) ago",
+              "shap": -4.915,
+              "value": 521.6
+            },
+            {
+              "feature": "d_lag3",
+              "label": "D (P - ET0), 3 month(s) ago",
+              "shap": -3.325,
+              "value": 395.0
+            },
+            {
+              "feature": "et0_lag5",
+              "label": "ET0, 5 month(s) ago",
+              "shap": -2.326,
+              "value": 119.11
+            },
+            {
+              "feature": "et0_lag9",
+              "label": "ET0, 9 month(s) ago",
+              "shap": 2.164,
+              "value": 67.79
+            }
+          ]
+        },
+        "sylhet": {
+          "baseValue": 97.55,
+          "prediction": -64.719,
+          "contributions": [
+            {
+              "feature": "clim_d_target",
+              "label": "Normal D for target month",
+              "shap": -112.801,
+              "value": -72.973
+            },
+            {
+              "feature": "p_lag9",
+              "label": "Rainfall, 9 month(s) ago",
+              "shap": -18.835,
+              "value": 0.0
+            },
+            {
+              "feature": "d_lag9",
+              "label": "D (P - ET0), 9 month(s) ago",
+              "shap": -15.361,
+              "value": -79.25
+            },
+            {
+              "feature": "clim_sd_target",
+              "label": "Variability of D (target month)",
+              "shap": -14.865,
+              "value": 14.259
+            },
+            {
+              "feature": "p_lag3",
+              "label": "Rainfall, 3 month(s) ago",
+              "shap": -6.13,
+              "value": 701.0
+            },
+            {
+              "feature": "division_id",
+              "label": "Division",
+              "shap": 5.413,
+              "value": 7.0
+            },
+            {
+              "feature": "d_roll12",
+              "label": "D, 12-month mean",
+              "shap": 4.773,
+              "value": 218.472
+            },
+            {
+              "feature": "d_lag3",
+              "label": "D (P - ET0), 3 month(s) ago",
+              "shap": -3.031,
+              "value": 581.19
+            }
+          ]
+        }
+      }
+    },
+    "6": {
+      "model": "random_forest",
+      "rows": 400,
+      "global": [
+        {
+          "feature": "clim_d_target",
+          "label": "Normal D for target month",
+          "meanAbsShap": 103.083
+        },
+        {
+          "feature": "tmean_lag0",
+          "label": "Mean temperature, latest month",
+          "meanAbsShap": 16.812
+        },
+        {
+          "feature": "d_lag6",
+          "label": "D (P - ET0), 6 month(s) ago",
+          "meanAbsShap": 16.672
+        },
+        {
+          "feature": "clim_sd_target",
+          "label": "Variability of D (target month)",
+          "meanAbsShap": 12.347
+        },
+        {
+          "feature": "p_lag6",
+          "label": "Rainfall, 6 month(s) ago",
+          "meanAbsShap": 11.226
+        },
+        {
+          "feature": "tmean_lag1",
+          "label": "Mean temperature, 1 month(s) ago",
+          "meanAbsShap": 4.756
+        },
+        {
+          "feature": "p_lag0",
+          "label": "Rainfall, latest month",
+          "meanAbsShap": 4.557
+        },
+        {
+          "feature": "division_id",
+          "label": "Division",
+          "meanAbsShap": 3.942
+        },
+        {
+          "feature": "d_roll12",
+          "label": "D, 12-month mean",
+          "meanAbsShap": 3.853
+        },
+        {
+          "feature": "target_month_sin",
+          "label": "Target month (sin)",
+          "meanAbsShap": 2.73
+        },
+        {
+          "feature": "d_lag0",
+          "label": "D (P - ET0), latest month",
+          "meanAbsShap": 2.642
+        },
+        {
+          "feature": "et0_lag6",
+          "label": "ET0, 6 month(s) ago",
+          "meanAbsShap": 2.123
+        }
+      ],
+      "local": {
+        "barishal": {
+          "baseValue": 98.384,
+          "prediction": -13.692,
+          "contributions": [
+            {
+              "feature": "clim_d_target",
+              "label": "Normal D for target month",
+              "shap": -91.072,
+              "value": -28.968
+            },
+            {
+              "feature": "p_lag0",
+              "label": "Rainfall, latest month",
+              "shap": 20.545,
+              "value": 37.7
+            },
+            {
+              "feature": "tmean_lag0",
+              "label": "Mean temperature, latest month",
+              "shap": -14.001,
+              "value": 28.19
+            },
+            {
+              "feature": "d_lag6",
+              "label": "D (P - ET0), 6 month(s) ago",
+              "shap": -13.914,
+              "value": 53.78
+            },
+            {
+              "feature": "d_lag0",
+              "label": "D (P - ET0), latest month",
+              "shap": 10.753,
+              "value": -84.26
+            },
+            {
+              "feature": "tmean_lag1",
+              "label": "Mean temperature, 1 month(s) ago",
+              "shap": -6.873,
+              "value": 28.507
+            },
+            {
+              "feature": "clim_sd_target",
+              "label": "Variability of D (target month)",
+              "shap": 4.17,
+              "value": 102.005
+            },
+            {
+              "feature": "et0_lag4",
+              "label": "ET0, 4 month(s) ago",
+              "shap": -3.346,
+              "value": 128.61
+            }
+          ]
+        },
+        "chattogram": {
+          "baseValue": 98.384,
+          "prediction": 3.353,
+          "contributions": [
+            {
+              "feature": "clim_d_target",
+              "label": "Normal D for target month",
+              "shap": -90.525,
+              "value": -29.989
+            },
+            {
+              "feature": "p_lag0",
+              "label": "Rainfall, latest month",
+              "shap": 19.07,
+              "value": 44.1
+            },
+            {
+              "feature": "tmean_lag0",
+              "label": "Mean temperature, latest month",
+              "shap": -13.113,
+              "value": 28.881
+            },
+            {
+              "feature": "d_lag6",
+              "label": "D (P - ET0), 6 month(s) ago",
+              "shap": -12.941,
+              "value": 44.91
+            },
+            {
+              "feature": "d_lag0",
+              "label": "D (P - ET0), latest month",
+              "shap": 10.482,
+              "value": -82.86
+            },
+            {
+              "feature": "clim_sd_target",
+              "label": "Variability of D (target month)",
+              "shap": 9.271,
+              "value": 113.462
+            },
+            {
+              "feature": "tmean_lag1",
+              "label": "Mean temperature, 1 month(s) ago",
+              "shap": -6.229,
+              "value": 28.25
+            },
+            {
+              "feature": "p_lag6",
+              "label": "Rainfall, 6 month(s) ago",
+              "shap": -4.093,
+              "value": 174.1
+            }
+          ]
+        },
+        "dhaka": {
+          "baseValue": 98.384,
+          "prediction": 40.486,
+          "contributions": [
+            {
+              "feature": "clim_d_target",
+              "label": "Normal D for target month",
+              "shap": -40.273,
+              "value": 10.267
+            },
+            {
+              "feature": "p_lag0",
+              "label": "Rainfall, latest month",
+              "shap": 13.791,
+              "value": 36.5
+            },
+            {
+              "feature": "tmean_lag0",
+              "label": "Mean temperature, latest month",
+              "shap": -12.113,
+              "value": 29.765
+            },
+            {
+              "feature": "clim_sd_target",
+              "label": "Variability of D (target month)",
+              "shap": 10.819,
+              "value": 113.612
+            },
+            {
+              "feature": "d_lag6",
+              "label": "D (P - ET0), 6 month(s) ago",
+              "shap": -9.688,
+              "value": -29.23
+            },
+            {
+              "feature": "d_lag0",
+              "label": "D (P - ET0), latest month",
+              "shap": 6.593,
+              "value": -95.27
+            },
+            {
+              "feature": "tmean_lag1",
+              "label": "Mean temperature, 1 month(s) ago",
+              "shap": -5.492,
+              "value": 29.363
+            },
+            {
+              "feature": "p_lag6",
+              "label": "Rainfall, 6 month(s) ago",
+              "shap": -4.449,
+              "value": 113.1
+            }
+          ]
+        },
+        "khulna": {
+          "baseValue": 98.384,
+          "prediction": -8.986,
+          "contributions": [
+            {
+              "feature": "clim_d_target",
+              "label": "Normal D for target month",
+              "shap": -86.286,
+              "value": -47.433
+            },
+            {
+              "feature": "p_lag0",
+              "label": "Rainfall, latest month",
+              "shap": 20.791,
+              "value": 35.7
+            },
+            {
+              "feature": "tmean_lag0",
+              "label": "Mean temperature, latest month",
+              "shap": -13.981,
+              "value": 27.935
+            },
+            {
+              "feature": "d_lag6",
+              "label": "D (P - ET0), 6 month(s) ago",
+              "shap": -12.004,
+              "value": -27.42
+            },
+            {
+              "feature": "d_lag0",
+              "label": "D (P - ET0), latest month",
+              "shap": 10.218,
+              "value": -84.64
+            },
+            {
+              "feature": "clim_sd_target",
+              "label": "Variability of D (target month)",
+              "shap": 6.3,
+              "value": 99.04
+            },
+            {
+              "feature": "p_lag6",
+              "label": "Rainfall, 6 month(s) ago",
+              "shap": -5.738,
+              "value": 120.7
+            },
+            {
+              "feature": "tmean_lag1",
+              "label": "Mean temperature, 1 month(s) ago",
+              "shap": -5.34,
+              "value": 28.357
+            }
+          ]
+        },
+        "mymensingh": {
+          "baseValue": 98.384,
+          "prediction": 104.718,
+          "contributions": [
+            {
+              "feature": "clim_sd_target",
+              "label": "Variability of D (target month)",
+              "shap": 14.307,
+              "value": 169.21
+            },
+            {
+              "feature": "d_lag6",
+              "label": "D (P - ET0), 6 month(s) ago",
+              "shap": 13.734,
+              "value": 249.47
+            },
+            {
+              "feature": "tmean_lag0",
+              "label": "Mean temperature, latest month",
+              "shap": -12.403,
+              "value": 27.287
+            },
+            {
+              "feature": "p_lag6",
+              "label": "Rainfall, 6 month(s) ago",
+              "shap": 11.854,
+              "value": 357.5
+            },
+            {
+              "feature": "tmean_lag1",
+              "label": "Mean temperature, 1 month(s) ago",
+              "shap": -7.811,
+              "value": 28.35
+            },
+            {
+              "feature": "et0_lag2",
+              "label": "ET0, 2 month(s) ago",
+              "shap": -6.893,
+              "value": 129.15
+            },
+            {
+              "feature": "p_lag0",
+              "label": "Rainfall, latest month",
+              "shap": 6.239,
+              "value": 37.6
+            },
+            {
+              "feature": "d_lag0",
+              "label": "D (P - ET0), latest month",
+              "shap": 4.509,
+              "value": -77.14
+            }
+          ]
+        },
+        "rajshahi": {
+          "baseValue": 98.384,
+          "prediction": -54.399,
+          "contributions": [
+            {
+              "feature": "clim_d_target",
+              "label": "Normal D for target month",
+              "shap": -119.617,
+              "value": -104.062
+            },
+            {
+              "feature": "tmean_lag0",
+              "label": "Mean temperature, latest month",
+              "shap": -14.801,
+              "value": 27.461
+            },
+            {
+              "feature": "d_lag6",
+              "label": "D (P - ET0), 6 month(s) ago",
+              "shap": -12.914,
+              "value": -30.7
+            },
+            {
+              "feature": "p_lag0",
+              "label": "Rainfall, latest month",
+              "shap": 12.833,
+              "value": 45.2
+            },
+            {
+              "feature": "tmean_lag1",
+              "label": "Mean temperature, 1 month(s) ago",
+              "shap": -5.594,
+              "value": 28.687
+            },
+            {
+              "feature": "d_lag0",
+              "label": "D (P - ET0), latest month",
+              "shap": 4.118,
+              "value": -72.72
+            },
+            {
+              "feature": "tmean_lag2",
+              "label": "Mean temperature, 2 month(s) ago",
+              "shap": -3.346,
+              "value": 29.468
+            },
+            {
+              "feature": "et0_lag10",
+              "label": "ET0, 10 month(s) ago",
+              "shap": 3.136,
+              "value": 79.45
+            }
+          ]
+        },
+        "rangpur": {
+          "baseValue": 98.384,
+          "prediction": 34.277,
+          "contributions": [
+            {
+              "feature": "clim_d_target",
+              "label": "Normal D for target month",
+              "shap": -62.369,
+              "value": 12.13
+            },
+            {
+              "feature": "p_lag6",
+              "label": "Rainfall, 6 month(s) ago",
+              "shap": 13.146,
+              "value": 274.8
+            },
+            {
+              "feature": "d_lag6",
+              "label": "D (P - ET0), 6 month(s) ago",
+              "shap": 12.587,
+              "value": 165.54
+            },
+            {
+              "feature": "tmean_lag0",
+              "label": "Mean temperature, latest month",
+              "shap": -11.975,
+              "value": 26.397
+            },
+            {
+              "feature": "tmean_lag1",
+              "label": "Mean temperature, 1 month(s) ago",
+              "shap": -9.202,
+              "value": 28.157
+            },
+            {
+              "feature": "p_lag0",
+              "label": "Rainfall, latest month",
+              "shap": 7.499,
+              "value": 43.9
+            },
+            {
+              "feature": "clim_sd_target",
+              "label": "Variability of D (target month)",
+              "shap": 5.069,
+              "value": 120.333
+            },
+            {
+              "feature": "tmean_lag2",
+              "label": "Mean temperature, 2 month(s) ago",
+              "shap": -4.147,
+              "value": 29.361
+            }
+          ]
+        },
+        "sylhet": {
+          "baseValue": 98.384,
+          "prediction": 382.169,
+          "contributions": [
+            {
+              "feature": "clim_d_target",
+              "label": "Normal D for target month",
+              "shap": 198.839,
+              "value": 448.066
+            },
+            {
+              "feature": "clim_sd_target",
+              "label": "Variability of D (target month)",
+              "shap": 38.721,
+              "value": 389.834
+            },
+            {
+              "feature": "d_lag6",
+              "label": "D (P - ET0), 6 month(s) ago",
+              "shap": 35.448,
+              "value": 542.08
+            },
+            {
+              "feature": "p_lag6",
+              "label": "Rainfall, 6 month(s) ago",
+              "shap": 32.905,
+              "value": 631.7
+            },
+            {
+              "feature": "tmean_lag0",
+              "label": "Mean temperature, latest month",
+              "shap": -28.929,
+              "value": 27.487
+            },
+            {
+              "feature": "d_roll12",
+              "label": "D, 12-month mean",
+              "shap": 16.876,
+              "value": 218.472
+            },
+            {
+              "feature": "division_id",
+              "label": "Division",
+              "shap": 14.303,
+              "value": 7.0
+            },
+            {
+              "feature": "et0_lag1",
+              "label": "ET0, 1 month(s) ago",
+              "shap": -8.603,
+              "value": 118.5
+            }
+          ]
+        }
+      }
+    }
+  }
+}

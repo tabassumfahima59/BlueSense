@@ -1,0 +1,16 @@
+# Render Blueprint for the AquaGuard API (Render reads this file from the repository root).
+# The frontend deploys separately to Vercel with root directory `aquaguard/frontend`.
+services:
+  - type: web
+    name: aquaguard-api
+    runtime: docker
+    dockerfilePath: ./aquaguard/backend/Dockerfile
+    dockerContext: ./aquaguard
+    healthCheckPath: /api/health
+    envVars:
+      - key: CORS_ORIGINS
+        value: https://YOUR-FRONTEND.vercel.app
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        value: claude-opus-5-5

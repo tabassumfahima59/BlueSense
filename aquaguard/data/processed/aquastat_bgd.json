@@ -1,0 +1,281 @@
+{
+  "source_id": "fao_aquastat",
+  "values": {
+    "country_area_kha": {
+      "value": 14757.0,
+      "unit": "1000 ha",
+      "year": 2023,
+      "symbol": "E",
+      "symbolDescription": "Estimate either calculated as sum or identify (yield) from official values or from an AQUASTAT estimation",
+      "variable": "Total area of the country (excl. coastal water)",
+      "variableCode": 4100,
+      "lastNonImputedYear": 2023,
+      "referenceYear": 2023
+    },
+    "population_kinhab": {
+      "value": 171466.99,
+      "unit": "1000 inhab",
+      "year": 2023,
+      "symbol": "X",
+      "symbolDescription": "External value (reported by FAOSTAT or another international agency)",
+      "variable": "Total population",
+      "variableCode": 4104,
+      "lastNonImputedYear": 2023,
+      "referenceYear": 2023
+    },
+    "area_equipped_irrigation_kha": {
+      "value": 5050.0,
+      "unit": "1000 ha",
+      "year": 2023,
+      "symbol": "I",
+      "symbolDescription": "Imputed (carry forward, vertical imputation, linear interpolation)",
+      "variable": "Area equipped for irrigation: total",
+      "variableCode": 4313,
+      "lastNonImputedYear": 2008,
+      "referenceYear": 2008
+    },
+    "irrigated_harvested_maize_kha": {
+      "value": 90.0,
+      "unit": "1000 ha",
+      "year": 2023,
+      "symbol": "I",
+      "symbolDescription": "Imputed (carry forward, vertical imputation, linear interpolation)",
+      "variable": "Harvested irrigated temporary crop area: Maize",
+      "variableCode": 4348,
+      "lastNonImputedYear": 2008,
+      "referenceYear": 2008
+    },
+    "irrigated_harvested_potato_kha": {
+      "value": 263.0,
+      "unit": "1000 ha",
+      "year": 2023,
+      "symbol": "I",
+      "symbolDescription": "Imputed (carry forward, vertical imputation, linear interpolation)",
+      "variable": "Harvested irrigated temporary crop area: Potatoes",
+      "variableCode": 4352,
+      "lastNonImputedYear": 2008,
+      "referenceYear": 2008
+    },
+    "irrigated_harvested_rice_kha": {
+      "value": 4341.0,
+      "unit": "1000 ha",
+      "year": 2023,
+      "symbol": "I",
+      "symbolDescription": "Imputed (carry forward, vertical imputation, linear interpolation)",
+      "variable": "Harvested irrigated temporary crop area: Rice",
+      "variableCode": 4346,
+      "lastNonImputedYear": 2008,
+      "referenceYear": 2008
+    },
+    "irrigated_harvested_wheat_kha": {
+      "value": 313.0,
+      "unit": "1000 ha",
+      "year": 2023,
+      "symbol": "I",
+      "symbolDescription": "Imputed (carry forward, vertical imputation, linear interpolation)",
+      "variable": "Harvested irrigated temporary crop area: Wheat",
+      "variableCode": 4345,
+      "lastNonImputedYear": 2008,
+      "referenceYear": 2008
+    },
+    "surface_external_km3": {
+      "value": 1122.0,
+      "unit": "10^9 m3/year",
+      "year": 2023,
+      "symbol": "I",
+      "symbolDescription": "Imputed (carry forward, vertical imputation, linear interpolation)",
+      "variable": "Surface water: total external renewable",
+      "variableCode": 4176,
+      "lastNonImputedYear": 2018,
+      "referenceYear": 2018
+    },
+    "groundwater_internal_km3": {
+      "value": 21.09,
+      "unit": "10^9 m3/year",
+      "year": 2023,
+      "symbol": "I",
+      "symbolDescription": "Imputed (carry forward, vertical imputation, linear interpolation)",
+      "variable": "Groundwater produced internally",
+      "variableCode": 4154,
+      "lastNonImputedYear": 2018,
+      "referenceYear": 2018
+    },
+    "surface_internal_km3": {
+      "value": 83.91,
+      "unit": "10^9 m3/year",
+      "year": 2023,
+      "symbol": "I",
+      "symbolDescription": "Imputed (carry forward, vertical imputation, linear interpolation)",
+      "variable": "Surface water produced internally",
+      "variableCode": 4155,
+      "lastNonImputedYear": 2018,
+      "referenceYear": 2018
+    },
+    "precip_depth_mm": {
+      "value": 2666.0,
+      "unit": "mm/year",
+      "year": 2023,
+      "symbol": "I",
+      "symbolDescription": "Imputed (carry forward, vertical imputation, linear interpolation)",
+      "variable": "Long-term average annual precipitation in depth",
+      "variableCode": 4151,
+      "lastNonImputedYear": 2018,
+      "referenceYear": 2018
+    },
+    "precip_volume_km3": {
+      "value": 393.42162,
+      "unit": "10^9 m3/year",
+      "year": 2023,
+      "symbol": "I",
+      "symbolDescription": "Imputed (carry forward, vertical imputation, linear interpolation)",
+      "variable": "Long-term average annual precipitation in volume",
+      "variableCode": 4150,
+      "lastNonImputedYear": 2018,
+      "referenceYear": 2018
+    },
+    "groundwater_renewable_km3": {
+      "value": 21.122,
+      "unit": "10^9 m3/year",
+      "year": 2023,
+      "symbol": "I",
+      "symbolDescription": "Imputed (carry forward, vertical imputation, linear interpolation)",
+      "variable": "Total renewable groundwater",
+      "variableCode": 4187,
+      "lastNonImputedYear": 2018,
+      "referenceYear": 2018
+    },
+    "surface_renewable_km3": {
+      "value": 1205.91,
+      "unit": "10^9 m3/year",
+      "year": 2023,
+      "symbol": "I",
+      "symbolDescription": "Imputed (carry forward, vertical imputation, linear interpolation)",
+      "variable": "Total renewable surface water",
+      "variableCode": 4185,
+      "lastNonImputedYear": 2018,
+      "referenceYear": 2018
+    },
+    "trwr_km3": {
+      "value": 1227.032,
+      "unit": "10^9 m3/year",
+      "year": 2023,
+      "symbol": "I",
+      "symbolDescription": "Imputed (carry forward, vertical imputation, linear interpolation)",
+      "variable": "Total renewable water resources",
+      "variableCode": 4188,
+      "lastNonImputedYear": 2018,
+      "referenceYear": 2018
+    },
+    "sdg642_water_stress_pct": {
+      "value": 5.723339482,
+      "unit": "%",
+      "year": 2023,
+      "symbol": "E",
+      "symbolDescription": "Estimate either calculated as sum or identify (yield) from official values or from an AQUASTAT estimation",
+      "variable": "SDG 6.4.2. Water Stress",
+      "variableCode": 4550,
+      "lastNonImputedYear": 2023,
+      "referenceYear": 2023
+    },
+    "withdrawal_agri_km3": {
+      "value": 31.5,
+      "unit": "10^9 m3/year",
+      "year": 2023,
+      "symbol": "I",
+      "symbolDescription": "Imputed (carry forward, vertical imputation, linear interpolation)",
+      "variable": "Agricultural water withdrawal",
+      "variableCode": 4250,
+      "lastNonImputedYear": 2008,
+      "referenceYear": 2008
+    },
+    "efr_km3": {
+      "value": 600.3,
+      "unit": "10^9 m3/year",
+      "year": 2023,
+      "symbol": "I",
+      "symbolDescription": "Imputed (carry forward, vertical imputation, linear interpolation)",
+      "variable": "Environmental Flow Requirements",
+      "variableCode": 4549,
+      "lastNonImputedYear": 2018,
+      "referenceYear": 2018
+    },
+    "withdrawal_industrial_km3": {
+      "value": 0.77,
+      "unit": "10^9 m3/year",
+      "year": 2023,
+      "symbol": "I",
+      "symbolDescription": "Imputed (carry forward, vertical imputation, linear interpolation)",
+      "variable": "Industrial water withdrawal",
+      "variableCode": 4252,
+      "lastNonImputedYear": 2008,
+      "referenceYear": 2008
+    },
+    "irrigation_requirement_km3": {
+      "value": 24.56,
+      "unit": "10^9 m3/year",
+      "year": 2023,
+      "symbol": "I",
+      "symbolDescription": "Imputed (carry forward, vertical imputation, linear interpolation)",
+      "variable": "Irrigation water requirement",
+      "variableCode": 4260,
+      "lastNonImputedYear": 2008,
+      "referenceYear": 2008
+    },
+    "withdrawal_municipal_km3": {
+      "value": 3.6,
+      "unit": "10^9 m3/year",
+      "year": 2023,
+      "symbol": "I",
+      "symbolDescription": "Imputed (carry forward, vertical imputation, linear interpolation)",
+      "variable": "Municipal water withdrawal",
+      "variableCode": 4251,
+      "lastNonImputedYear": 2008,
+      "referenceYear": 2008
+    },
+    "municipal_per_capita_m3": {
+      "value": 20.99529478,
+      "unit": "m3/inhab/year",
+      "year": 2023,
+      "symbol": "E",
+      "symbolDescription": "Estimate either calculated as sum or identify (yield) from official values or from an AQUASTAT estimation",
+      "variable": "Municipal water withdrawal per capita (total population)",
+      "variableCode": 4457,
+      "lastNonImputedYear": 2023,
+      "referenceYear": 2023
+    },
+    "withdrawal_total_km3": {
+      "value": 35.87,
+      "unit": "10^9 m3/year",
+      "year": 2023,
+      "symbol": "I",
+      "symbolDescription": "Imputed (carry forward, vertical imputation, linear interpolation)",
+      "variable": "Total water withdrawal",
+      "variableCode": 4253,
+      "lastNonImputedYear": 2008,
+      "referenceYear": 2008
+    },
+    "withdrawal_groundwater_km3": {
+      "value": 28.48,
+      "unit": "10^9 m3/year",
+      "year": 2023,
+      "symbol": "I",
+      "symbolDescription": "Imputed (carry forward, vertical imputation, linear interpolation)",
+      "variable": "Fresh groundwater withdrawal",
+      "variableCode": 4262,
+      "lastNonImputedYear": 2008,
+      "referenceYear": 2008
+    },
+    "withdrawal_surface_km3": {
+      "value": 7.39,
+      "unit": "10^9 m3/year",
+      "year": 2023,
+      "symbol": "I",
+      "symbolDescription": "Imputed (carry forward, vertical imputation, linear interpolation)",
+      "variable": "Fresh surface water withdrawal",
+      "variableCode": 4261,
+      "lastNonImputedYear": 2008,
+      "referenceYear": 2008
+    }
+  },
+  "missing": []
+}
