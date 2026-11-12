@@ -4,6 +4,7 @@ services:
   - type: web
     name: aquaguard-api
     runtime: docker
+    plan: free
     dockerfilePath: ./aquaguard/backend/Dockerfile
     dockerContext: ./aquaguard
     healthCheckPath: /api/health
