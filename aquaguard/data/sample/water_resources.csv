@@ -1,0 +1,26 @@
+key,value,unit,year,reference_year,symbol,variable,variable_code,source_id,retrieved_at,provenance,is_sample
+country_area_kha,14757.0,1000 ha,2023,2023,E,Total area of the country (excl. coastal water),4100,fao_aquastat,2026-11-12T16:25:32+00:00,historical,1
+population_kinhab,171466.99,1000 inhab,2023,2023,X,Total population,4104,fao_aquastat,2026-11-12T16:25:32+00:00,historical,1
+area_equipped_irrigation_kha,5050.0,1000 ha,2023,2008,I,Area equipped for irrigation: total,4313,fao_aquastat,2026-11-12T16:25:32+00:00,historical,1
+irrigated_harvested_maize_kha,90.0,1000 ha,2023,2008,I,Harvested irrigated temporary crop area: Maize,4348,fao_aquastat,2026-11-12T16:25:32+00:00,historical,1
+irrigated_harvested_potato_kha,263.0,1000 ha,2023,2008,I,Harvested irrigated temporary crop area: Potatoes,4352,fao_aquastat,2026-11-12T16:25:32+00:00,historical,1
+irrigated_harvested_rice_kha,4341.0,1000 ha,2023,2008,I,Harvested irrigated temporary crop area: Rice,4346,fao_aquastat,2026-11-12T16:25:32+00:00,historical,1
+irrigated_harvested_wheat_kha,313.0,1000 ha,2023,2008,I,Harvested irrigated temporary crop area: Wheat,4345,fao_aquastat,2026-11-12T16:25:32+00:00,historical,1
+surface_external_km3,1122.0,10^9 m3/year,2023,2018,I,Surface water: total external renewable,4176,fao_aquastat,2026-11-12T16:25:32+00:00,historical,1
+groundwater_internal_km3,21.09,10^9 m3/year,2023,2018,I,Groundwater produced internally,4154,fao_aquastat,2026-11-12T16:25:32+00:00,historical,1
+surface_internal_km3,83.91,10^9 m3/year,2023,2018,I,Surface water produced internally,4155,fao_aquastat,2026-11-12T16:25:32+00:00,historical,1
+precip_depth_mm,2666.0,mm/year,2023,2018,I,Long-term average annual precipitation in depth,4151,fao_aquastat,2026-11-12T16:25:32+00:00,historical,1
+precip_volume_km3,393.42162,10^9 m3/year,2023,2018,I,Long-term average annual precipitation in volume,4150,fao_aquastat,2026-11-12T16:25:32+00:00,historical,1
+groundwater_renewable_km3,21.122,10^9 m3/year,2023,2018,I,Total renewable groundwater,4187,fao_aquastat,2026-11-12T16:25:32+00:00,historical,1
+surface_renewable_km3,1205.91,10^9 m3/year,2023,2018,I,Total renewable surface water,4185,fao_aquastat,2026-11-12T16:25:32+00:00,historical,1
+trwr_km3,1227.032,10^9 m3/year,2023,2018,I,Total renewable water resources,4188,fao_aquastat,2026-11-12T16:25:32+00:00,historical,1
+sdg642_water_stress_pct,5.723339482,%,2023,2023,E,SDG 6.4.2. Water Stress,4550,fao_aquastat,2026-11-12T16:25:32+00:00,historical,1
+withdrawal_agri_km3,31.5,10^9 m3/year,2023,2008,I,Agricultural water withdrawal,4250,fao_aquastat,2026-11-12T16:25:32+00:00,historical,1
+efr_km3,600.3,10^9 m3/year,2023,2018,I,Environmental Flow Requirements,4549,fao_aquastat,2026-11-12T16:25:32+00:00,historical,1
+withdrawal_industrial_km3,0.77,10^9 m3/year,2023,2008,I,Industrial water withdrawal,4252,fao_aquastat,2026-11-12T16:25:32+00:00,historical,1
+irrigation_requirement_km3,24.56,10^9 m3/year,2023,2008,I,Irrigation water requirement,4260,fao_aquastat,2026-11-12T16:25:32+00:00,historical,1
+withdrawal_municipal_km3,3.6,10^9 m3/year,2023,2008,I,Municipal water withdrawal,4251,fao_aquastat,2026-11-12T16:25:32+00:00,historical,1
+municipal_per_capita_m3,20.99529478,m3/inhab/year,2023,2023,E,Municipal water withdrawal per capita (total population),4457,fao_aquastat,2026-11-12T16:25:32+00:00,historical,1
+withdrawal_total_km3,35.87,10^9 m3/year,2023,2008,I,Total water withdrawal,4253,fao_aquastat,2026-11-12T16:25:32+00:00,historical,1
+withdrawal_groundwater_km3,28.48,10^9 m3/year,2023,2008,I,Fresh groundwater withdrawal,4262,fao_aquastat,2026-11-12T16:25:32+00:00,historical,1
+withdrawal_surface_km3,7.39,10^9 m3/year,2023,2008,I,Fresh surface water withdrawal,4261,fao_aquastat,2026-11-12T16:25:32+00:00,historical,1

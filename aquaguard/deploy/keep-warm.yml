@@ -1,0 +1,11 @@
+# Copy to <repo root>/.github/workflows/keep-warm.yml and set the BACKEND_URL repository variable.
+# Pings the API every 10 minutes so a free-tier host does not cold-start during the demo.
+name: keep-warm
+on:
+  schedule: [{ cron: "*/10 * * * *" }]
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl -fsS "${{ vars.BACKEND_URL }}/api/health" > /dev/null

@@ -1,0 +1,24 @@
+{
+  "_note": "Representative point per division = divisional headquarters (approximate). One point per division is an assumption (see docs/ASSUMPTIONS.md A-01).",
+  "country": {
+    "id": "bd",
+    "name": "Bangladesh",
+    "nameBn": "বাংলাদেশ",
+    "centroid": [90.3563, 23.685]
+  },
+  "divisions": [
+    {"id": "dhaka", "name": "Dhaka", "nameBn": "ঢাকা", "lat": 23.8103, "lon": 90.4125, "geoName": "Dhaka Division", "pcode": "BD30"},
+    {"id": "chattogram", "name": "Chattogram", "nameBn": "চট্টগ্রাম", "lat": 22.3569, "lon": 91.7832, "geoName": "Chittagong Division", "pcode": "BD20"},
+    {"id": "rajshahi", "name": "Rajshahi", "nameBn": "রাজশাহী", "lat": 24.3745, "lon": 88.6042, "geoName": "Rajshahi Division", "pcode": "BD50"},
+    {"id": "khulna", "name": "Khulna", "nameBn": "খুলনা", "lat": 22.8456, "lon": 89.5403, "geoName": "Khulna Division", "pcode": "BD40"},
+    {"id": "barishal", "name": "Barishal", "nameBn": "বরিশাল", "lat": 22.701, "lon": 90.3535, "geoName": "Barisal Division", "pcode": "BD10"},
+    {"id": "sylhet", "name": "Sylhet", "nameBn": "সিলেট", "lat": 24.8949, "lon": 91.8687, "geoName": "Sylhet Division", "pcode": "BD60"},
+    {"id": "rangpur", "name": "Rangpur", "nameBn": "রংপুর", "lat": 25.7439, "lon": 89.2752, "geoName": "Rangpur Division", "pcode": "BD55"},
+    {"id": "mymensingh", "name": "Mymensingh", "nameBn": "ময়মনসিংহ", "lat": 24.7471, "lon": 90.4203, "geoName": "Mymensingh Division", "pcode": "BD45"}
+  ],
+  "riverGauges": [
+    {"id": "ganges_hardinge", "name": "Ganges near Hardinge Bridge (GloFAS cell)", "lat": 24.07, "lon": 89.03},
+    {"id": "brahmaputra_bahadurabad", "name": "Brahmaputra-Jamuna near Bahadurabad (GloFAS cell)", "lat": 25.15, "lon": 89.70},
+    {"id": "meghna_bhairab", "name": "Upper Meghna near Bhairab Bazar (GloFAS cell)", "lat": 24.05, "lon": 90.98}
+  ]
+}

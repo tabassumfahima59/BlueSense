@@ -1,0 +1,68 @@
+{
+  "what": "Frozen snapshot of AquaGuard's processed real datasets, used only when the database and live APIs are unavailable. Every record is flagged is_sample = 1 and shown with a 'Sample' tag.",
+  "sources_retrieved": {
+    "openmeteo_forecast": {
+      "retrievedAt": "2026-11-12T16:23:39+00:00",
+      "points": 8
+    },
+    "fao_aquastat": {
+      "retrievedAt": "2026-11-12T16:25:32+00:00",
+      "rows": 706,
+      "missing": []
+    },
+    "geoboundaries": {
+      "retrievedAt": "2026-11-12T16:24:04+00:00",
+      "ADM0": {
+        "boundaryLicense": "CC0 1.0 Universal (CC0 1.0) Public Domain Dedication",
+        "boundarySource": "geoBoundaries, Wikimedia Commons",
+        "boundaryYearRepresented": "2015",
+        "admUnitCount": "1",
+        "simplifiedGeometryGeoJSON": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/BGD/ADM0/geoBoundaries-BGD-ADM0_simplified.geojson",
+        "sourceDataUpdateDate": "Thu Jan 19 07:31:04 2023"
+      },
+      "ADM1": {
+        "boundaryLicense": "CC0 1.0 Universal (CC0 1.0) Public Domain Dedication",
+        "boundarySource": "geoBoundaries, Wikimedia Commons",
+        "boundaryYearRepresented": "2015",
+        "admUnitCount": "8",
+        "simplifiedGeometryGeoJSON": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/BGD/ADM1/geoBoundaries-BGD-ADM1_simplified.geojson",
+        "sourceDataUpdateDate": "Thu Jan 19 07:31:04 2023"
+      },
+      "ADM2": {
+        "boundaryLicense": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+        "boundarySource": "Bangladesh Bureau of Statistics (BBS), OCHA ROAP",
+        "boundaryYearRepresented": "2020",
+        "admUnitCount": "64",
+        "simplifiedGeometryGeoJSON": "https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/BGD/ADM2/geoBoundaries-BGD-ADM2_simplified.geojson",
+        "sourceDataUpdateDate": "Thu Jan 19 07:31:04 2023"
+      }
+    },
+    "hdx_cod_ps": {
+      "retrievedAt": "2026-11-12T16:24:12+00:00",
+      "license": "Creative Commons Attribution for Intergovernmental Organisations (CC BY-IGO)",
+      "files": [
+        "bgd_admpop_adm1_2022.csv",
+        "bgd_admpop_adm2_2022.csv"
+      ]
+    },
+    "openmeteo_glofas": {
+      "retrievedAt": "2026-11-12T16:24:16+00:00",
+      "period": "1991-01-01/2026-11-05",
+      "cells": 3
+    },
+    "worldbank_pep": {
+      "retrievedAt": "2026-11-12T16:30:45+00:00",
+      "years": "2000-2050"
+    },
+    "openmeteo_archive": {
+      "retrievedAt": "2026-11-12T16:34:26+00:00",
+      "period": "1991-01-01/2026-11-05",
+      "points": 8
+    },
+    "grace_csr": {
+      "retrievedAt": "2026-11-12T16:35:19+00:00",
+      "file": "CSR_GRACE_GRACE-FO_RL0603_Mascons_all-corrections.nc",
+      "months": 259
+    }
+  }
+}

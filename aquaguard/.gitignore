@@ -1,0 +1,26 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Secrets
+.env
+.env.*
+!.env.example
+frontend/.env.local
+
+# Large or rebuildable data (see README: `make data` / `make db`)
+data/raw/
+data/aquaguard.db
+data/aquaguard.tmp.db
+ml/artifacts/features_h*.csv
+ml/artifacts/test_predictions.csv
+
+# Node / Next
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/public/maplibre/
+*.tsbuildinfo

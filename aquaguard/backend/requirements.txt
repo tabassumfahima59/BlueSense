@@ -1,0 +1,13 @@
+# AquaGuard backend (API). Versions pinned to the environment the ML models were trained in:
+# the joblib model files must be loaded with the same scikit-learn/numpy versions.
+fastapi==0.162.5
+uvicorn[standard]==0.54.0
+pydantic==2.14.3
+pandas==3.1.1
+numpy==2.5.4
+scipy==1.18.1
+scikit-learn==1.9.1
+xgboost==3.4.1
+joblib==1.6.0
+PyYAML==6.0.3
+anthropic==2.8.0

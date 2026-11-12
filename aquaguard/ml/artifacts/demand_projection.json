@@ -1,0 +1,555 @@
+{
+  "generatedAt": "2026-11-12T17:22:15+00:00",
+  "label": "Estimated (projection)",
+  "regions": {
+    "bd": {
+      "method": "Domestic scales with World Bank projected population; agriculture held at the FAO-56 climatological requirement for the AQUASTAT irrigated area; industry held constant (no cited growth path). Estimated (projection).",
+      "years": [
+        {
+          "year": 2022,
+          "population": 165650475.0,
+          "agricultureMcm": 47021.0,
+          "domesticMcm": 3477.8,
+          "industryMcm": 770.0,
+          "totalMcm": 51269.0
+        },
+        {
+          "year": 2025,
+          "population": 171813537.0,
+          "agricultureMcm": 47021.0,
+          "domesticMcm": 3607.2,
+          "industryMcm": 770.0,
+          "totalMcm": 51398.0
+        },
+        {
+          "year": 2030,
+          "population": 181970076.0,
+          "agricultureMcm": 47021.0,
+          "domesticMcm": 3820.4,
+          "industryMcm": 770.0,
+          "totalMcm": 51611.0
+        },
+        {
+          "year": 2035,
+          "population": 190828341.0,
+          "agricultureMcm": 47021.0,
+          "domesticMcm": 4006.4,
+          "industryMcm": 770.0,
+          "totalMcm": 51797.0
+        },
+        {
+          "year": 2040,
+          "population": 198122948.0,
+          "agricultureMcm": 47021.0,
+          "domesticMcm": 4159.6,
+          "industryMcm": 770.0,
+          "totalMcm": 51951.0
+        },
+        {
+          "year": 2045,
+          "population": 204421127.0,
+          "agricultureMcm": 47021.0,
+          "domesticMcm": 4291.8,
+          "industryMcm": 770.0,
+          "totalMcm": 52083.0
+        },
+        {
+          "year": 2050,
+          "population": 209975414.0,
+          "agricultureMcm": 47021.0,
+          "domesticMcm": 4408.4,
+          "industryMcm": 770.0,
+          "totalMcm": 52199.0
+        }
+      ]
+    },
+    "barishal": {
+      "method": "Domestic scales with World Bank projected population; agriculture held at the FAO-56 climatological requirement for the AQUASTAT irrigated area; industry held constant (no cited growth path). Estimated (projection).",
+      "years": [
+        {
+          "year": 2022,
+          "population": 8110723.0,
+          "agricultureMcm": 3421.0,
+          "domesticMcm": 170.3,
+          "industryMcm": 37.7,
+          "totalMcm": 3629.0
+        },
+        {
+          "year": 2025,
+          "population": 8412484.0,
+          "agricultureMcm": 3421.0,
+          "domesticMcm": 176.6,
+          "industryMcm": 37.7,
+          "totalMcm": 3636.0
+        },
+        {
+          "year": 2030,
+          "population": 8909778.0,
+          "agricultureMcm": 3421.0,
+          "domesticMcm": 187.1,
+          "industryMcm": 37.7,
+          "totalMcm": 3646.0
+        },
+        {
+          "year": 2035,
+          "population": 9343504.0,
+          "agricultureMcm": 3421.0,
+          "domesticMcm": 196.2,
+          "industryMcm": 37.7,
+          "totalMcm": 3655.0
+        },
+        {
+          "year": 2040,
+          "population": 9700669.0,
+          "agricultureMcm": 3421.0,
+          "domesticMcm": 203.7,
+          "industryMcm": 37.7,
+          "totalMcm": 3663.0
+        },
+        {
+          "year": 2045,
+          "population": 10009045.0,
+          "agricultureMcm": 3421.0,
+          "domesticMcm": 210.1,
+          "industryMcm": 37.7,
+          "totalMcm": 3669.0
+        },
+        {
+          "year": 2050,
+          "population": 10280999.0,
+          "agricultureMcm": 3421.0,
+          "domesticMcm": 215.8,
+          "industryMcm": 37.7,
+          "totalMcm": 3675.0
+        }
+      ]
+    },
+    "chattogram": {
+      "method": "Domestic scales with World Bank projected population; agriculture held at the FAO-56 climatological requirement for the AQUASTAT irrigated area; industry held constant (no cited growth path). Estimated (projection).",
+      "years": [
+        {
+          "year": 2022,
+          "population": 32593285.0,
+          "agricultureMcm": 10705.0,
+          "domesticMcm": 684.3,
+          "industryMcm": 151.5,
+          "totalMcm": 11541.0
+        },
+        {
+          "year": 2025,
+          "population": 33805925.0,
+          "agricultureMcm": 10705.0,
+          "domesticMcm": 709.7,
+          "industryMcm": 151.5,
+          "totalMcm": 11567.0
+        },
+        {
+          "year": 2030,
+          "population": 35804320.0,
+          "agricultureMcm": 10705.0,
+          "domesticMcm": 751.7,
+          "industryMcm": 151.5,
+          "totalMcm": 11609.0
+        },
+        {
+          "year": 2035,
+          "population": 37547266.0,
+          "agricultureMcm": 10705.0,
+          "domesticMcm": 788.3,
+          "industryMcm": 151.5,
+          "totalMcm": 11645.0
+        },
+        {
+          "year": 2040,
+          "population": 38982549.0,
+          "agricultureMcm": 10705.0,
+          "domesticMcm": 818.4,
+          "industryMcm": 151.5,
+          "totalMcm": 11675.0
+        },
+        {
+          "year": 2045,
+          "population": 40221774.0,
+          "agricultureMcm": 10705.0,
+          "domesticMcm": 844.4,
+          "industryMcm": 151.5,
+          "totalMcm": 11701.0
+        },
+        {
+          "year": 2050,
+          "population": 41314633.0,
+          "agricultureMcm": 10705.0,
+          "domesticMcm": 867.4,
+          "industryMcm": 151.5,
+          "totalMcm": 11724.0
+        }
+      ]
+    },
+    "dhaka": {
+      "method": "Domestic scales with World Bank projected population; agriculture held at the FAO-56 climatological requirement for the AQUASTAT irrigated area; industry held constant (no cited growth path). Estimated (projection).",
+      "years": [
+        {
+          "year": 2022,
+          "population": 47312914.0,
+          "agricultureMcm": 6835.0,
+          "domesticMcm": 993.3,
+          "industryMcm": 219.9,
+          "totalMcm": 8048.0
+        },
+        {
+          "year": 2025,
+          "population": 49073201.0,
+          "agricultureMcm": 6835.0,
+          "domesticMcm": 1030.3,
+          "industryMcm": 219.9,
+          "totalMcm": 8085.0
+        },
+        {
+          "year": 2030,
+          "population": 51974101.0,
+          "agricultureMcm": 6835.0,
+          "domesticMcm": 1091.2,
+          "industryMcm": 219.9,
+          "totalMcm": 8146.0
+        },
+        {
+          "year": 2035,
+          "population": 54504189.0,
+          "agricultureMcm": 6835.0,
+          "domesticMcm": 1144.3,
+          "industryMcm": 219.9,
+          "totalMcm": 8199.0
+        },
+        {
+          "year": 2040,
+          "population": 56587668.0,
+          "agricultureMcm": 6835.0,
+          "domesticMcm": 1188.0,
+          "industryMcm": 219.9,
+          "totalMcm": 8243.0
+        },
+        {
+          "year": 2045,
+          "population": 58386547.0,
+          "agricultureMcm": 6835.0,
+          "domesticMcm": 1225.8,
+          "industryMcm": 219.9,
+          "totalMcm": 8281.0
+        },
+        {
+          "year": 2050,
+          "population": 59972956.0,
+          "agricultureMcm": 6835.0,
+          "domesticMcm": 1259.1,
+          "industryMcm": 219.9,
+          "totalMcm": 8314.0
+        }
+      ]
+    },
+    "khulna": {
+      "method": "Domestic scales with World Bank projected population; agriculture held at the FAO-56 climatological requirement for the AQUASTAT irrigated area; industry held constant (no cited growth path). Estimated (projection).",
+      "years": [
+        {
+          "year": 2022,
+          "population": 16132492.0,
+          "agricultureMcm": 8009.0,
+          "domesticMcm": 338.7,
+          "industryMcm": 75.0,
+          "totalMcm": 8422.0
+        },
+        {
+          "year": 2025,
+          "population": 16732705.0,
+          "agricultureMcm": 8009.0,
+          "domesticMcm": 351.3,
+          "industryMcm": 75.0,
+          "totalMcm": 8435.0
+        },
+        {
+          "year": 2030,
+          "population": 17721837.0,
+          "agricultureMcm": 8009.0,
+          "domesticMcm": 372.1,
+          "industryMcm": 75.0,
+          "totalMcm": 8456.0
+        },
+        {
+          "year": 2035,
+          "population": 18584533.0,
+          "agricultureMcm": 8009.0,
+          "domesticMcm": 390.2,
+          "industryMcm": 75.0,
+          "totalMcm": 8474.0
+        },
+        {
+          "year": 2040,
+          "population": 19294945.0,
+          "agricultureMcm": 8009.0,
+          "domesticMcm": 405.1,
+          "industryMcm": 75.0,
+          "totalMcm": 8489.0
+        },
+        {
+          "year": 2045,
+          "population": 19908317.0,
+          "agricultureMcm": 8009.0,
+          "domesticMcm": 418.0,
+          "industryMcm": 75.0,
+          "totalMcm": 8502.0
+        },
+        {
+          "year": 2050,
+          "population": 20449242.0,
+          "agricultureMcm": 8009.0,
+          "domesticMcm": 429.3,
+          "industryMcm": 75.0,
+          "totalMcm": 8513.0
+        }
+      ]
+    },
+    "mymensingh": {
+      "method": "Domestic scales with World Bank projected population; agriculture held at the FAO-56 climatological requirement for the AQUASTAT irrigated area; industry held constant (no cited growth path). Estimated (projection).",
+      "years": [
+        {
+          "year": 2022,
+          "population": 11809762.0,
+          "agricultureMcm": 2894.0,
+          "domesticMcm": 247.9,
+          "industryMcm": 54.9,
+          "totalMcm": 3197.0
+        },
+        {
+          "year": 2025,
+          "population": 12249147.0,
+          "agricultureMcm": 2894.0,
+          "domesticMcm": 257.2,
+          "industryMcm": 54.9,
+          "totalMcm": 3206.0
+        },
+        {
+          "year": 2030,
+          "population": 12973240.0,
+          "agricultureMcm": 2894.0,
+          "domesticMcm": 272.4,
+          "industryMcm": 54.9,
+          "totalMcm": 3221.0
+        },
+        {
+          "year": 2035,
+          "population": 13604774.0,
+          "agricultureMcm": 2894.0,
+          "domesticMcm": 285.6,
+          "industryMcm": 54.9,
+          "totalMcm": 3234.0
+        },
+        {
+          "year": 2040,
+          "population": 14124830.0,
+          "agricultureMcm": 2894.0,
+          "domesticMcm": 296.5,
+          "industryMcm": 54.9,
+          "totalMcm": 3245.0
+        },
+        {
+          "year": 2045,
+          "population": 14573848.0,
+          "agricultureMcm": 2894.0,
+          "domesticMcm": 306.0,
+          "industryMcm": 54.9,
+          "totalMcm": 3255.0
+        },
+        {
+          "year": 2050,
+          "population": 14969831.0,
+          "agricultureMcm": 2894.0,
+          "domesticMcm": 314.3,
+          "industryMcm": 54.9,
+          "totalMcm": 3263.0
+        }
+      ]
+    },
+    "rajshahi": {
+      "method": "Domestic scales with World Bank projected population; agriculture held at the FAO-56 climatological requirement for the AQUASTAT irrigated area; industry held constant (no cited growth path). Estimated (projection).",
+      "years": [
+        {
+          "year": 2022,
+          "population": 20150829.0,
+          "agricultureMcm": 7360.0,
+          "domesticMcm": 423.1,
+          "industryMcm": 93.7,
+          "totalMcm": 7876.0
+        },
+        {
+          "year": 2025,
+          "population": 20900545.0,
+          "agricultureMcm": 7360.0,
+          "domesticMcm": 438.8,
+          "industryMcm": 93.7,
+          "totalMcm": 7892.0
+        },
+        {
+          "year": 2030,
+          "population": 22136054.0,
+          "agricultureMcm": 7360.0,
+          "domesticMcm": 464.7,
+          "industryMcm": 93.7,
+          "totalMcm": 7918.0
+        },
+        {
+          "year": 2035,
+          "population": 23213633.0,
+          "agricultureMcm": 7360.0,
+          "domesticMcm": 487.4,
+          "industryMcm": 93.7,
+          "totalMcm": 7941.0
+        },
+        {
+          "year": 2040,
+          "population": 24100997.0,
+          "agricultureMcm": 7360.0,
+          "domesticMcm": 506.0,
+          "industryMcm": 93.7,
+          "totalMcm": 7959.0
+        },
+        {
+          "year": 2045,
+          "population": 24867150.0,
+          "agricultureMcm": 7360.0,
+          "domesticMcm": 522.1,
+          "industryMcm": 93.7,
+          "totalMcm": 7975.0
+        },
+        {
+          "year": 2050,
+          "population": 25542810.0,
+          "agricultureMcm": 7360.0,
+          "domesticMcm": 536.3,
+          "industryMcm": 93.7,
+          "totalMcm": 7990.0
+        }
+      ]
+    },
+    "rangpur": {
+      "method": "Domestic scales with World Bank projected population; agriculture held at the FAO-56 climatological requirement for the AQUASTAT irrigated area; industry held constant (no cited growth path). Estimated (projection).",
+      "years": [
+        {
+          "year": 2022,
+          "population": 17363512.0,
+          "agricultureMcm": 5371.0,
+          "domesticMcm": 364.5,
+          "industryMcm": 80.7,
+          "totalMcm": 5817.0
+        },
+        {
+          "year": 2025,
+          "population": 18009525.0,
+          "agricultureMcm": 5371.0,
+          "domesticMcm": 378.1,
+          "industryMcm": 80.7,
+          "totalMcm": 5830.0
+        },
+        {
+          "year": 2030,
+          "population": 19074135.0,
+          "agricultureMcm": 5371.0,
+          "domesticMcm": 400.5,
+          "industryMcm": 80.7,
+          "totalMcm": 5853.0
+        },
+        {
+          "year": 2035,
+          "population": 20002660.0,
+          "agricultureMcm": 5371.0,
+          "domesticMcm": 420.0,
+          "industryMcm": 80.7,
+          "totalMcm": 5872.0
+        },
+        {
+          "year": 2040,
+          "population": 20767282.0,
+          "agricultureMcm": 5371.0,
+          "domesticMcm": 436.0,
+          "industryMcm": 80.7,
+          "totalMcm": 5888.0
+        },
+        {
+          "year": 2045,
+          "population": 21427459.0,
+          "agricultureMcm": 5371.0,
+          "domesticMcm": 449.9,
+          "industryMcm": 80.7,
+          "totalMcm": 5902.0
+        },
+        {
+          "year": 2050,
+          "population": 22009660.0,
+          "agricultureMcm": 5371.0,
+          "domesticMcm": 462.1,
+          "industryMcm": 80.7,
+          "totalMcm": 5914.0
+        }
+      ]
+    },
+    "sylhet": {
+      "method": "Domestic scales with World Bank projected population; agriculture held at the FAO-56 climatological requirement for the AQUASTAT irrigated area; industry held constant (no cited growth path). Estimated (projection).",
+      "years": [
+        {
+          "year": 2022,
+          "population": 12176958.0,
+          "agricultureMcm": 2425.0,
+          "domesticMcm": 255.7,
+          "industryMcm": 56.6,
+          "totalMcm": 2738.0
+        },
+        {
+          "year": 2025,
+          "population": 12630004.0,
+          "agricultureMcm": 2425.0,
+          "domesticMcm": 265.2,
+          "industryMcm": 56.6,
+          "totalMcm": 2747.0
+        },
+        {
+          "year": 2030,
+          "population": 13376611.0,
+          "agricultureMcm": 2425.0,
+          "domesticMcm": 280.8,
+          "industryMcm": 56.6,
+          "totalMcm": 2763.0
+        },
+        {
+          "year": 2035,
+          "population": 14027782.0,
+          "agricultureMcm": 2425.0,
+          "domesticMcm": 294.5,
+          "industryMcm": 56.6,
+          "totalMcm": 2776.0
+        },
+        {
+          "year": 2040,
+          "population": 14564008.0,
+          "agricultureMcm": 2425.0,
+          "domesticMcm": 305.8,
+          "industryMcm": 56.6,
+          "totalMcm": 2788.0
+        },
+        {
+          "year": 2045,
+          "population": 15026987.0,
+          "agricultureMcm": 2425.0,
+          "domesticMcm": 315.5,
+          "industryMcm": 56.6,
+          "totalMcm": 2797.0
+        },
+        {
+          "year": 2050,
+          "population": 15435282.0,
+          "agricultureMcm": 2425.0,
+          "domesticMcm": 324.1,
+          "industryMcm": 56.6,
+          "totalMcm": 2806.0
+        }
+      ]
+    }
+  }
+}
