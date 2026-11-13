@@ -1,0 +1,93 @@
+# AquaGuard alert rules (reference data, P3). Evaluated after every sync job and by `python -m app.sync.run alerts`.
+# One open alert per rule and location: a firing rule opens or updates it, a rule that no longer fires resolves it,
+# and a rule whose input data is unavailable leaves the alert as it is (no evaluation without data).
+# levels: checked from the first entry; the first matching level sets the severity (info|low|medium|high|critical).
+# Only indicators supported at each spatial level are used (AQUASTAT national, weather-derived per division,
+# GRACE regional). Engine-based division stress (national statistics distributed to divisions) is not used.
+version: 1
+rules:
+  - id: sdg642_water_stress
+    title: National water stress (SDG 6.4.2)
+    indicator: sdg642_water_stress_pct
+    scope: national
+    basis: statistic
+    source_id: fao_aquastat
+    unit: "%"
+    levels:
+      - {op: ">", threshold: 100, severity: critical, label: Critical}
+      - {op: ">", threshold: 75, severity: high, label: High}
+      - {op: ">", threshold: 50, severity: medium, label: Medium}
+      - {op: ">", threshold: 25, severity: low, label: Low}
+    threshold_source: "FAO SDG 6.4.2 water stress classes: <=25% no stress, >25-50 low, >50-75 medium, >75-100 high, >100 critical (FAO/UN-Water)"
+    assumption: false
+    message: "Water stress (SDG 6.4.2) is {value:.1f}% ({label}), reference year {observed}."
+
+  - id: rainfall_deficit_30d
+    title: Rainfall well below normal (last 30 days)
+    indicator: rain_30d_anomaly_pct
+    scope: divisions
+    basis: derived
+    source_id: openmeteo_archive
+    unit: "%"
+    min_normal_mm: 5
+    levels:
+      - {op: "<=", threshold: -30, severity: low, label: Below normal}
+    threshold_source: "Assumption (parameters.yaml alerts.rainfall_deficit_pct): 30-day rainfall at least 30% below the 1991-2020 mean for the same days; skipped when that mean is under 5 mm (dry season)"
+    assumption: true
+    message: "Rainfall {start} to {end} was {total:.0f} mm against a 1991-2020 mean of {normal:.0f} mm ({value:.0f}%) at the division's representative point."
+
+  - id: heavy_rain_forecast
+    title: Heavy rain forecast (next 7 days)
+    indicator: forecast_max_daily_rain_mm
+    scope: divisions
+    basis: forecast
+    source_id: openmeteo_forecast
+    unit: "mm/day"
+    levels:
+      - {op: ">", threshold: 88, severity: high, label: Very heavy rain}
+      - {op: ">=", threshold: 44, severity: medium, label: Heavy rain}
+    threshold_source: "Bangladesh Meteorological Department 24-hour rainfall categories: heavy 44-88 mm, very heavy above 88 mm"
+    assumption: false
+    message: "Weather-model forecast of {value:.0f} mm on {max_day} ({label}) at the division's representative point; forecast, not an observation."
+
+  - id: seasonal_dryness_3m
+    title: Dry conditions (last 3 months)
+    indicator: water_balance_3m_z
+    scope: divisions
+    basis: derived
+    source_id: openmeteo_archive
+    unit: "z-score"
+    levels:
+      - {op: "<=", threshold: -2.0, severity: high, label: Extremely dry}
+      - {op: "<=", threshold: -1.5, severity: medium, label: Severely dry}
+      - {op: "<=", threshold: -1.0, severity: low, label: Moderately dry}
+    threshold_source: "SPI dryness classes (McKee et al. 1993; WMO-No. 1090, 2012) applied to a normal z-score of 3-month P - ET0 against 1991-2020"
+    assumption: false
+    message: "P - ET0 for {window} was {total:.0f} mm (z = {value:.2f}, {label}) against the 1991-2020 distribution for the same months."
+
+  - id: forecast_dryness_1m
+    title: Drier than normal month predicted (ML)
+    indicator: predicted_water_balance_z
+    scope: divisions
+    basis: prediction
+    source_id: aquaguard_ml
+    unit: "z-score"
+    levels:
+      - {op: "<=", threshold: -2.0, severity: medium, label: Extremely dry (predicted)}
+      - {op: "<=", threshold: -1.0, severity: low, label: Drier than normal (predicted)}
+    threshold_source: "SPI/SPEI 'moderately dry' threshold z <= -1 (parameters.yaml alerts.dryness_z)"
+    assumption: false
+    message: "The model predicts P - ET0 of {total:.0f} mm for {target} (z = {value:.2f}). Prediction, not an observation."
+
+  - id: storage_decline
+    title: Declining regional water storage (GRACE)
+    indicator: grace_tws_trend_cm_yr
+    scope: national
+    basis: satellite_monthly
+    source_id: grace_csr
+    unit: "cm/yr"
+    levels:
+      - {op: "<", threshold: -0.5, severity: low, label: Declining storage, require_ci_below_zero: true}
+    threshold_source: "Assumption (parameters.yaml alerts.gw_trend_negative_cm_yr): trend below -0.5 cm/yr and its 95% CI excludes 0"
+    assumption: true
+    message: "Bangladesh-wide TWS anomaly trend {value:.2f} cm/yr (95% CI {low:.2f} to {high:.2f}) through {observed}. Regional (~300 km) total water storage, not a groundwater level."

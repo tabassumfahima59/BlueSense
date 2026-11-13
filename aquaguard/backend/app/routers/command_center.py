@@ -1,13 +1,16 @@
 """M1 Command Center: /overview and /alerts."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from typing import Literal
 
+from fastapi import APIRouter, Depends, Query
+
+from ..db import connection
 from ..engine import risk as riskmod
+from ..errors import ApiError
 from ..schemas.common import RiskClass, RuleTrace, ScenarioParams, Series, SeriesPoint
 from ..schemas.modules import (
     Alert,
-    AlertsResponse,
     MonthlyBalancePoint,
     OverviewKpis,
     OverviewResponse,
@@ -16,11 +19,13 @@ from ..schemas.modules import (
     SectorValues,
     ValidationCheck,
 )
+from ..schemas.v2 import AlertsList, AlertsResponseV2, StoredAlert
+from ..services import alert_engine, catalog, regional
 from ..services import alerts as alertsvc
 from ..services import data_access as da
 from ..services import ml_artifacts as mla
-from ..services import regional
 from ..services.measure import engine, m
+from ..settings import get_settings
 from .deps import context, region_or_404, scenario_query
 
 router = APIRouter(tags=["Command Center"])
@@ -158,8 +163,43 @@ def overview(region: str = "bd", scenario: ScenarioParams = Depends(scenario_que
         validation=validation)
 
 
-@router.get("/alerts", response_model=AlertsResponse)
-def alerts(region: str = "bd", scenario: ScenarioParams = Depends(scenario_query)) -> AlertsResponse:
-    region_or_404(region)
+def _stored_alert(a: dict) -> StoredAlert:
+    """Alert value and threshold as Measures (the value keeps its own data kind, source and observation date)."""
+    level = "regional" if a["dataKind"] == "satellite_monthly" else ("national" if a["regionId"] == "bd" else "point")
+    unit = a.pop("unit") or ""
+    value = catalog.mv(a.pop("value"), unit, a["dataKind"], a["sourceId"] or "aquaguard_engine", level,
+                       observed_at=a["observedAt"], digits=2)
+    threshold = catalog.mv(a.pop("threshold"), unit, "reference", "aquaguard_engine", level,
+                           note=a.get("thresholdSource"), digits=2)
+    return StoredAlert(**a, value=value, threshold=threshold)
+
+
+@router.get("/alerts", response_model=AlertsResponseV2)
+def alerts(region: str = "bd", scenario: ScenarioParams = Depends(scenario_query),
+           severity: str | None = Query(None, description="comma-separated: info,low,medium,high,critical"),
+           status: Literal["open", "all"] = "open",
+           clientId: str | None = Query(None, min_length=8, max_length=64, pattern=r"^[A-Za-z0-9_-]+$")
+           ) -> AlertsResponseV2:
+    r = region_or_404(region)
+    sev = [x.strip() for x in severity.split(",") if x.strip()] if severity else None
+    if sev and any(x not in alert_engine.SEVERITIES for x in sev):
+        raise ApiError(422, "invalid_parameter", f"severity must be among {', '.join(alert_engine.SEVERITIES)}.")
     run = regional.run(region, scenario)
-    return AlertsResponse(context=context(run), alerts=[Alert(**a) for a in alertsvc.evaluate(run)])
+    scope = r["parent_id"] if r["level"] == "district" else region
+    s = get_settings()
+    stored: list[dict] = []
+    if s.db_path.exists():
+        conn = connection.connect(s.db_path, read_only=True)
+        try:
+            stored = alert_engine.list_alerts(conn, scope, sev, status == "all", clientId)
+        finally:
+            conn.close()
+    counts = {k: sum(1 for a in stored if a["severity"] == k) for k in alert_engine.SEVERITIES}
+    counts["unread"] = sum(1 for a in stored if not a["read"] and a["resolvedAt"] is None)
+    note = ("Stored alerts from the rule engine (config/alert_rules.yaml). National alerts are included for every "
+            "division; prediction-based alerts are marked isPrediction.")
+    return AlertsResponseV2(
+        context=context(run), alerts=[Alert(**a) for a in alertsvc.evaluate(run)],
+        data=AlertsList(alerts=[_stored_alert(a) for a in stored], counts=counts),
+        meta=catalog.meta(sorted({a["sourceId"] for a in stored if a["sourceId"]}) or ["aquaguard_engine"],
+                          sorted({a["dataKind"] for a in stored}) or ["derived"], "mixed", note=note))

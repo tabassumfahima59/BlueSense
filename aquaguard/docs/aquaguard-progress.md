@@ -2,7 +2,27 @@
 
 Updated after every verified phase or module. A task is **done** only when a check was run and passed.
 
-## Current phase: P2 Sources + scheduler — implemented and verified, awaiting review (P3 not started)
+## Current phase: P3 API — implemented and verified, awaiting review (P4 not started)
+
+| Phase | Task | Status | Evidence (2026-11-14) |
+|---|---|---|---|
+| P3 | Decision D9 | done | user confirmed calendar-month GRACE periods |
+| P3 | Verified backup | done | `data/backups/aquaguard-pre-p3-20261113T200718124357Z.db` (integrity ok, counts verified) |
+| P3 | Envelope + Measure metadata | done | `schemas/v2.py` (`Meta`, `Envelope[T]`), `Measure` + `dataKind/status/observedAt/retrievedAt/spatialLevel/referenceYear/note`; `test_envelope_contract` over 20 GET endpoints |
+| P3 | Data endpoints | done | weather current/forecast/history, water availability/scarcity, groundwater trends, dashboard summary, predictions, water-budget, whatif, irrigation recommendations (`routers/data_api.py`) |
+| P3 | Spatial rules | done | AQUASTAT values always `spatialLevel = national` (tests on 4 endpoints with a division selected); national weather = area-weighted mean of 8 points, never partial (test against DB); districts rejected (422) |
+| P3 | Alert rules engine | done | `config/alert_rules.yaml` (6 rules, sources/assumptions recorded; BMD rain categories checked); real DB: 15 open alerts (8 × 30-day rainfall deficit, 6 × 3-month dryness, 1 × GRACE decline), re-run 0 changes; `test_alert_engine.py` 7 (idempotency, update, resolve, unavailable input, prediction label, CI rule, post-sync hook) |
+| P3 | Alerts API + read marks | done | `/api/alerts` keeps legacy fields + `data`/`meta`; `POST /api/alerts/{id}/read` per client (live: unread 15 → 14) |
+| P3 | Search, data sources, last updated | done | tests + live |
+| P3 | Refresh (public, throttled) | done | live: forecast stale → refreshed (1,088 new, 14,103 newer values) → status fresh; second call "Already up to date"; throttle 429 + Retry-After tested; offline → 503 |
+| P3 | Admin sync | done | live: 401 without token, 403 wrong token, 200 with token (AQUASTAT 0 new / 706 skipped); token never in logs (checked) |
+| P3 | Error codes + caching | done | `app/errors.py`; generic 500 hides internals (test); Cache-Control per path (test) |
+| P3 | Status performance | done | `all_statuses` 450–760 ms → ~22 ms (primary-key lookups) + 15 s cache |
+| P3 | OpenAPI + TS types | done | `docs/openapi.json` 35 paths; `npm run gen:api`; `contract.ts` alias `AlertsResponse` → `AlertsResponseV2`; tsc OK |
+| P3 | Row counts never decrease | done | real DB: alerts 0 → 15, alert_reads 0 → 1, sync_runs 21 → 23, weather_values 651,096 → 652,184, scheduler_lock 4 → 5; all other tables unchanged; integrity ok; FK clean |
+| P3 | Regression | done | backend **280 passed** (new: `test_api_v2.py` 52, `test_alert_engine.py` 7); ruff OK; vitest 8; tsc OK; eslint OK; `next build` OK |
+
+## P2 Sources + scheduler — verified
 
 | Phase | Task | Status | Evidence (2026-11-13) |
 |---|---|---|---|
@@ -96,7 +116,10 @@ Updated after every verified phase or module. A task is **done** only when a che
 
 ## Remaining issues / open items
 
-* D9 (GRACE per calendar month, not exact solution bounds) needs confirmation.
+* P3 notes: `/api/predictions` reads the ML artifacts until M5 stores runs in `predictions_v2`; KPI insights,
+  DetailDrawer and UI wiring are M1; what-if baseline semantics are M3; the national AQUASTAT Sankey UI is M4.
+* The test suite now takes ~3 min (was 43 s at P2): the importer/migration tests copying the real data dominate
+  (~15–34 s each, unchanged code); measured under ~34 % background CPU load.
 * Docker image not built locally (no Docker on this machine); the Dockerfile no longer copies `data/sample`.
 * Frontend mock mode (`NEXT_PUBLIC_API_MODE=mock`, `frontend/public/mocks`) remains until P4; `data/sample/` is no
   longer read by the API and stays on disk untouched; `make mocks` now exports only the OpenAPI spec.

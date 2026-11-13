@@ -24,14 +24,19 @@ SCHEDULED = {"forecast": "openmeteo_forecast", "archive": "openmeteo_archive", "
              "grace": "grace_csr"}
 STATUSES = ("fresh", "stale", "unavailable", "not_configured")
 
-# latest observation (not retrieval) per scheduled source
+# latest observation (not retrieval) per scheduled source. Written as per-point primary-key lookups: a plain
+# MAX over weather_values scans ~650k rows (~400 ms); these take well under 5 ms.
 LATEST_OBSERVATION = {
-    "openmeteo_forecast": "SELECT MAX(valid_time) FROM weather_values WHERE source_id = 'openmeteo_forecast' "
-                          "AND data_kind = 'model_current'",
-    "openmeteo_archive": "SELECT MAX(date) FROM weather_daily",
+    "openmeteo_forecast": "SELECT MAX((SELECT MAX(valid_time) FROM weather_values w WHERE w.location_id = l.id "
+                          "AND w.variable = 'temperature_2m' AND w.data_kind = 'model_current' "
+                          "AND w.time_step = 'current')) FROM locations l WHERE l.is_weather_point = 1",
+    "openmeteo_archive": "SELECT MAX((SELECT MAX(date) FROM weather_daily d WHERE d.division = l.id)) "
+                         "FROM locations l WHERE l.is_weather_point = 1",
     "fao_aquastat": "SELECT MAX(reference_year) FROM water_statistics WHERE source_id = 'fao_aquastat' "
                     "AND superseded_at IS NULL",
-    "grace_csr": "SELECT MAX(period_start) FROM water_storage WHERE source_id = 'grace_csr' AND scope = 'national'",
+    "grace_csr": "SELECT MAX(period_start) FROM water_storage WHERE source_id = 'grace_csr' AND release_version IN "
+                 "(SELECT DISTINCT release_version FROM water_storage WHERE source_id = 'grace_csr') "
+                 "AND scope = 'national' AND location_id = 'bd' AND cell_id = ''",
 }
 HAS_DATA = {
     "openmeteo_forecast": "SELECT 1 FROM weather_values WHERE source_id = 'openmeteo_forecast' LIMIT 1",

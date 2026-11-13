@@ -1,7 +1,6 @@
 # AquaGuard — Implementation Plan (Main Rebuild)
 
-Status: **P2 Sources + scheduler implemented and verified — awaiting review before P3.** Evidence:
-`aquaguard-progress.md`.
+Status: **P3 API implemented and verified — awaiting review before P4.** Evidence: `aquaguard-progress.md`.
 This plan implements the approved *Final Implementation Scope* and *Final Master Implementation Prompt*. It is an
 evolution of the existing repository, not a rebuild: working features, routes, tables and records are preserved.
 
@@ -41,7 +40,7 @@ Next.js (frontend): lib/api (typed client) ─► Zustand + URL state ─► Plo
 
 | Layer | Technology (pinned in requirements / package.json) |
 |---|---|
-| Frontend | Next.js 15.5.4, React 19.1, TypeScript, Tailwind CSS 4, Zustand 5, lucide-react |
+| Frontend | Next.js 15.5.28, React 19.1, TypeScript, Tailwind CSS 4, Zustand 5, lucide-react |
 | Visualisation | Plotly 4.3 (react-plotly.js), d3 7.9 + d3-sankey, MapLibre GL 6.18, three 0.187 + R3F 9.8 + drei 10.7 |
 | Backend | Python 3.14, FastAPI 0.162.5, Pydantic 2.14.3, uvicorn 0.54.0 |
 | Data | SQLite 3.50 (WAL), raw `sqlite3` + pandas, custom versioned SQL migrations |
@@ -202,14 +201,51 @@ value), and backfills the new tables.
 
 Current endpoints are preserved (`/api/health, /regions, /sources, /overview, /alerts, /map/layers, /weather,
 /predictions/*, /models/*, /flow/simulate, /budget, /budget/optimize, /scenario/run, /irrigation/estimate,
-/copilot/chat`). New endpoints (P3) are added alongside, with aliases for renamed paths:
-`/api/weather/current|forecast|history`, `/api/water/availability|scarcity`, `/api/groundwater/trends`,
-`/api/irrigation/recommendations`, `/api/dashboard/summary`, `/api/predictions`, `POST /api/whatif`,
-`/api/water-budget`, `/api/alerts` (+ read), `/api/search`, `/api/data/sources|last-updated`, `POST /api/refresh`,
-`POST /api/sync/{source}` (admin).
+/copilot/chat`); the current UI keeps working on them until P4/M1–M8 move it to the new contract.
 
-**Envelope (D4):** responses carry `meta {source, data_kind, observed_at, retrieved_at, unit, spatial_level, status,
-attribution}` and every numeric value remains a measurement-level `Measure` (one response can mix sources).
+### 7.1 P3 endpoints (implemented)
+
+All take `region` = `bd` or a division id. Districts → 422 `unsupported_region` (decision 6); unknown → 404
+`unknown_region`. Files: `routers/data_api.py`, `routers/platform_api.py`, readers in `services/store.py`.
+
+| Endpoint | Data | data_kind / level |
+|---|---|---|
+| `GET /api/weather/current` | latest model_current per variable; national = area-weighted mean of the 8 points (only when all have it) | model_current; point / national |
+| `GET /api/weather/forecast?days=1..16&step=daily\|hourly` | stored forecast (hourly ≤ 7 days) | forecast |
+| `GET /api/weather/history?start&end&step=daily\|monthly` | `weather_daily` / `weather_monthly` (daily ≤ 10 years) | reanalysis (+ derived P − ET0) |
+| `GET /api/water/availability` | AQUASTAT TRWR, renewable surface/groundwater, external inflow, EFR (each with reference year and change vs the previous reference year) + GRACE context | statistic (national only), satellite_monthly |
+| `GET /api/water/scarcity` | `statistics`: SDG 6.4.2 with FAO class (national); `weather`: 30-day rainfall vs 1991–2020 and vs last year, 30-day and next-7-day P − ET0, reference-crop need (Kc = 1), 3-month dryness z with SPI class | statistic; reanalysis/derived/forecast |
+| `GET /api/groundwater/trends?start&end&cells=true` | national GRACE series, latest vs same month last year, trend (artifact), optional 206 grid cells | satellite_monthly; regional |
+| `GET /api/dashboard/summary?targetEfficiency` | the five §6.1 KPIs (availability, demand, utilization, water storage, potential saving) + open alert count | mixed |
+| `GET /api/predictions?category=water_balance&horizon=1\|3\|6` | ML P − ET0 forecasts with interval, 36-month history, model card | prediction (artifacts until M5 fills `predictions_v2`) |
+| `GET /api/water-budget?mode=national\|derived` | national AQUASTAT Sankey (reference years, mixed-year flag, "no data" parts, derived remainder) or the existing monthly model (national) | statistic / derived |
+| `POST /api/whatif` | existing scenario engine, national only (division request → national with note) | scenario |
+| `GET /api/irrigation/recommendations` | GET wrapper of `POST /api/irrigation/estimate` | forecast + derived |
+| `GET /api/alerts` | legacy computed alerts (unchanged) **plus** `data` (stored rule-engine alerts, filters `severity`, `status=open\|all`, `clientId` for read marks) and `meta` | per alert |
+| `POST /api/alerts/{id}/read` | body `{clientId}` (8–64 chars `[A-Za-z0-9_-]`, per browser; no login) | — |
+| `GET /api/search?q&limit` | regions (districts link to their division), modules, indicators, sources, open alerts | reference |
+| `GET /api/data/sources`, `/api/data/last-updated` | registry + computed status, last success, last error, latest observation | reference |
+| `POST /api/refresh` | public; re-runs only the Open-Meteo forecast/archive jobs that are not fresh; "Already up to date" when fresh; throttled to one run per 10 min (DB lease, 429 + `Retry-After`); 503 `offline` when outbound access is disabled; never the GRACE download | — |
+| `POST /api/sync/{source}?force` | admin only (`ADMIN_TOKEN`); job name or source id | — |
+
+**Envelope (D4):** `{ data, meta }`, `meta = {source[], data_kind[], observed_at, retrieved_at, unit, spatial_level,
+status, attribution[], note}`. `source`, `data_kind` and `attribution` are lists because one response can combine
+sources; `status` is the least current of them. Every new numeric value is a `Measure` with `dataKind`, `status`,
+`observedAt`, `retrievedAt`, `spatialLevel`, `referenceYear` and `note` (legacy `provenance` kept for the old UI;
+`isSample` always false). Compact series (`t[]`, `v[]`) are labelled by `meta`.
+
+**Errors:** `{detail, code}` for every error (`invalid_request`, `invalid_parameter`, `invalid_date`, `invalid_range`,
+`unknown_region`, `unsupported_region`, `unsupported_category`, `not_found`, `unauthorized`, `forbidden`,
+`refresh_throttled`, `offline`, `unavailable`, `internal_error`); unhandled exceptions return a generic 500 and are
+logged by type only. **Caching:** `no-store` for alerts, data status, health and search; 60 s for current/forecast
+weather and the dashboard; 300 s otherwise.
+
+**Alerts engine (`services/alert_engine.py`, `config/alert_rules.yaml`):** six rules — SDG 6.4.2 classes (national),
+30-day rainfall deficit (divisions, assumption threshold), BMD heavy/very heavy rain in the 7-day forecast,
+3-month dryness (SPI classes), ML-predicted dryness (labelled prediction) and GRACE storage decline (assumption
+threshold, CI below zero). One open alert per rule and location (unique partial index); firing → open/update,
+not firing → resolve, no data → untouched. Runs after every sync job and via `python -m app.sync.run alerts`.
+Engine-based division stress (national statistics distributed to divisions) is not used for stored alerts.
 
 **Security:** privileged endpoints use `require_admin` (`backend/app/security.py`): `Authorization: Bearer
 <ADMIN_TOKEN>`, constant-time comparison, 401 when missing, 403 when invalid, 503 when the server has no token
@@ -242,8 +278,8 @@ secret uses a `NEXT_PUBLIC_` name.
 | Phase | Content | Status |
 |---|---|---|
 | P1 Foundation | audit, docs, backup, migration runner, migrations 0001–0007, SQLite config, settings, HTTP client, admin auth, dependencies | implemented and verified |
-| P2 Sources + scheduler | Open-Meteo, AQUASTAT, GRACE CSR adapters; APScheduler + DB lease lock; status; bootstrap seed; backend sample fallback removed; approved security upgrades | implemented and verified; awaiting review |
-| P3 API | new endpoints, meta envelope, alerts engine, search, refresh, admin sync | not started |
+| P2 Sources + scheduler | Open-Meteo, AQUASTAT, GRACE CSR adapters; APScheduler + DB lease lock; status; bootstrap seed; backend sample fallback removed; approved security upgrades | implemented and verified |
+| P3 API | new endpoints, meta envelope, alerts engine, search, refresh, admin sync | implemented and verified; awaiting review |
 | P4 Design + shell | Blue & White glass tokens, shared components, TopBar, Settings, mock mode removal | not started |
 | M1–M8 | Command Center → Irrigation → What-if → Water Budget → Prediction Lab → Explorer → Water Flow → Copilot | not started |
 | P5 Verification | §7 checks of the master prompt, final report | not started |
@@ -271,4 +307,4 @@ secret uses a `NEXT_PUBLIC_` name.
 | D6 | What-if keeps temperature and pipeline-loss controls | preserve working features |
 | D7 | Water Flow remains conceptual | no measured flow source exists |
 | D8 | `data_kind` list keeps `model_current`, `forecast`, `satellite_historical` | needed to label forecast and JRC data correctly |
-| D9 | GRACE stored per calendar month (solutions in the same month averaged), not per exact solution time bounds | **proposed in P2 — needs confirmation**: identical to the existing national series and `ml/grace_trend.py`; one row per month and cell keeps the unique key simple; the file's `time_bounds` are not stored yet |
+| D9 | GRACE stored per calendar month (solutions in the same month averaged), not per exact solution time bounds | **approved (2026-11-14)**: identical to the existing national series and `ml/grace_trend.py`; one row per month and cell |

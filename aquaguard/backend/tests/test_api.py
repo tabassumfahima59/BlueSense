@@ -35,7 +35,7 @@ def walk_numbers(obj, path="$", skip=("divisions", "districts")):
 # Structural integers that are identifiers/indices rather than data (documented exceptions).
 ALLOWED_BARE = ("month", "level", "riskLevel", "horizon", "year", "burstSeverity", ".metrics", ".samples",
                 ".daily", ".centroid", ".local", ".globalImportance", ".model.", "Samples", "daysSincePlanting",
-                ".location", ".scenario.")
+                ".location", ".scenario.", ".counts.", "].id")  # P3: alert tallies and stored-alert ids
 
 
 @pytest.mark.parametrize("url", GET_ENDPOINTS)

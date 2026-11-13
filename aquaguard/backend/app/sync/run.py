@@ -23,7 +23,7 @@ from .jobs import JOBS, run_job
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.sync.run", description="AquaGuard data sync")
-    parser.add_argument("job", choices=[*JOBS, "all", "status"])
+    parser.add_argument("job", choices=[*JOBS, "all", "status", "alerts"])
     parser.add_argument("--db", type=Path, help="database path (default: AQUAGUARD_DB_PATH or data/aquaguard.db)")
     parser.add_argument("--force", action="store_true", help="ignore the min-interval check")
     args = parser.parse_args(argv)
@@ -41,6 +41,16 @@ def main(argv: list[str] | None = None) -> int:
         conn = connection.connect(settings.db_path, read_only=True)
         try:
             print(json.dumps(status_mod.all_statuses(conn, settings), indent=1))
+        finally:
+            conn.close()
+        return 0
+
+    if args.job == "alerts":
+        from ..services import alert_engine
+
+        conn = connection.connect(settings.db_path)
+        try:
+            print(json.dumps(alert_engine.evaluate(conn), indent=1))
         finally:
             conn.close()
         return 0

@@ -70,7 +70,13 @@ when it changes). Re-runs are idempotent; missing values never overwrite stored 
 ```bash
 make sync          # = cd backend && python -m app.sync.run all   (skips jobs that ran recently; --force to override)
 make sync-status   # fresh / stale / unavailable / not_configured per source
+cd backend && ../.venv/Scripts/python -m app.sync.run alerts   # re-evaluate config/alert_rules.yaml
 ```
+
+The P3 API (`/api/weather/*`, `/api/water/*`, `/api/groundwater/trends`, `/api/dashboard/summary`, `/api/predictions`,
+`/api/water-budget`, `POST /api/whatif`, `/api/alerts`, `/api/search`, `/api/data/*`, `POST /api/refresh`,
+`POST /api/sync/{source}` with `ADMIN_TOKEN`) returns `{data, meta}`; see `docs/aquaguard-plan.md` §7.1 and
+`/api/docs`.
 
 Set `AQUAGUARD_SCHEDULER_ENABLED=1` to run the jobs inside the API (APScheduler; intervals `SYNC_*`, DB lease lock so
 several workers never run the same job). Data shows `stale` when the last successful sync is older than

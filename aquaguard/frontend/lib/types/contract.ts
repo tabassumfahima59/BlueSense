@@ -19,7 +19,12 @@ export type StatusResponse = S["StatusResponse"];
 export type RegionsResponse = S["RegionsResponse"];
 export type SourcesResponse = S["SourcesResponse"];
 export type OverviewResponse = S["OverviewResponse"];
-export type AlertsResponse = S["AlertsResponse"];
+// P3: /api/alerts returns the legacy fields plus stored alerts (`data`) and `meta`.
+export type AlertsResponse = S["AlertsResponseV2"];
+export type StoredAlert = S["StoredAlert"];
+export type Meta = S["Meta"];
+export type DataKind = NonNullable<Measure["dataKind"]>;
+export type DataStatus = NonNullable<Measure["status"]>;
 export type Alert = S["Alert"];
 export type MapLayersResponse = S["MapLayersResponse"];
 export type RegionValues = S["RegionValues"];

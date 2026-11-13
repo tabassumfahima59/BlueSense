@@ -69,10 +69,25 @@ def _touch_legacy_source(conn, source_id: str, when: str) -> None:
                  "ON CONFLICT(id) DO UPDATE SET retrieved_at = excluded.retrieved_at", (source_id, when))
 
 
-def _clear_api_cache() -> None:
-    from ..services import data_access
+def _clear_api_cache(tables: bool) -> None:
+    from ..services import catalog, data_access
 
-    data_access.clear_cache()
+    catalog.clear()  # source status depends on sync_runs: always recompute after a run
+    if tables:
+        data_access.clear_cache()
+
+
+def _evaluate_alerts(conn, now) -> None:
+    """Re-evaluate the alert rules after a run (P3). An alert-engine error never fails the sync job."""
+    from ..services import alert_engine
+
+    try:
+        counts = alert_engine.evaluate(conn, now=now)
+        log.info("alerts evaluated: %s", counts)
+    except Exception as exc:  # noqa: BLE001
+        if conn.in_transaction:
+            conn.execute("ROLLBACK")
+        log.error("alert evaluation failed with %s", type(exc).__name__)
 
 
 def run_job(name: str, *, settings=None, client: HttpClient | None = None, force: bool = False,
@@ -117,8 +132,9 @@ def run_job(name: str, *, settings=None, client: HttpClient | None = None, force
             finish_run(conn, run_id, status, stats, now=finished)
             if status in ("success", "partial") and stats.retrieved:
                 _touch_legacy_source(conn, job.source_id, iso(finished))
-            if stats.inserted or stats.updated:
-                _clear_api_cache()
+            if status in ("success", "partial"):
+                _evaluate_alerts(conn, now)
+            _clear_api_cache(tables=bool(stats.inserted or stats.updated))
             log.info("sync job %s: %s (inserted %d, updated %d, skipped %d, errors %d)", name, status, stats.inserted,
                      stats.updated, stats.skipped, len(stats.errors))
             return JobResult(name, status, run_id, stats)

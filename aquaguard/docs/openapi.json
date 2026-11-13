@@ -215,6 +215,57 @@
       }
      },
      {
+      "name": "severity",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "comma-separated: info,low,medium,high,critical",
+       "title": "Severity"
+      },
+      "description": "comma-separated: info,low,medium,high,critical"
+     },
+     {
+      "name": "status",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "enum": [
+        "open",
+        "all"
+       ],
+       "type": "string",
+       "default": "open",
+       "title": "Status"
+      }
+     },
+     {
+      "name": "clientId",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string",
+         "minLength": 8,
+         "maxLength": 64,
+         "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Clientid"
+      }
+     },
+     {
       "name": "rainfallChangePct",
       "in": "query",
       "required": false,
@@ -305,7 +356,7 @@
       "content": {
        "application/json": {
         "schema": {
-         "$ref": "#/components/schemas/AlertsResponse"
+         "$ref": "#/components/schemas/AlertsResponseV2"
         }
        }
       }
@@ -1279,6 +1330,1017 @@
      }
     }
    }
+  },
+  "/api/weather/current": {
+   "get": {
+    "tags": [
+     "Data API (P3)"
+    ],
+    "summary": "Weather Current",
+    "operationId": "weather_current_api_weather_current_get",
+    "parameters": [
+     {
+      "name": "region",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "default": "bd",
+       "title": "Region"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_WeatherCurrent_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/weather/forecast": {
+   "get": {
+    "tags": [
+     "Data API (P3)"
+    ],
+    "summary": "Weather Forecast",
+    "operationId": "weather_forecast_api_weather_forecast_get",
+    "parameters": [
+     {
+      "name": "region",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "default": "bd",
+       "title": "Region"
+      }
+     },
+     {
+      "name": "days",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 16,
+       "minimum": 1,
+       "default": 7,
+       "title": "Days"
+      }
+     },
+     {
+      "name": "step",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "enum": [
+        "daily",
+        "hourly"
+       ],
+       "type": "string",
+       "default": "daily",
+       "title": "Step"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_WeatherSeries_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/weather/history": {
+   "get": {
+    "tags": [
+     "Data API (P3)"
+    ],
+    "summary": "Weather History",
+    "operationId": "weather_history_api_weather_history_get",
+    "parameters": [
+     {
+      "name": "region",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "default": "bd",
+       "title": "Region"
+      }
+     },
+     {
+      "name": "start",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Start"
+      }
+     },
+     {
+      "name": "end",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "End"
+      }
+     },
+     {
+      "name": "step",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "enum": [
+        "daily",
+        "monthly"
+       ],
+       "type": "string",
+       "default": "monthly",
+       "title": "Step"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_WeatherSeries_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/water/availability": {
+   "get": {
+    "tags": [
+     "Data API (P3)"
+    ],
+    "summary": "Water Availability",
+    "operationId": "water_availability_api_water_availability_get",
+    "parameters": [
+     {
+      "name": "region",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "default": "bd",
+       "title": "Region"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_WaterAvailability_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/water/scarcity": {
+   "get": {
+    "tags": [
+     "Data API (P3)"
+    ],
+    "summary": "Water Scarcity",
+    "operationId": "water_scarcity_api_water_scarcity_get",
+    "parameters": [
+     {
+      "name": "region",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "default": "bd",
+       "title": "Region"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_WaterScarcity_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/groundwater/trends": {
+   "get": {
+    "tags": [
+     "Data API (P3)"
+    ],
+    "summary": "Groundwater Trends",
+    "operationId": "groundwater_trends_api_groundwater_trends_get",
+    "parameters": [
+     {
+      "name": "region",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "default": "bd",
+       "title": "Region"
+      }
+     },
+     {
+      "name": "start",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Start"
+      }
+     },
+     {
+      "name": "end",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "End"
+      }
+     },
+     {
+      "name": "cells",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean",
+       "default": false,
+       "title": "Cells"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_GroundwaterTrends_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/dashboard/summary": {
+   "get": {
+    "tags": [
+     "Data API (P3)"
+    ],
+    "summary": "Dashboard Summary",
+    "operationId": "dashboard_summary_api_dashboard_summary_get",
+    "parameters": [
+     {
+      "name": "region",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "default": "bd",
+       "title": "Region"
+      }
+     },
+     {
+      "name": "targetEfficiency",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "number",
+         "maximum": 0.95,
+         "minimum": 0.3
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Targetefficiency"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_DashboardSummary_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/predictions": {
+   "get": {
+    "tags": [
+     "Data API (P3)"
+    ],
+    "summary": "Predictions",
+    "operationId": "predictions_api_predictions_get",
+    "parameters": [
+     {
+      "name": "region",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "default": "bd",
+       "title": "Region"
+      }
+     },
+     {
+      "name": "category",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "default": "water_balance",
+       "title": "Category"
+      }
+     },
+     {
+      "name": "horizon",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "default": 1,
+       "title": "Horizon"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_Predictions_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/water-budget": {
+   "get": {
+    "tags": [
+     "Data API (P3)"
+    ],
+    "summary": "Water Budget",
+    "operationId": "water_budget_api_water_budget_get",
+    "parameters": [
+     {
+      "name": "region",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "default": "bd",
+       "title": "Region"
+      }
+     },
+     {
+      "name": "mode",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "enum": [
+        "national",
+        "derived"
+       ],
+       "type": "string",
+       "default": "national",
+       "title": "Mode"
+      }
+     },
+     {
+      "name": "period",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "default": "annual",
+       "title": "Period"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_WaterBudget_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/whatif": {
+   "post": {
+    "tags": [
+     "Data API (P3)"
+    ],
+    "summary": "Whatif",
+    "operationId": "whatif_api_whatif_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ScenarioRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_WhatIf_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/irrigation/recommendations": {
+   "get": {
+    "tags": [
+     "Data API (P3)"
+    ],
+    "summary": "Irrigation Recommendations",
+    "operationId": "irrigation_recommendations_api_irrigation_recommendations_get",
+    "parameters": [
+     {
+      "name": "crop",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Crop"
+      }
+     },
+     {
+      "name": "region",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Region"
+      }
+     },
+     {
+      "name": "lat",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "number"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Lat"
+      }
+     },
+     {
+      "name": "lon",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "number"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Lon"
+      }
+     },
+     {
+      "name": "soil",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "default": "silty_clay_loam",
+       "title": "Soil"
+      }
+     },
+     {
+      "name": "plantingDate",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Plantingdate"
+      }
+     },
+     {
+      "name": "stage",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "enum": [
+          "initial",
+          "development",
+          "mid-season",
+          "late season"
+         ],
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Stage"
+      }
+     },
+     {
+      "name": "areaHa",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "number",
+       "maximum": 100000,
+       "exclusiveMinimum": 0,
+       "default": 1.0,
+       "title": "Areaha"
+      }
+     },
+     {
+      "name": "efficiency",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "number",
+         "maximum": 0.95,
+         "minimum": 0.3
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Efficiency"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_IrrigationResponse_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/alerts/{alert_id}/read": {
+   "post": {
+    "tags": [
+     "Platform API (P3)"
+    ],
+    "summary": "Mark Read",
+    "operationId": "mark_read_api_alerts__alert_id__read_post",
+    "parameters": [
+     {
+      "name": "alert_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "integer",
+       "title": "Alert Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ReadRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_ReadResult_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/search": {
+   "get": {
+    "tags": [
+     "Platform API (P3)"
+    ],
+    "summary": "Search",
+    "operationId": "search_api_search_get",
+    "parameters": [
+     {
+      "name": "q",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 100,
+       "title": "Q"
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "maximum": 50,
+       "minimum": 1,
+       "default": 12,
+       "title": "Limit"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_SearchResults_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/data/sources": {
+   "get": {
+    "tags": [
+     "Platform API (P3)"
+    ],
+    "summary": "Data Sources",
+    "operationId": "data_sources_api_data_sources_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_list_SourceStatus__"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/data/last-updated": {
+   "get": {
+    "tags": [
+     "Platform API (P3)"
+    ],
+    "summary": "Data Last Updated",
+    "operationId": "data_last_updated_api_data_last_updated_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_LastUpdated_"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/refresh": {
+   "post": {
+    "tags": [
+     "Platform API (P3)"
+    ],
+    "summary": "Refresh",
+    "operationId": "refresh_api_refresh_post",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_RefreshResult_"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/sync/{source}": {
+   "post": {
+    "tags": [
+     "Platform API (P3)"
+    ],
+    "summary": "Admin Sync",
+    "operationId": "admin_sync_api_sync__source__post",
+    "parameters": [
+     {
+      "name": "source",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Source"
+      }
+     },
+     {
+      "name": "force",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean",
+       "default": false,
+       "title": "Force"
+      }
+     },
+     {
+      "name": "authorization",
+      "in": "header",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_SyncResult_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
   }
  },
  "components": {
@@ -1340,7 +2402,32 @@
     ],
     "title": "Alert"
    },
-   "AlertsResponse": {
+   "AlertsList": {
+    "properties": {
+     "alerts": {
+      "items": {
+       "$ref": "#/components/schemas/StoredAlert"
+      },
+      "type": "array",
+      "title": "Alerts"
+     },
+     "counts": {
+      "additionalProperties": {
+       "type": "integer"
+      },
+      "type": "object",
+      "title": "Counts"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "alerts",
+     "counts"
+    ],
+    "title": "AlertsList"
+   },
+   "AlertsResponseV2": {
     "properties": {
      "context": {
       "$ref": "#/components/schemas/Context"
@@ -1351,15 +2438,24 @@
       },
       "type": "array",
       "title": "Alerts"
+     },
+     "data": {
+      "$ref": "#/components/schemas/AlertsList"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
      }
     },
     "additionalProperties": false,
     "type": "object",
     "required": [
      "context",
-     "alerts"
+     "alerts",
+     "data",
+     "meta"
     ],
-    "title": "AlertsResponse"
+    "title": "AlertsResponseV2",
+    "description": "Legacy fields (``context``, ``alerts``: computed per request, scenario-aware) are kept for the current UI;\n``data``/``meta`` carry the stored, rule-engine alerts (P3)."
    },
    "AssumptionRow": {
     "properties": {
@@ -1394,6 +2490,52 @@
      "assumption"
     ],
     "title": "AssumptionRow"
+   },
+   "BudgetLink": {
+    "properties": {
+     "source": {
+      "type": "string",
+      "title": "Source"
+     },
+     "target": {
+      "type": "string",
+      "title": "Target"
+     },
+     "value": {
+      "$ref": "#/components/schemas/Measure"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "source",
+     "target",
+     "value"
+    ],
+    "title": "BudgetLink"
+   },
+   "BudgetNode": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "title": "Id"
+     },
+     "label": {
+      "type": "string",
+      "title": "Label"
+     },
+     "value": {
+      "$ref": "#/components/schemas/Measure"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "id",
+     "label",
+     "value"
+    ],
+    "title": "BudgetNode"
    },
    "BudgetResponse": {
     "properties": {
@@ -1680,6 +2822,32 @@
     ],
     "title": "CopilotResponse"
    },
+   "DashboardSummary": {
+    "properties": {
+     "region": {
+      "$ref": "#/components/schemas/RegionRef"
+     },
+     "kpis": {
+      "items": {
+       "$ref": "#/components/schemas/Kpi"
+      },
+      "type": "array",
+      "title": "Kpis"
+     },
+     "openAlerts": {
+      "type": "integer",
+      "title": "Openalerts"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "region",
+     "kpis",
+     "openAlerts"
+    ],
+    "title": "DashboardSummary"
+   },
    "DemandResponse": {
     "properties": {
      "context": {
@@ -1782,6 +2950,282 @@
      "serviceOk"
     ],
     "title": "DestinationState"
+   },
+   "Envelope_DashboardSummary_": {
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/DashboardSummary"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[DashboardSummary]"
+   },
+   "Envelope_GroundwaterTrends_": {
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/GroundwaterTrends"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[GroundwaterTrends]"
+   },
+   "Envelope_IrrigationResponse_": {
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/IrrigationResponse"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[IrrigationResponse]"
+   },
+   "Envelope_LastUpdated_": {
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/LastUpdated"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[LastUpdated]"
+   },
+   "Envelope_Predictions_": {
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/Predictions"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[Predictions]"
+   },
+   "Envelope_ReadResult_": {
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/ReadResult"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[ReadResult]"
+   },
+   "Envelope_RefreshResult_": {
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/RefreshResult"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[RefreshResult]"
+   },
+   "Envelope_SearchResults_": {
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/SearchResults"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[SearchResults]"
+   },
+   "Envelope_SyncResult_": {
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/SyncResult"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[SyncResult]"
+   },
+   "Envelope_WaterAvailability_": {
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/WaterAvailability"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[WaterAvailability]"
+   },
+   "Envelope_WaterBudget_": {
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/WaterBudget"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[WaterBudget]"
+   },
+   "Envelope_WaterScarcity_": {
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/WaterScarcity"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[WaterScarcity]"
+   },
+   "Envelope_WeatherCurrent_": {
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/WeatherCurrent"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[WeatherCurrent]"
+   },
+   "Envelope_WeatherSeries_": {
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/WeatherSeries"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[WeatherSeries]"
+   },
+   "Envelope_WhatIf_": {
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/WhatIf"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[WhatIf]"
+   },
+   "Envelope_list_SourceStatus__": {
+    "properties": {
+     "data": {
+      "items": {
+       "$ref": "#/components/schemas/SourceStatus"
+      },
+      "type": "array",
+      "title": "Data"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[list[SourceStatus]]"
    },
    "FlowRequest": {
     "properties": {
@@ -1999,6 +3443,54 @@
     ],
     "title": "ForecastPoint"
    },
+   "GridCell": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "title": "Id"
+     },
+     "lat": {
+      "type": "number",
+      "title": "Lat"
+     },
+     "lon": {
+      "type": "number",
+      "title": "Lon"
+     },
+     "v": {
+      "type": "number",
+      "title": "V"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "id",
+     "lat",
+     "lon",
+     "v"
+    ],
+    "title": "GridCell"
+   },
+   "GroundwaterPoint": {
+    "properties": {
+     "t": {
+      "type": "string",
+      "title": "T"
+     },
+     "v": {
+      "type": "number",
+      "title": "V"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "t",
+     "v"
+    ],
+    "title": "GroundwaterPoint"
+   },
    "GroundwaterResponse": {
     "properties": {
      "context": {
@@ -2089,6 +3581,112 @@
      "instructions"
     ],
     "title": "GroundwaterResponse"
+   },
+   "GroundwaterTrends": {
+    "properties": {
+     "region": {
+      "$ref": "#/components/schemas/RegionRef"
+     },
+     "quantity": {
+      "type": "string",
+      "title": "Quantity"
+     },
+     "series": {
+      "items": {
+       "$ref": "#/components/schemas/GroundwaterPoint"
+      },
+      "type": "array",
+      "title": "Series"
+     },
+     "latest": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/Measure"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "sameMonthLastYear": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/Measure"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "change": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/Measure"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "trend": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/Measure"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "trendMethod": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Trendmethod"
+     },
+     "cells": {
+      "items": {
+       "$ref": "#/components/schemas/GridCell"
+      },
+      "type": "array",
+      "title": "Cells",
+      "default": []
+     },
+     "cellsPeriod": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cellsperiod"
+     },
+     "resolutionNote": {
+      "type": "string",
+      "title": "Resolutionnote"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "region",
+     "quantity",
+     "series",
+     "latest",
+     "sameMonthLastYear",
+     "change",
+     "trend",
+     "trendMethod",
+     "resolutionNote"
+    ],
+    "title": "GroundwaterTrends"
    },
    "HTTPValidationError": {
     "properties": {
@@ -2438,6 +4036,125 @@
     ],
     "title": "IrrigationResponse"
    },
+   "Kpi": {
+    "properties": {
+     "key": {
+      "type": "string",
+      "title": "Key"
+     },
+     "label": {
+      "type": "string",
+      "title": "Label"
+     },
+     "value": {
+      "$ref": "#/components/schemas/Measure"
+     },
+     "comparison": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/Measure"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "comparisonLabel": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Comparisonlabel"
+     },
+     "classLabel": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Classlabel"
+     },
+     "formula": {
+      "type": "string",
+      "title": "Formula"
+     },
+     "context": {
+      "items": {
+       "$ref": "#/components/schemas/Measure"
+      },
+      "type": "array",
+      "title": "Context",
+      "default": []
+     },
+     "note": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Note"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "key",
+     "label",
+     "value",
+     "formula"
+    ],
+    "title": "Kpi"
+   },
+   "LastUpdated": {
+    "properties": {
+     "sources": {
+      "items": {
+       "$ref": "#/components/schemas/SourceStatus"
+      },
+      "type": "array",
+      "title": "Sources"
+     },
+     "latestRetrievedAt": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Latestretrievedat"
+     },
+     "overallStatus": {
+      "type": "string",
+      "enum": [
+       "fresh",
+       "stale",
+       "unavailable",
+       "not_configured"
+      ],
+      "title": "Overallstatus"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "sources",
+     "latestRetrievedAt",
+     "overallStatus"
+    ],
+    "title": "LastUpdated"
+   },
    "LayerInfo": {
     "properties": {
      "id": {
@@ -2596,6 +4313,111 @@
         "type": "null"
        }
       ]
+     },
+     "dataKind": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "observed",
+         "model_current",
+         "forecast",
+         "reanalysis",
+         "satellite_monthly",
+         "satellite_historical",
+         "statistic",
+         "derived",
+         "prediction",
+         "scenario",
+         "conceptual",
+         "reference"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Datakind"
+     },
+     "status": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "fresh",
+         "stale",
+         "unavailable",
+         "not_configured"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Status"
+     },
+     "observedAt": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Observedat"
+     },
+     "retrievedAt": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Retrievedat"
+     },
+     "spatialLevel": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "point",
+         "division",
+         "national",
+         "regional",
+         "grid",
+         "mixed"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Spatiallevel"
+     },
+     "referenceYear": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Referenceyear"
+     },
+     "note": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Note"
      }
     },
     "additionalProperties": false,
@@ -2606,6 +4428,121 @@
      "provenance"
     ],
     "title": "Measure"
+   },
+   "Meta": {
+    "properties": {
+     "source": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Source"
+     },
+     "data_kind": {
+      "items": {
+       "type": "string",
+       "enum": [
+        "observed",
+        "model_current",
+        "forecast",
+        "reanalysis",
+        "satellite_monthly",
+        "satellite_historical",
+        "statistic",
+        "derived",
+        "prediction",
+        "scenario",
+        "conceptual",
+        "reference"
+       ]
+      },
+      "type": "array",
+      "title": "Data Kind"
+     },
+     "observed_at": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Observed At"
+     },
+     "retrieved_at": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Retrieved At"
+     },
+     "unit": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Unit"
+     },
+     "spatial_level": {
+      "type": "string",
+      "enum": [
+       "point",
+       "division",
+       "national",
+       "regional",
+       "grid",
+       "mixed"
+      ],
+      "title": "Spatial Level"
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "fresh",
+       "stale",
+       "unavailable",
+       "not_configured"
+      ],
+      "title": "Status"
+     },
+     "attribution": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Attribution"
+     },
+     "note": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Note"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "source",
+     "data_kind",
+     "spatial_level",
+     "status",
+     "attribution"
+    ],
+    "title": "Meta"
    },
    "MetricsResponse": {
     "properties": {
@@ -2716,6 +4653,60 @@
      "unmet"
     ],
     "title": "MonthlyBalancePoint"
+   },
+   "NationalBudget": {
+    "properties": {
+     "nodes": {
+      "items": {
+       "$ref": "#/components/schemas/BudgetNode"
+      },
+      "type": "array",
+      "title": "Nodes"
+     },
+     "links": {
+      "items": {
+       "$ref": "#/components/schemas/BudgetLink"
+      },
+      "type": "array",
+      "title": "Links"
+     },
+     "referenceYears": {
+      "items": {
+       "type": "integer"
+      },
+      "type": "array",
+      "title": "Referenceyears"
+     },
+     "mixedReferenceYears": {
+      "type": "boolean",
+      "title": "Mixedreferenceyears"
+     },
+     "missing": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Missing"
+     },
+     "notes": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Notes"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "nodes",
+     "links",
+     "referenceYears",
+     "mixedReferenceYears",
+     "missing",
+     "notes"
+    ],
+    "title": "NationalBudget"
    },
    "OptimizeRequest": {
     "properties": {
@@ -3028,6 +5019,135 @@
     ],
     "title": "PipeState"
    },
+   "PredictionPoint": {
+    "properties": {
+     "horizon": {
+      "type": "integer",
+      "title": "Horizon"
+     },
+     "issuedMonth": {
+      "type": "string",
+      "title": "Issuedmonth"
+     },
+     "targetMonth": {
+      "type": "string",
+      "title": "Targetmonth"
+     },
+     "value": {
+      "$ref": "#/components/schemas/Measure"
+     },
+     "normal": {
+      "$ref": "#/components/schemas/Measure"
+     },
+     "z": {
+      "$ref": "#/components/schemas/Measure"
+     },
+     "drynessClass": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Drynessclass"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "horizon",
+     "issuedMonth",
+     "targetMonth",
+     "value",
+     "normal",
+     "z",
+     "drynessClass"
+    ],
+    "title": "PredictionPoint"
+   },
+   "Predictions": {
+    "properties": {
+     "region": {
+      "$ref": "#/components/schemas/RegionRef"
+     },
+     "category": {
+      "type": "string",
+      "title": "Category"
+     },
+     "target": {
+      "type": "string",
+      "title": "Target"
+     },
+     "horizon": {
+      "type": "integer",
+      "title": "Horizon"
+     },
+     "history": {
+      "$ref": "#/components/schemas/SeriesValues"
+     },
+     "forecast": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/PredictionPoint"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "allHorizons": {
+      "items": {
+       "$ref": "#/components/schemas/PredictionPoint"
+      },
+      "type": "array",
+      "title": "Allhorizons"
+     },
+     "model": {
+      "additionalProperties": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "integer"
+        },
+        {
+         "type": "number"
+        },
+        {
+         "type": "null"
+        }
+       ]
+      },
+      "type": "object",
+      "title": "Model"
+     },
+     "storage": {
+      "type": "string",
+      "enum": [
+       "database",
+       "artifact"
+      ],
+      "title": "Storage"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "region",
+     "category",
+     "target",
+     "horizon",
+     "history",
+     "forecast",
+     "allHorizons",
+     "model",
+     "storage"
+    ],
+    "title": "Predictions"
+   },
    "Rainfall30d": {
     "properties": {
      "total": {
@@ -3053,6 +5173,76 @@
      "window"
     ],
     "title": "Rainfall30d"
+   },
+   "ReadRequest": {
+    "properties": {
+     "clientId": {
+      "type": "string",
+      "maxLength": 64,
+      "minLength": 8,
+      "pattern": "^[A-Za-z0-9_-]+$",
+      "title": "Clientid"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "clientId"
+    ],
+    "title": "ReadRequest"
+   },
+   "ReadResult": {
+    "properties": {
+     "alertId": {
+      "type": "integer",
+      "title": "Alertid"
+     },
+     "read": {
+      "type": "boolean",
+      "title": "Read"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "alertId",
+     "read"
+    ],
+    "title": "ReadResult"
+   },
+   "RefreshResult": {
+    "properties": {
+     "result": {
+      "type": "string",
+      "enum": [
+       "up_to_date",
+       "refreshed",
+       "partial",
+       "failed"
+      ],
+      "title": "Result"
+     },
+     "message": {
+      "type": "string",
+      "title": "Message"
+     },
+     "jobs": {
+      "items": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "type": "array",
+      "title": "Jobs"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "result",
+     "message",
+     "jobs"
+    ],
+    "title": "RefreshResult"
    },
    "Region": {
     "properties": {
@@ -3119,6 +5309,34 @@
      "centroid"
     ],
     "title": "Region"
+   },
+   "RegionRef": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "title": "Id"
+     },
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "level": {
+      "type": "string",
+      "enum": [
+       "country",
+       "division"
+      ],
+      "title": "Level"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "id",
+     "name",
+     "level"
+    ],
+    "title": "RegionRef"
    },
    "RegionValues": {
     "properties": {
@@ -3375,6 +5593,56 @@
     ],
     "title": "SankeyNode"
    },
+   "ScarcityIndicator": {
+    "properties": {
+     "key": {
+      "type": "string",
+      "title": "Key"
+     },
+     "label": {
+      "type": "string",
+      "title": "Label"
+     },
+     "value": {
+      "$ref": "#/components/schemas/Measure"
+     },
+     "classLabel": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Classlabel"
+     },
+     "classLevel": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Classlevel"
+     },
+     "method": {
+      "type": "string",
+      "title": "Method"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "key",
+     "label",
+     "value",
+     "method"
+    ],
+    "title": "ScarcityIndicator"
+   },
    "ScarcityResponse": {
     "properties": {
      "context": {
@@ -3621,6 +5889,69 @@
     ],
     "title": "ScenarioResponse"
    },
+   "SearchItem": {
+    "properties": {
+     "type": {
+      "type": "string",
+      "enum": [
+       "region",
+       "module",
+       "indicator",
+       "source",
+       "alert"
+      ],
+      "title": "Type"
+     },
+     "id": {
+      "type": "string",
+      "title": "Id"
+     },
+     "label": {
+      "type": "string",
+      "title": "Label"
+     },
+     "description": {
+      "type": "string",
+      "title": "Description"
+     },
+     "href": {
+      "type": "string",
+      "title": "Href"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "type",
+     "id",
+     "label",
+     "description",
+     "href"
+    ],
+    "title": "SearchItem"
+   },
+   "SearchResults": {
+    "properties": {
+     "query": {
+      "type": "string",
+      "title": "Query"
+     },
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/SearchItem"
+      },
+      "type": "array",
+      "title": "Items"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "query",
+     "items"
+    ],
+    "title": "SearchResults"
+   },
    "SectorRow": {
     "properties": {
      "sector": {
@@ -3731,6 +6062,53 @@
     ],
     "title": "SeriesPoint"
    },
+   "SeriesValues": {
+    "properties": {
+     "variable": {
+      "type": "string",
+      "title": "Variable"
+     },
+     "label": {
+      "type": "string",
+      "title": "Label"
+     },
+     "unit": {
+      "type": "string",
+      "title": "Unit"
+     },
+     "t": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "T"
+     },
+     "v": {
+      "items": {
+       "anyOf": [
+        {
+         "type": "number"
+        },
+        {
+         "type": "null"
+        }
+       ]
+      },
+      "type": "array",
+      "title": "V"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "variable",
+     "label",
+     "unit",
+     "t",
+     "v"
+    ],
+    "title": "SeriesValues"
+   },
    "ShapResponse": {
     "properties": {
      "available": {
@@ -3838,6 +6216,181 @@
     ],
     "title": "Source"
    },
+   "SourceStatus": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "title": "Id"
+     },
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "url": {
+      "type": "string",
+      "title": "Url"
+     },
+     "licence": {
+      "type": "string",
+      "title": "Licence"
+     },
+     "attribution": {
+      "type": "string",
+      "title": "Attribution"
+     },
+     "cadence": {
+      "type": "string",
+      "title": "Cadence"
+     },
+     "cadenceSeconds": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cadenceseconds"
+     },
+     "dataKind": {
+      "type": "string",
+      "enum": [
+       "observed",
+       "model_current",
+       "forecast",
+       "reanalysis",
+       "satellite_monthly",
+       "satellite_historical",
+       "statistic",
+       "derived",
+       "prediction",
+       "scenario",
+       "conceptual",
+       "reference"
+      ],
+      "title": "Datakind"
+     },
+     "spatialLevel": {
+      "type": "string",
+      "title": "Spatiallevel"
+     },
+     "scheduled": {
+      "type": "boolean",
+      "title": "Scheduled"
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "fresh",
+       "stale",
+       "unavailable",
+       "not_configured"
+      ],
+      "title": "Status"
+     },
+     "retrievedAt": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Retrievedat"
+     },
+     "lastSuccessAt": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Lastsuccessat"
+     },
+     "lastAttemptAt": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Lastattemptat"
+     },
+     "lastAttemptStatus": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Lastattemptstatus"
+     },
+     "lastError": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Lasterror"
+     },
+     "latestObservation": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Latestobservation"
+     },
+     "note": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Note"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "id",
+     "name",
+     "url",
+     "licence",
+     "attribution",
+     "cadence",
+     "cadenceSeconds",
+     "dataKind",
+     "spatialLevel",
+     "scheduled",
+     "status",
+     "retrievedAt",
+     "lastSuccessAt",
+     "lastAttemptAt",
+     "lastAttemptStatus",
+     "lastError",
+     "latestObservation",
+     "note"
+    ],
+    "title": "SourceStatus"
+   },
    "SourcesResponse": {
     "properties": {
      "sources": {
@@ -3862,6 +6415,49 @@
      "parameters"
     ],
     "title": "SourcesResponse"
+   },
+   "StatValue": {
+    "properties": {
+     "key": {
+      "type": "string",
+      "title": "Key"
+     },
+     "label": {
+      "type": "string",
+      "title": "Label"
+     },
+     "value": {
+      "$ref": "#/components/schemas/Measure"
+     },
+     "previous": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/Measure"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "change": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/Measure"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "key",
+     "label",
+     "value"
+    ],
+    "title": "StatValue"
    },
    "StatusResponse": {
     "properties": {
@@ -3910,6 +6506,247 @@
      "version"
     ],
     "title": "StatusResponse"
+   },
+   "StoredAlert": {
+    "properties": {
+     "id": {
+      "type": "integer",
+      "title": "Id"
+     },
+     "ruleId": {
+      "type": "string",
+      "title": "Ruleid"
+     },
+     "regionId": {
+      "type": "string",
+      "title": "Regionid"
+     },
+     "regionName": {
+      "type": "string",
+      "title": "Regionname"
+     },
+     "severity": {
+      "type": "string",
+      "enum": [
+       "info",
+       "low",
+       "medium",
+       "high",
+       "critical"
+      ],
+      "title": "Severity"
+     },
+     "title": {
+      "type": "string",
+      "title": "Title"
+     },
+     "message": {
+      "type": "string",
+      "title": "Message"
+     },
+     "indicator": {
+      "type": "string",
+      "title": "Indicator"
+     },
+     "value": {
+      "$ref": "#/components/schemas/Measure"
+     },
+     "threshold": {
+      "$ref": "#/components/schemas/Measure"
+     },
+     "basis": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Basis"
+     },
+     "dataKind": {
+      "type": "string",
+      "enum": [
+       "observed",
+       "model_current",
+       "forecast",
+       "reanalysis",
+       "satellite_monthly",
+       "satellite_historical",
+       "statistic",
+       "derived",
+       "prediction",
+       "scenario",
+       "conceptual",
+       "reference"
+      ],
+      "title": "Datakind"
+     },
+     "isPrediction": {
+      "type": "boolean",
+      "title": "Isprediction"
+     },
+     "sourceId": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Sourceid"
+     },
+     "thresholdSource": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Thresholdsource"
+     },
+     "observedAt": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Observedat"
+     },
+     "createdAt": {
+      "type": "string",
+      "title": "Createdat"
+     },
+     "updatedAt": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Updatedat"
+     },
+     "resolvedAt": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Resolvedat"
+     },
+     "read": {
+      "type": "boolean",
+      "title": "Read"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "id",
+     "ruleId",
+     "regionId",
+     "regionName",
+     "severity",
+     "title",
+     "message",
+     "indicator",
+     "value",
+     "threshold",
+     "basis",
+     "dataKind",
+     "isPrediction",
+     "sourceId",
+     "thresholdSource",
+     "observedAt",
+     "createdAt",
+     "updatedAt",
+     "resolvedAt",
+     "read"
+    ],
+    "title": "StoredAlert"
+   },
+   "SyncResult": {
+    "properties": {
+     "job": {
+      "type": "string",
+      "title": "Job"
+     },
+     "status": {
+      "type": "string",
+      "title": "Status"
+     },
+     "runId": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Runid"
+     },
+     "inserted": {
+      "type": "integer",
+      "title": "Inserted"
+     },
+     "updated": {
+      "type": "integer",
+      "title": "Updated"
+     },
+     "skipped": {
+      "type": "integer",
+      "title": "Skipped"
+     },
+     "okUnits": {
+      "type": "integer",
+      "title": "Okunits"
+     },
+     "errors": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Errors"
+     },
+     "reason": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Reason"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "job",
+     "status",
+     "runId",
+     "inserted",
+     "updated",
+     "skipped",
+     "okUnits",
+     "errors",
+     "reason"
+    ],
+    "title": "SyncResult"
    },
    "TestPoint": {
     "properties": {
@@ -4000,6 +6837,184 @@
     ],
     "title": "ValidationError"
    },
+   "WaterAvailability": {
+    "properties": {
+     "region": {
+      "$ref": "#/components/schemas/RegionRef"
+     },
+     "nationalOnly": {
+      "type": "boolean",
+      "title": "Nationalonly"
+     },
+     "renewable": {
+      "items": {
+       "$ref": "#/components/schemas/StatValue"
+      },
+      "type": "array",
+      "title": "Renewable"
+     },
+     "storage": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/Measure"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "storageTrend": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/Measure"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "region",
+     "nationalOnly",
+     "renewable",
+     "storage",
+     "storageTrend"
+    ],
+    "title": "WaterAvailability"
+   },
+   "WaterBudget": {
+    "properties": {
+     "mode": {
+      "type": "string",
+      "enum": [
+       "national",
+       "derived"
+      ],
+      "title": "Mode"
+     },
+     "region": {
+      "$ref": "#/components/schemas/RegionRef"
+     },
+     "national": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/NationalBudget"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "derived": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Derived"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "mode",
+     "region"
+    ],
+    "title": "WaterBudget"
+   },
+   "WaterScarcity": {
+    "properties": {
+     "region": {
+      "$ref": "#/components/schemas/RegionRef"
+     },
+     "statistics": {
+      "items": {
+       "$ref": "#/components/schemas/ScarcityIndicator"
+      },
+      "type": "array",
+      "title": "Statistics",
+      "description": "national statistics (AQUASTAT); never per division"
+     },
+     "weather": {
+      "items": {
+       "$ref": "#/components/schemas/ScarcityIndicator"
+      },
+      "type": "array",
+      "title": "Weather",
+      "description": "weather-derived indicators at the selected level"
+     },
+     "note": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Note"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "region",
+     "statistics",
+     "weather"
+    ],
+    "title": "WaterScarcity"
+   },
+   "WeatherCurrent": {
+    "properties": {
+     "region": {
+      "$ref": "#/components/schemas/RegionRef"
+     },
+     "validTime": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Validtime"
+     },
+     "timezone": {
+      "type": "string",
+      "title": "Timezone"
+     },
+     "values": {
+      "additionalProperties": {
+       "$ref": "#/components/schemas/Measure"
+      },
+      "type": "object",
+      "title": "Values"
+     },
+     "points": {
+      "type": "integer",
+      "title": "Points",
+      "description": "weather points combined (8 for the national estimate)"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "region",
+     "validTime",
+     "timezone",
+     "values",
+     "points"
+    ],
+    "title": "WeatherCurrent"
+   },
    "WeatherResponse": {
     "properties": {
      "context": {
@@ -4029,6 +7044,83 @@
      "series"
     ],
     "title": "WeatherResponse"
+   },
+   "WeatherSeries": {
+    "properties": {
+     "region": {
+      "$ref": "#/components/schemas/RegionRef"
+     },
+     "step": {
+      "type": "string",
+      "enum": [
+       "hourly",
+       "daily",
+       "monthly"
+      ],
+      "title": "Step"
+     },
+     "timezone": {
+      "type": "string",
+      "title": "Timezone"
+     },
+     "start": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Start"
+     },
+     "end": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "End"
+     },
+     "series": {
+      "items": {
+       "$ref": "#/components/schemas/SeriesValues"
+      },
+      "type": "array",
+      "title": "Series"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "region",
+     "step",
+     "timezone",
+     "start",
+     "end",
+     "series"
+    ],
+    "title": "WeatherSeries"
+   },
+   "WhatIf": {
+    "properties": {
+     "region": {
+      "$ref": "#/components/schemas/RegionRef"
+     },
+     "result": {
+      "$ref": "#/components/schemas/ScenarioResponse"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "region",
+     "result"
+    ],
+    "title": "WhatIf"
    }
   }
  }

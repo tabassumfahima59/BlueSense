@@ -6,6 +6,11 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 Provenance = Literal["observed", "historical", "predicted", "estimated", "simulated"]
+# P3: what a value is (master prompt rule 1) and how current its source is (computed when read)
+DataKind = Literal["observed", "model_current", "forecast", "reanalysis", "satellite_monthly", "satellite_historical",
+                   "statistic", "derived", "prediction", "scenario", "conceptual", "reference"]
+DataStatus = Literal["fresh", "stale", "unavailable", "not_configured"]
+SpatialLevel = Literal["point", "division", "national", "regional", "grid", "mixed"]
 
 
 class Model(BaseModel):
@@ -20,11 +25,19 @@ class Interval(Model):
 class Measure(Model):
     value: float | None
     unit: str
-    provenance: Provenance
-    isSample: bool = False
+    provenance: Provenance  # legacy label, kept until the UI moves to dataKind (P4/M1)
+    isSample: bool = False  # legacy, always False since P2
     sourceId: str | None = None
     asOf: str | None = None
     uncertainty: Interval | None = None
+    # P3 measurement-level metadata (D4); filled by the new endpoints
+    dataKind: DataKind | None = None
+    status: DataStatus | None = None
+    observedAt: str | None = None
+    retrievedAt: str | None = None
+    spatialLevel: SpatialLevel | None = None
+    referenceYear: int | None = None
+    note: str | None = None
 
 
 class Region(Model):

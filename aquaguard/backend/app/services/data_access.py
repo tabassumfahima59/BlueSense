@@ -84,8 +84,11 @@ def _invalidate_if_synced_elsewhere() -> None:
         changed = latest != _sync_marker["value"]
         _sync_marker["value"] = latest
     if changed:
+        from . import catalog
+
         _cached.cache_clear()
         _region_index.cache_clear()
+        catalog.clear()
 
 
 def table(name: str) -> Table:
@@ -94,8 +97,11 @@ def table(name: str) -> Table:
 
 
 def clear_cache() -> None:
+    from . import catalog
+
     _cached.cache_clear()
     _region_index.cache_clear()
+    catalog.clear()
     with _lock:
         _sync_marker["checked"] = 0.0
 

@@ -9,17 +9,18 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
-from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import JSONResponse
 
+from . import errors
 from .routers import (
     command_center,
     copilot,
+    data_api,
     explorer,
     health,
     irrigation,
+    platform_api,
     prediction_lab,
     regions,
     sources,
@@ -78,25 +79,28 @@ app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_me
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
-@app.exception_handler(RequestValidationError)
-async def validation_handler(_: Request, exc: RequestValidationError) -> JSONResponse:
-    msg = "; ".join(f"{'.'.join(str(x) for x in e['loc'] if x != 'body')}: {e['msg']}" for e in exc.errors())
-    return JSONResponse(status_code=422, content={"detail": f"Invalid request — {msg}"})
+errors.install(app)  # {"detail", "code"} error bodies; internal details only in logs
 
-
-@app.exception_handler(KeyError)
-async def key_error_handler(_: Request, exc: KeyError) -> JSONResponse:
-    return JSONResponse(status_code=404, content={"detail": f"Not found: {exc}"})
+# Per-client or fast-changing responses are not cached; live weather briefly; everything else 5 minutes.
+NO_STORE = ("/api/alerts", "/api/data/", "/api/health", "/api/search")
+SHORT_CACHE = ("/api/weather/current", "/api/weather/forecast", "/api/dashboard/")
 
 
 @app.middleware("http")
 async def cache_headers(request: Request, call_next):
     response = await call_next(request)
-    if request.method == "GET" and response.status_code == 200 and request.url.path.startswith("/api/"):
-        response.headers.setdefault("Cache-Control", "public, max-age=300")
+    path = request.url.path
+    if request.method == "GET" and response.status_code == 200 and path.startswith("/api/"):
+        if path.startswith(NO_STORE):
+            value = "no-store"
+        elif path.startswith(SHORT_CACHE):
+            value = "public, max-age=60"
+        else:
+            value = "public, max-age=300"
+        response.headers.setdefault("Cache-Control", value)
     return response
 
 
 for r in (health, regions, sources, command_center, explorer, prediction_lab, water_flow, water_budget, what_if,
-          irrigation, copilot):
+          irrigation, copilot, data_api, platform_api):
     app.include_router(r.router, prefix="/api")
