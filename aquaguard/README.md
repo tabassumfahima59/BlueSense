@@ -49,18 +49,39 @@ cp .env.example backend/.env    # optional; set LLM_API_KEY to enable Copilot LL
 
 ### Data and models
 
-The repository ships the cleaned data (`data/processed`), the sample snapshot (`data/sample`) and trained model artifacts (`ml/artifacts`). To build the database from them:
+The repository ships the cleaned data (`data/processed`) and trained model artifacts (`ml/artifacts`). To build the database from them (the API also does this at startup when the database is missing):
 
 ```bash
-make db            # = python ml/build_db.py --sample
+make db            # = python ml/build_db.py  (idempotent: never replaces or shrinks the database)
+make migrate       # apply pending schema migrations (backend/app/db/migrations), verified backup first
+make migrate-status
 ```
+
+The database schema is managed by versioned SQL migrations (`backend/app/db/migrate.py`); the API also applies
+pending migrations at startup (`AQUAGUARD_MIGRATE_ON_STARTUP=1`). Backups go to `data/backups/` (git-ignored).
+SQLite runs in WAL mode with `foreign_keys = ON` and `busy_timeout = 5000`. See `docs/aquaguard-plan.md`.
+
+### Live data sync (P2)
+
+Adapters in `backend/app/sync/` keep the database current: Open-Meteo forecast + current (hourly) and archive
+top-up (daily), FAO AQUASTAT (weekly) and GRACE CSR RL06.3 (daily HEAD check; the ~110 MB file is downloaded only
+when it changes). Re-runs are idempotent; missing values never overwrite stored ones; every run is logged in `sync_runs`.
+
+```bash
+make sync          # = cd backend && python -m app.sync.run all   (skips jobs that ran recently; --force to override)
+make sync-status   # fresh / stale / unavailable / not_configured per source
+```
+
+Set `AQUAGUARD_SCHEDULER_ENABLED=1` to run the jobs inside the API (APScheduler; intervals `SYNC_*`, DB lease lock so
+several workers never run the same job). Data shows `stale` when the last successful sync is older than
+`SYNC_STALE_FACTOR` × the cadence (e.g. while free hosting sleeps).
 
 To rebuild everything from the original sources (downloads ~125 MB incl. GRACE; the Open-Meteo archive takes ~12 minutes because of rate limits):
 
 ```bash
 make data          # fetch → process → db   (GRACE: place the CSR NetCDF in data/raw/grace/ if the download is blocked)
 make ml            # features → train → evaluate → predict → SHAP → demand projection → model card → db
-make mocks         # OpenAPI spec + Phase-0 mock JSON + regenerated TypeScript types
+make mocks         # OpenAPI spec + regenerated TypeScript types
 ```
 
 ### Run
@@ -72,12 +93,12 @@ make dev-frontend  # Next.js on http://localhost:3000  (frontend/.env.local: NEX
 
 Without `make`: `cd backend && ../.venv/Scripts/python -m uvicorn app.main:app --port 8001` and `cd frontend && npm run dev`.
 
-Offline / resilience switches: `AQUAGUARD_OFFLINE=1` (no outbound calls), `AQUAGUARD_FORCE_SAMPLE=1` (serve the snapshot), `NEXT_PUBLIC_API_MODE=mock` (frontend without backend).
+Offline switch: `AQUAGUARD_OFFLINE=1` (no outbound calls; scheduled sync skipped). The backend has no sample/mock fallback (P2); the frontend mock mode (`NEXT_PUBLIC_API_MODE=mock`) is removed in P4.
 
 ### Test and lint
 
 ```bash
-make test          # pytest: 128 tests (engines, mass balance, API contract, consistency, Copilot grounding, offline mode) + vitest
+make test          # pytest (engines, API contract, migrations, sync adapters, scheduler, security, Copilot grounding) + vitest
 make lint          # ruff, eslint, tsc
 ```
 

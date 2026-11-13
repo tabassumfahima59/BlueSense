@@ -5,7 +5,7 @@ PY := .venv/Scripts/python
 endif
 export PYTHONIOENCODING := utf-8
 
-.PHONY: setup data fetch process db ml mocks test lint dev-backend dev-frontend build all
+.PHONY: setup data fetch process db migrate migrate-status sync sync-status ml mocks test lint dev-backend dev-frontend build all
 
 setup:            ## create venv, install Python + Node dependencies
 	python -m venv .venv
@@ -21,9 +21,20 @@ process:          ## clean raw data -> data/processed (+ GRACE if the NetCDF fil
 	$(PY) ml/process_weather.py
 	$(PY) ml/grace_trend.py
 
-db:               ## build SQLite (data/aquaguard.db) and refresh the offline sample snapshot
-	$(PY) ml/build_db.py --sample
-	cp data/raw/openmeteo/forecast_*.json data/sample/ 2>/dev/null || true
+db:               ## idempotent import into data/aquaguard.db (migrations + verified backup first); refresh sample
+	$(PY) ml/build_db.py
+
+migrate:          ## apply pending versioned SQL migrations (verified backup first)
+	cd backend && ../$(PY) -m app.db.migrate
+
+migrate-status:   ## list applied / pending migrations
+	cd backend && ../$(PY) -m app.db.migrate --status
+
+sync:             ## run every data-source sync job once (skips jobs that ran recently)
+	cd backend && ../$(PY) -m app.sync.run all
+
+sync-status:      ## data-source status: fresh / stale / unavailable / not_configured
+	cd backend && ../$(PY) -m app.sync.run status
 
 data: fetch process db
 
@@ -35,9 +46,9 @@ ml:               ## features -> train -> evaluate -> forecast -> SHAP -> demand
 	$(PY) ml/explain_shap.py
 	$(PY) ml/project_demand.py
 	$(PY) ml/model_card.py
-	$(PY) ml/build_db.py --sample
+	$(PY) ml/build_db.py
 
-mocks:            ## export OpenAPI spec, Phase-0 mocks and regenerate TypeScript types
+mocks:            ## export the OpenAPI spec and regenerate TypeScript types (mock capture removed in P2)
 	$(PY) backend/scripts/export_openapi_and_mocks.py
 	cd frontend && npm run gen:api
 

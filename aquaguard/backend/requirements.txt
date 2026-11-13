@@ -1,5 +1,5 @@
-# AquaGuard backend (API). Versions pinned to the environment the ML models were trained in:
-# the joblib model files must be loaded with the same scikit-learn/numpy versions.
+# AquaGuard backend (API). Exact pins; see docs/aquaguard-plan.md §8 for the dependency policy.
+# The joblib model files must be loaded with the same scikit-learn/numpy versions they were trained with.
 fastapi==0.162.5
 uvicorn[standard]==0.54.0
 pydantic==2.14.3
@@ -10,4 +10,13 @@ scikit-learn==1.9.1
 xgboost==3.4.1
 joblib==1.6.0
 PyYAML==6.0.3
+# HTTP client for data-source adapters (P1)
+httpx==0.28.1
+# Scheduler for data synchronisation (P2) and its time-zone dependencies
+APScheduler==3.11.3
+tzlocal==5.4.5
+tzdata==2026.6
+# GRACE CSR NetCDF/HDF5 reading (P2 adapter)
+h5py==3.16.0
+# AI Copilot (M8)
 anthropic==2.8.0

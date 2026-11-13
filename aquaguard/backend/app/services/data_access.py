@@ -1,9 +1,14 @@
 """Single read path for all stored data.
 
-Order of preference for every table:
-  1. SQLite database (data/aquaguard.db), built by `make data`.
-  2. data/sample/<table>.csv — a frozen snapshot of the same schema, flagged is_sample = 1.
-Live Open-Meteo forecasts: network (unless AQUAGUARD_OFFLINE) -> on-disk cache -> sample snapshot.
+Every table is read from the SQLite database (data/aquaguard.db). There is no sample/mock fallback (decision 5):
+a missing table reads as empty and the caller reports the data as unavailable. ``Table.is_sample`` is kept for API
+compatibility and is always False.
+
+Tables are cached per process. The cache is cleared after a sync job in this process and, at most every
+``INVALIDATE_CHECK_S`` seconds, when ``sync_runs`` shows a run that finished in another process (e.g. the CLI).
+
+Open-Meteo forecast for a point: network (unless AQUAGUARD_OFFLINE) -> on-disk cache (TTL) -> the forecast stored by
+the scheduled sync for the nearest divisional weather point -> unavailable.
 """
 from __future__ import annotations
 
@@ -15,16 +20,17 @@ import urllib.request
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from functools import lru_cache
-from pathlib import Path
 from urllib.parse import urlencode
 
 import pandas as pd
 
 from ..config.params import sources_registry
+from ..db import connection
 from ..settings import get_settings
 
 _lock = threading.Lock()
-_state = {"sample_tables": set()}  # tables served from the sample snapshot in this process
+INVALIDATE_CHECK_S = 30.0
+_sync_marker: dict[str, object] = {"checked": 0.0, "value": None}
 
 
 @dataclass(frozen=True)
@@ -33,49 +39,70 @@ class Table:
     is_sample: bool
 
 
-def _db_available() -> bool:
-    s = get_settings()
-    return (not s.force_sample) and s.db_path.exists()
-
-
 def _read(name: str) -> Table:
     s = get_settings()
-    if _db_available():
+    if s.db_path.exists():
         try:
-            con = sqlite3.connect(f"file:{s.db_path}?mode=ro", uri=True)
+            con = connection.connect(s.db_path, read_only=True)  # WAL-safe; writes blocked by query_only
             try:
                 df = pd.read_sql_query(f"SELECT * FROM {name}", con)
             finally:
                 con.close()
-            if len(df):
-                return Table(df, False)
+            return Table(df, False)
         except sqlite3.Error:
             pass
-    path = s.data_dir / "sample" / f"{name}.csv"
-    if path.exists():
-        with _lock:
-            _state["sample_tables"].add(name)
-        df = pd.read_csv(path)
-        df["is_sample"] = 1
-        return Table(df, True)
-    return Table(pd.DataFrame(), True)
+    return Table(pd.DataFrame(), False)
 
 
 @lru_cache(maxsize=32)
-def table(name: str) -> Table:
+def _cached(name: str) -> Table:
     return _read(name)
 
 
+def _latest_sync() -> str | None:
+    s = get_settings()
+    if not s.db_path.exists():
+        return None
+    try:
+        con = connection.connect(s.db_path, read_only=True)
+        try:
+            return con.execute("SELECT MAX(finished_at) FROM sync_runs").fetchone()[0]
+        finally:
+            con.close()
+    except sqlite3.Error:
+        return None
+
+
+def _invalidate_if_synced_elsewhere() -> None:
+    now = time.monotonic()
+    with _lock:
+        if now - float(_sync_marker["checked"]) < INVALIDATE_CHECK_S:
+            return
+        _sync_marker["checked"] = now
+    latest = _latest_sync()
+    with _lock:
+        changed = latest != _sync_marker["value"]
+        _sync_marker["value"] = latest
+    if changed:
+        _cached.cache_clear()
+        _region_index.cache_clear()
+
+
+def table(name: str) -> Table:
+    _invalidate_if_synced_elsewhere()
+    return _cached(name)
+
+
 def clear_cache() -> None:
-    table.cache_clear()
+    _cached.cache_clear()
     _region_index.cache_clear()
     with _lock:
-        _state["sample_tables"].clear()
+        _sync_marker["checked"] = 0.0
 
 
 def sample_tables() -> list[str]:
-    with _lock:
-        return sorted(_state["sample_tables"])
+    """Kept for API compatibility: no table is ever served from a sample snapshot (decision 5)."""
+    return []
 
 
 # ---------------------------------------------------------------- regions
@@ -120,18 +147,24 @@ def resolve_division_scope(region_id: str) -> tuple[list[str], str]:
 
 def monthly(division: str | None = None) -> Table:
     t = table("weather_monthly")
+    if t.df.empty:
+        return t
     df = t.df if division is None else t.df[t.df["division"] == division]
     return Table(df.sort_values(["division", "year", "month"]).reset_index(drop=True), t.is_sample)
 
 
 def climatology(division: str | None = None) -> Table:
     t = table("climatology")
+    if t.df.empty:
+        return t
     df = t.df if division is None else t.df[t.df["division"] == division]
     return Table(df.sort_values(["division", "month"]).reset_index(drop=True), t.is_sample)
 
 
 def daily(division: str, start: str | None = None, end: str | None = None) -> Table:
     t = table("weather_daily")
+    if t.df.empty:
+        return t
     df = t.df[t.df["division"] == division]
     if start:
         df = df[df["date"] >= start]
@@ -168,14 +201,9 @@ def retrieved_at(source_id: str) -> str | None:
         hit = df[df["id"] == source_id]
         if len(hit):
             return hit.iloc[0]["retrieved_at"]
-    s = get_settings()
-    f = s.data_dir / "processed" / "sources_retrieved.json"
+    f = get_settings().data_dir / "processed" / "sources_retrieved.json"
     if f.exists():
         return json.loads(f.read_text(encoding="utf-8")).get(source_id, {}).get("retrievedAt")
-    readme = s.data_dir / "sample" / "README.json"
-    if readme.exists():
-        return json.loads(readme.read_text(encoding="utf-8")).get("sources_retrieved", {}).get(source_id, {}).get(
-            "retrievedAt")
     return None
 
 
@@ -208,8 +236,9 @@ class Forecast:
     daily: pd.DataFrame          # date, precip_mm, tmax_c, tmin_c, tmean_c, et0_mm, kind ('past'|'forecast')
     soil_moisture: float | None  # latest hourly 3-9 cm value (m3/m3), model data
     retrieved_at: str | None
-    mode: str                    # 'live' | 'cache' | 'sample'
-    is_sample: bool
+    mode: str                    # 'live' | 'cache' | 'stored' | 'unavailable'
+    is_sample: bool              # always False (kept for API compatibility)
+    point_id: str | None = None  # 'stored': the divisional weather point whose forecast was used
 
 
 def _parse_forecast(js: dict) -> tuple[pd.DataFrame, float | None]:
@@ -250,40 +279,82 @@ def forecast(lat: float, lon: float, cache_key: str) -> Forecast:
             return Forecast(df, sm, js["_retrievedAt"], "live", False)
         except Exception:
             pass
-    # stale cache is better than nothing
+    # an expired cache is still the newest forecast for this exact point
     if cache.exists():
         js = json.loads(cache.read_text(encoding="utf-8"))
         df, sm = _parse_forecast(js)
         return Forecast(df, sm, js.get("_retrievedAt"), "cache", False)
-    # ingestion-time forecast snapshot for the nearest division
-    return _sample_forecast(lat, lon)
+    return stored_forecast(lat, lon)
 
 
-def _nearest_division(lat: float, lon: float) -> str:
-    divs = [r for r in regions() if r["level"] == "division"]
-    return min(divs, key=lambda r: (r["lat"] - lat) ** 2 + (r["lon"] - lon) ** 2)["id"]
+FORECAST_COLUMNS = ["date", "precip_mm", "tmax_c", "tmin_c", "tmean_c", "et0_mm", "kind"]
+_STORED_DAILY = {"precipitation_sum": "precip_mm", "temperature_2m_max": "tmax_c", "temperature_2m_min": "tmin_c",
+                 "temperature_2m_mean": "tmean_c", "et0_fao_evapotranspiration": "et0_mm"}
 
 
-def _sample_forecast(lat: float, lon: float) -> Forecast:
+def _nearest_weather_point(con: sqlite3.Connection, lat: float, lon: float) -> str | None:
+    rows = con.execute("SELECT id, lat, lon FROM locations WHERE is_weather_point = 1 AND lat IS NOT NULL").fetchall()
+    if not rows:
+        return None
+    return min(rows, key=lambda r: (r[1] - lat) ** 2 + (r[2] - lon) ** 2)[0]
+
+
+def stored_forecast(lat: float, lon: float, past_days: int = 7) -> Forecast:
+    """Forecast stored by the scheduled Open-Meteo sync for the nearest divisional weather point.
+
+    The window is the newest stored 16-day forecast plus ``past_days`` before it (when sync is current: today-7 to
+    today+15). When the scheduler has been stopped the newest stored run is returned as is; ``retrieved_at`` and
+    mode 'stored' disclose its age."""
     s = get_settings()
-    div = _nearest_division(lat, lon)
-    for p in (s.data_dir / "raw" / "openmeteo" / f"forecast_{div}.json",
-              s.data_dir / "sample" / f"forecast_{div}.json"):
-        if Path(p).exists():
-            js = json.loads(Path(p).read_text(encoding="utf-8"))
-            df, sm = _parse_forecast(js)
-            with _lock:
-                _state["sample_tables"].add("forecast")
-            return Forecast(df, sm, js.get("_retrievedAt"), "sample", True)
-    with _lock:
-        _state["sample_tables"].add("forecast")
-    return Forecast(pd.DataFrame(columns=["date", "precip_mm", "tmax_c", "tmin_c", "tmean_c", "et0_mm", "kind"]),
-                    None, None, "sample", True)
+    empty = Forecast(pd.DataFrame(columns=FORECAST_COLUMNS), None, None, "unavailable", False)
+    if not s.db_path.exists():
+        return empty
+    dhaka_now = datetime.now(timezone.utc) + timedelta(hours=6)  # Asia/Dhaka (UTC+6, no DST)
+    today = dhaka_now.date()
+    try:
+        con = connection.connect(s.db_path, read_only=True)
+        try:
+            point = _nearest_weather_point(con, lat, lon)
+            if point is None:
+                return empty
+            names = ",".join("?" for _ in _STORED_DAILY)
+            newest = con.execute(
+                "SELECT MAX(valid_time) FROM weather_values WHERE location_id = ? AND data_kind = 'forecast' "
+                "AND time_step = 'daily'", (point,)).fetchone()[0]
+            if newest is None:
+                return empty
+            anchor = min(today, date.fromisoformat(newest[:10]) - timedelta(days=15))
+            rows = con.execute(
+                f"SELECT valid_time, variable, value, retrieved_at FROM weather_values WHERE location_id = ? "
+                f"AND data_kind = 'forecast' AND time_step = 'daily' AND variable IN ({names}) AND valid_time >= ?",
+                [point, *_STORED_DAILY, (anchor - timedelta(days=past_days)).isoformat()]).fetchall()
+            sm = con.execute(
+                "SELECT value FROM weather_values WHERE location_id = ? AND data_kind = 'forecast' "
+                "AND time_step = 'hourly' AND variable = 'soil_moisture_3_to_9cm' AND valid_time <= ? "
+                "ORDER BY valid_time DESC LIMIT 1", (point, dhaka_now.strftime("%Y-%m-%dT%H:00"))).fetchone()
+        finally:
+            con.close()
+    except sqlite3.Error:
+        return empty
+    if not rows:
+        return empty
+    wide = (pd.DataFrame(rows, columns=["date", "variable", "value", "retrieved_at"])
+            .pivot_table(index="date", columns="variable", values="value", aggfunc="last")
+            .rename(columns=_STORED_DAILY).reset_index())
+    for col in FORECAST_COLUMNS[1:-1]:
+        if col not in wide:
+            wide[col] = None
+    wide["kind"] = ["past" if d < today.isoformat() else "forecast" for d in wide["date"]]
+    retrieved = max(r[3] for r in rows)
+    return Forecast(wide[FORECAST_COLUMNS].sort_values("date").reset_index(drop=True),
+                    None if sm is None else float(sm[0]), retrieved, "stored", False, point)
 
 
 def last_n_days_rain(division: str, n: int = 30) -> tuple[float | None, str | None, str | None, bool]:
     """Rainfall total for the last n days available in the archive (Historical reanalysis)."""
     t = table("weather_daily")
+    if t.df.empty:
+        return None, None, None, False
     df = t.df[t.df["division"] == division].dropna(subset=["precip_mm"])
     if not len(df):
         return None, None, None, t.is_sample
@@ -296,6 +367,8 @@ def last_n_days_rain(division: str, n: int = 30) -> tuple[float | None, str | No
 def clim_rain_for_window(division: str, start: str, end: str) -> float | None:
     """1991-2020 normal rainfall for the same calendar days (mean over years of the daily window sums)."""
     t = table("weather_daily")
+    if t.df.empty:
+        return None
     df = t.df[t.df["division"] == division].copy()
     if not len(df):
         return None

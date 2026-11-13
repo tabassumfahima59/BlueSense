@@ -277,7 +277,7 @@ def llm_answer(message: str, history: list[dict], name: str, facts: list[Fact]) 
         return None
     import anthropic
 
-    client = anthropic.Anthropic(api_key=s.llm_api_key, timeout=30.0, max_retries=1)
+    client = anthropic.Anthropic(api_key=s.llm_api_key.get_secret_value(), timeout=30.0, max_retries=1)
     model = s.llm_model or "claude-opus-5-5"
     msgs = [{"role": t["role"], "content": t["content"]} for t in history[-6:]]
     msgs.append({"role": "user", "content": f"FACTS:\n{facts_block(name, facts)}\n\nQUESTION: {message}"})

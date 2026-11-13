@@ -5,6 +5,9 @@ OpenAPI: /api/openapi.json   Docs: /api/docs
 """
 from __future__ import annotations
 
+import logging
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,6 +30,39 @@ from .routers import (
 from .settings import get_settings
 
 settings = get_settings()
+log = logging.getLogger("aquaguard.startup")
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    """Startup: (1) bootstrap seed when the database is missing; (2) apply pending migrations to an existing
+    database (verified backup first; a failed migration is rolled back and stops startup rather than serving a
+    half-migrated database); (3) start the sync scheduler when enabled. Shutdown: stop the scheduler."""
+    app_log = logging.getLogger("aquaguard")
+    if not app_log.handlers:  # uvicorn configures only its own loggers; show sync/migration/seed messages too
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter("%(levelname)s:     %(name)s: %(message)s"))
+        app_log.addHandler(handler)
+        app_log.setLevel(logging.INFO)
+    if settings.bootstrap_on_startup and not settings.db_path.exists():
+        from .db import seed
+
+        seed.bootstrap_if_missing(settings)
+    if settings.migrate_on_startup and settings.db_path.exists():
+        from .db import migrate
+
+        report = migrate.migrate(settings.db_path, backup=True, backup_dir=settings.backup_dir)
+        if report.applied:
+            log.info("applied migrations %s (backup: %s)", report.applied, report.backup_path)
+    from .sync import scheduler
+
+    scheduler.start(settings)
+    try:
+        yield
+    finally:
+        scheduler.stop()
+
+
 app = FastAPI(
     title="AquaGuard API",
     version=health.VERSION,
@@ -35,6 +71,7 @@ app = FastAPI(
     openapi_url="/api/openapi.json",
     docs_url="/api/docs",
     redoc_url=None,
+    lifespan=lifespan,
 )
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_methods=["GET", "POST"],
                    allow_headers=["Content-Type"], allow_credentials=False)

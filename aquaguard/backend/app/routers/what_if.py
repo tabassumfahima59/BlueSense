@@ -26,7 +26,7 @@ def _cmp(key: str, label: str, b: float, s: float, unit: str, smp: bool, digits:
 def _log(region: str, p: ScenarioParams, summary: str) -> None:
     """Persist scenario runs (scenarios table). Failures never break the response."""
     s = get_settings()
-    if not s.db_path.exists() or s.force_sample:
+    if not s.db_path.exists():
         return
     try:
         con = sqlite3.connect(s.db_path)

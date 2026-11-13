@@ -21,7 +21,7 @@ The live registry (with retrieval times read from `data/processed/sources_retrie
 
 - Raw responses: `data/raw/` (git-ignored; re-download with `make fetch`).
 - Cleaned tables: `data/processed/` → SQLite `data/aquaguard.db` (tables: regions, sources, weather_daily, weather_monthly, climatology, water_resources, inflow_shape, population_projection, storage_anomaly, station_observations, predictions, scenarios, alerts_log). Every record carries `source_id`, `retrieved_at`, `provenance`, `is_sample`.
-- Offline fallback: `data/sample/*.csv` is a frozen snapshot of the same tables (daily weather: last 400 days) plus forecast snapshots. When the database is missing (or `AQUAGUARD_FORCE_SAMPLE=1`) these are served with `isSample = true` and a "Sample data" banner. Live forecasts fall back to the 3-hour cache, then to the snapshot.
+- No sample fallback (P2, decision 5): every table is read from the database; when the database is missing at startup it is bootstrapped from `data/processed` (original dates, reported `stale` until the first sync). Point forecasts: live request → 3-hour cache → forecast stored by the scheduled sync for the nearest divisional point → unavailable. `data/sample/` is no longer read by the API.
 
 ## BWDB CSV schema {#bwdb}
 

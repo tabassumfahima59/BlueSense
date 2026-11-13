@@ -9,9 +9,9 @@ COPY backend backend
 COPY ml/*.py ml/
 COPY ml/artifacts ml/artifacts
 COPY data/processed data/processed
-COPY data/sample data/sample
 COPY data/geo data/geo
-# Build SQLite from the committed processed data (raw downloads are not needed at runtime).
+# Build SQLite from the committed processed data (bootstrap seed: original dates kept, sources show "stale" until the
+# first scheduled sync). Raw downloads are not needed at runtime; there is no sample/mock fallback.
 RUN python ml/build_db.py
 WORKDIR /app/backend
 EXPOSE 8000

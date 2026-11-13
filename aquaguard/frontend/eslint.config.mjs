@@ -18,6 +18,7 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      "public/maplibre/**", // vendor worker copied from maplibre-gl by scripts/copy-maplibre-worker.mjs
     ],
   },
 ];

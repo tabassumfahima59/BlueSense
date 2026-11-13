@@ -73,11 +73,11 @@ def estimate(req: IrrigationRequest) -> IrrigationResponse:
 
     fc = da.forecast(lat, lon, key)
     if fc.daily.empty:
-        raise HTTPException(status_code=503, detail="No weather data available (live, cached or sample).")
+        raise HTTPException(status_code=503, detail="No weather data available (live, cached or stored forecast).")
     today = date.today()
     df = fc.daily.copy()
     if df[df["date"] >= today.isoformat()].empty:
-        # Sample snapshot is older than today: evaluate its own forecast window instead of failing.
+        # Stored forecast ends before today: evaluate its own window (weatherMode + retrieval time disclose this).
         today = date.fromisoformat(df[df["kind"] == "forecast"]["date"].min() if (df["kind"] == "forecast").any()
                                    else df["date"].min())
     future = df[df["date"] >= today.isoformat()]

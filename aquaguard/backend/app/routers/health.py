@@ -1,4 +1,4 @@
-"""GET /health — status, sample mode and data freshness."""
+"""GET /health — status and data freshness. ``sampleMode`` is always False (no sample fallback since P2)."""
 from __future__ import annotations
 
 from fastapi import APIRouter
@@ -23,7 +23,7 @@ def health() -> StatusResponse:
         "graceRetrievedAt": da.retrieved_at("grace_csr"),
         "modelsTrainedAt": (mla.model_meta() or {}).get("trainedAt"),
     }
-    sample = bool(da.sample_tables()) or da.table("weather_monthly").is_sample
-    return StatusResponse(status="degraded" if sample else "ok", sampleMode=sample, dataFreshness=freshness,
+    has_data = not da.table("weather_monthly").df.empty
+    return StatusResponse(status="ok" if has_data else "degraded", sampleMode=False, dataFreshness=freshness,
                           llmEnabled=bool(s.llm_api_key and s.llm_model), version=VERSION)
 
