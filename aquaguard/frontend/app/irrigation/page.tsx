@@ -75,7 +75,7 @@ function Outputs({ r }: { r: IrrigationResponse }) {
   const days = Number(r.period.match(/\((\d+) days\)/)?.[1] ?? 7);
   return (
     <div className="space-y-5">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard label={`Gross need · next ${days} days`} m={r.grossRequirementMm} icon={<Droplet size={16} />}
                  hint={<span>{fmtMeasure(r.grossRequirementM3)} · net {fmtMeasure(r.netRequirementMm)}</span>} />
         <KpiCard label="Crop water use ETc (mean per day)" m={r.etc} icon={<Gauge size={16} />} hint={<span>ET0 {fmtMeasure(r.et0)} × Kc {fmtMeasure(r.kc, { digits: 2 })}</span>} />
@@ -94,7 +94,7 @@ function Outputs({ r }: { r: IrrigationResponse }) {
       <Card title="Recommendations">
         <ul className="list-disc space-y-1 pl-5 text-[13.5px]">{r.recommendations.map((x) => <li key={x}>{x}</li>)}</ul>
       </Card>
-      <div className="grid gap-5 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
         <Why r={r} />
         <div className="space-y-5">
           <Conditions r={r} />
@@ -178,7 +178,7 @@ export default function Irrigation() {
       <PageHeader title="Smart Irrigation Advisor" description="FAO-56 crop water requirement for the next 7 days from the stored Open-Meteo forecast (ET0, rainfall, model soil moisture) at the division's weather point. Estimate — validate locally; not a field prescription.">
         {res && res.forecastStatus && <DataStatusBadge info={{ status: res.forecastStatus, kind: "forecast", retrievedAt: res.weatherRetrievedAt, sources: ["openmeteo_forecast"], note: `Weather: ${res.weatherMode}` }} />}
       </PageHeader>
-      <div className="grid gap-5 lg:grid-cols-[340px_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[340px_minmax(0,1fr)]">
         <div className="space-y-4">
           <Card title="Inputs">
             <form className="space-y-3 text-[13px]" onSubmit={(e) => { e.preventDefault(); run(); }}>

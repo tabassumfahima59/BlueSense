@@ -2,6 +2,27 @@
 
 Updated after every verified phase or module. A task is **done** only when a check was run and passed.
 
+## P5 Final verification — done (report: `aquaguard-final-report.md`)
+
+| # | §7 check | Result (2026-11-14) |
+|---|---|---|
+| 1 | parser / validator tests on recorded fixtures | pass (`test_sync.py` 27) |
+| 2 | live run per source | pass on the real DB after verified backup `data/backups/aquaguard-pre-p5-20261114T081540Z.db` (integrity ok, 25 tables equal); all four jobs `success`; every scheduled source `fresh` |
+| 3 | scheduler, 60 s intervals, ~3.5 min | pass on a scratch copy: 16 runs, re-runs insert 0, 0 duplicate keys |
+| 4 | failure and recovery | pass on a scratch copy (dead host → retries, rows kept, `stale`; restored → `fresh`); UI banner shown before / absent after the live run |
+| 5 | counts never down, no null overwrite | pass (live run deltas only up; tests) |
+| 6 | prediction snapshot ↔ scheduler rows | pass with a note: real DB row from the bootstrap import; scratch copy shows the sync-created row = snapshot |
+| 7–8 | UI interactions | pass (Playwright) |
+| 9 | control inventory | pass with notes (report §3; 3 controls not re-tested) |
+| 10 | axe + keyboard | pass |
+| 11 | screenshots 375 / 768 / 1440, build, bundle | pass after fixing horizontal scroll on What-if, Irrigation, Data Sources (grid base `grid-cols-1`, wrapping licence text) + new `responsive.spec`; `npm run build` ok; MapLibre / three.js only in lazy chunks |
+| 12 | static-data sweep | pass |
+| 13 | existing tests | pass (see totals below) |
+
+New in P5: `e2e/controls.spec.ts` (6 tests for controls without a dedicated test), `e2e/responsive.spec.ts` (2).
+Totals: backend **327 passed**, vitest 38, Playwright **65 passed**, tsc / ESLint / ruff clean. npm runtime tree 0
+vulnerabilities (6 moderate dev-only, unchanged); OSV: only local `pip`.
+
 ## M8 Copilot — verified
 
 | Phase | Task | Status | Evidence (2026-11-14) |

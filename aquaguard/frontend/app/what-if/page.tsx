@@ -103,7 +103,7 @@ export default function WhatIf() {
           <Button onClick={() => setScenario(local)} disabled={applied}><Globe2 size={14} aria-hidden /> {applied && !isBaseline(local) ? "Applied across platform" : "Apply across platform"}</Button>
         </div>
       </PageHeader>
-      <div className="grid gap-5 lg:grid-cols-[340px_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[340px_minmax(0,1fr)]">
         <div className="space-y-4">
           <Card title="Baseline" subtitle={data?.basisPeriod ? `Weather: ${data.basisPeriod}` : "Loading…"}>
             <Segmented label="Baseline weather" value={basis} onChange={setBasis}
@@ -151,10 +151,10 @@ export default function WhatIf() {
                 <p className="text-[14px] leading-relaxed">{res.summary}</p>
                 {!applied && <p className="mt-2 text-[12.5px] text-primary">Preview only — click “Apply across platform” to update the other modules.</p>}
               </Card>
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {res.comparisons.filter((c) => ["dryAvailability", "dryDemand", "dryUnmet", "dryStress", "availability", "irrigationNeed", "losses", "groundwater"].includes(c.key)).map((c) => <CompareCard key={c.key} c={c} />)}
               </div>
-              <div className="grid gap-5 xl:grid-cols-2">
+              <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
                 <Card title="Scarcity risk" subtitle="Baseline → simulated (1-month horizon)">
                   <div className="flex flex-wrap items-center gap-3">
                     {res.riskBaseline && <RiskPill label={res.riskBaseline.label} level={res.riskBaseline.level} />}

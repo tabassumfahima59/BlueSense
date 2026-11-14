@@ -29,7 +29,7 @@ export default function DataSources() {
       <Async state={s} rows={3} label="Loading sources">
         {(d) => (
           <>
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {d.sources.map((x) => (
                 <Card key={x.id} id={x.id} title={x.name} subtitle={<code className="text-[11.5px]">{x.id}</code>}
                       actions={status.get(x.id) && (() => { const v = status.get(x.id)!; return (
@@ -37,7 +37,7 @@ export default function DataSources() {
                                                  retrievedAt: v.lastSuccessAt ?? v.retrievedAt, sources: [v.id],
                                                  attribution: [v.attribution], spatialLevel: v.spatialLevel, note: v.note }} />); })()}>
                   <dl className="space-y-1 text-[12.5px]">
-                    <div><dt className="inline text-muted">Licence: </dt><dd className="inline">{x.license}</dd></div>
+                    <div className="[overflow-wrap:anywhere]"><dt className="inline text-muted">Licence: </dt><dd className="inline">{x.license}</dd></div>
                     <div><dt className="inline text-muted">Spatial: </dt><dd className="inline">{x.spatialResolution}</dd></div>
                     <div><dt className="inline text-muted">Temporal: </dt><dd className="inline">{x.temporalResolution}</dd></div>
                     <div><dt className="inline text-muted">Retrieved: </dt><dd className="inline tabular-nums">{x.retrievedAt}</dd></div>
