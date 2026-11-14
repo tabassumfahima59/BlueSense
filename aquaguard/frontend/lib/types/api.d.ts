@@ -327,6 +327,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/weather/points": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Weather Points
+         * @description The eight representative divisional weather points (map layer, M6) with their latest current conditions.
+         */
+        get: operations["weather_points_api_weather_points_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/weather/forecast": {
         parameters: {
             query?: never;
@@ -995,6 +1015,11 @@ export interface components {
         /** Envelope[WeatherCurrent] */
         Envelope_WeatherCurrent_: {
             data: components["schemas"]["WeatherCurrent"];
+            meta: components["schemas"]["Meta"];
+        };
+        /** Envelope[WeatherPoints] */
+        Envelope_WeatherPoints_: {
+            data: components["schemas"]["WeatherPoints"];
             meta: components["schemas"]["Meta"];
         };
         /** Envelope[WeatherSeries] */
@@ -2274,6 +2299,30 @@ export interface components {
              */
             points: number;
         };
+        /** WeatherPoint */
+        WeatherPoint: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Lat */
+            lat: number;
+            /** Lon */
+            lon: number;
+            /** Pointkind */
+            pointKind: string;
+            /** Validtime */
+            validTime: string | null;
+            temperature: components["schemas"]["Measure"] | null;
+            precipitation: components["schemas"]["Measure"] | null;
+        };
+        /** WeatherPoints */
+        WeatherPoints: {
+            /** Points */
+            points: components["schemas"]["WeatherPoint"][];
+            /** Note */
+            note: string;
+        };
         /** WeatherResponse */
         WeatherResponse: {
             context: components["schemas"]["Context"];
@@ -3017,6 +3066,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    weather_points_api_weather_points_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_WeatherPoints_"];
                 };
             };
         };

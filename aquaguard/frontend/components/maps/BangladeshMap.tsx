@@ -1,15 +1,18 @@
 "use client";
 /**
  * MapLibre map of Bangladesh (client-only). Layers: boundaries, rivers (basemap waterways), JRC surface water,
- * GRACE regional storage trend, scarcity risk (choropleth or 3D extrusion), raster-dem terrain.
+ * GRACE grid cells (TWS anomaly, ~300 km effective resolution), the eight weather points, scarcity risk
+ * (choropleth or 3D extrusion), raster-dem terrain.
  */
 import * as maplibregl from "maplibre-gl";
 import type { ExpressionSpecification, Map as MLMap, MapLayerMouseEvent } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useRef } from "react";
+import { SERIES } from "@/components/charts/theme";
 import { riskColor } from "@/lib/format";
 import type { RegionValues } from "@/lib/types/contract";
 import { type LayerState, TERRAIN_EXAGGERATION } from "./layers";
+import { EMPTY_FC, graceColorExpression } from "./overlays";
 
 export { DEFAULT_LAYERS, type LayerState, TERRAIN_EXAGGERATION } from "./layers";
 
@@ -41,7 +44,7 @@ function heightExpression(values: Record<string, RegionValues>, ids: string[]) {
   return (pairs.length ? ["match", ["get", "id"], ...pairs, 0] : 0) as unknown as ExpressionSpecification;
 }
 
-export function BangladeshMap({ divisions, districts, values, layers, selected, onSelect, graceColor, interactive = true, height = "100%", flat = false, lite = false, resetSignal = 0, colors, onHover }: {
+export function BangladeshMap({ divisions, districts, values, layers, selected, onSelect, graceCells, cellsLabel, points, interactive = true, height = "100%", flat = false, lite = false, resetSignal = 0, colors, onHover }: {
   divisions: GeoJSON.FeatureCollection;
   districts: GeoJSON.FeatureCollection;
   values: Record<string, RegionValues>;
@@ -52,7 +55,12 @@ export function BangladeshMap({ divisions, districts, values, layers, selected, 
   layers: LayerState;
   selected?: string;
   onSelect?: (id: string) => void;
-  graceColor?: string;
+  /** GRACE grid cells as polygons (property v = anomaly in cm). */
+  graceCells?: GeoJSON.FeatureCollection;
+  /** e.g. "September 2026" for the cell popup. */
+  cellsLabel?: string;
+  /** Weather points (property id = division id, name). */
+  points?: GeoJSON.FeatureCollection;
   interactive?: boolean;
   height?: number | string;
   flat?: boolean;
@@ -67,6 +75,8 @@ export function BangladeshMap({ divisions, districts, values, layers, selected, 
   onSelectRef.current = onSelect;
   const onHoverRef = useRef(onHover);
   onHoverRef.current = onHover;
+  const cellsLabelRef = useRef(cellsLabel);
+  cellsLabelRef.current = cellsLabel;
 
   // create once
   useEffect(() => {
@@ -108,8 +118,18 @@ export function BangladeshMap({ divisions, districts, values, layers, selected, 
       m.addLayer({ id: "gsw", type: "raster", source: "gsw", paint: { "raster-opacity": 0.8 } });
       m.addSource("divisions", { type: "geojson", data: divisions, promoteId: "id" });
       m.addSource("districts", { type: "geojson", data: districts, promoteId: "id" });
+      m.addSource("grace-cells", { type: "geojson", data: EMPTY_FC });
+      m.addLayer({ id: "grace-cells", type: "fill", source: "grace-cells",
+                   paint: { "fill-color": graceColorExpression() as unknown as ExpressionSpecification, "fill-opacity": 0.6, "fill-outline-color": "#FFFFFF" } });
+      m.on("click", "grace-cells", (e: MapLayerMouseEvent) => {
+        const p = e.features?.[0]?.properties;
+        if (!p) return;
+        const v = Number(p.v);
+        new maplibregl.Popup({ closeButton: true, maxWidth: "260px" }).setLngLat(e.lngLat)
+          .setText(`GRACE cell ${Number(p.lat).toFixed(3)}°N ${Number(p.lon).toFixed(3)}°E: water storage anomaly ${v >= 0 ? "+" : ""}${v.toFixed(1)} cm${cellsLabelRef.current ? ` (${cellsLabelRef.current})` : ""}. Effective resolution about 300 km; not a well level.`)
+          .addTo(m);
+      });
       for (const lvl of ["divisions", "districts"] as const) {
-        m.addLayer({ id: `${lvl}-grace`, type: "fill", source: lvl, paint: { "fill-color": "#6250D6", "fill-opacity": 0.4 } });
         m.addLayer({ id: `${lvl}-fill`, type: "fill", source: lvl, paint: { "fill-color": "#CBD5E1", "fill-opacity": 0.7 } });
         m.addLayer({
           id: `${lvl}-extrude`, type: "fill-extrusion", source: lvl,
@@ -138,6 +158,18 @@ export function BangladeshMap({ divisions, districts, values, layers, selected, 
           if (id) onHoverRef.current?.(String(id));
         });
       }
+      m.addSource("weather-points", { type: "geojson", data: EMPTY_FC });
+      m.addLayer({ id: "weather-points", type: "circle", source: "weather-points",
+                   paint: { "circle-radius": 7, "circle-color": SERIES[0], "circle-stroke-color": "#FFFFFF", "circle-stroke-width": 2 } });
+      m.addLayer({ id: "weather-points-label", type: "symbol", source: "weather-points",
+                   layout: { "text-field": ["get", "name"], "text-size": 12, "text-offset": [0, 1.3], "text-anchor": "top" },
+                   paint: { "text-color": "#102B50", "text-halo-color": "#FFFFFF", "text-halo-width": 1.5 } });
+      m.on("click", "weather-points", (e: MapLayerMouseEvent) => {
+        const id = e.features?.[0]?.properties?.id;
+        if (id && onSelectRef.current) onSelectRef.current(String(id));
+      });
+      m.on("mouseenter", "weather-points", () => (m.getCanvas().style.cursor = "pointer"));
+      m.on("mouseleave", "weather-points", () => (m.getCanvas().style.cursor = ""));
       ready.current = true;
       pending.current?.();
       pending.current = null;
@@ -168,10 +200,9 @@ export function BangladeshMap({ divisions, districts, values, layers, selected, 
       const extrude = layers.extrude && !flat && layers.scarcity;
       m.setLayoutProperty(`${lvl}-fill`, "visibility", vis(layers.scarcity && !extrude));
       m.setLayoutProperty(`${lvl}-extrude`, "visibility", vis(extrude));
-      m.setLayoutProperty(`${lvl}-grace`, "visibility", vis(layers.groundwater));
       m.setLayoutProperty(`${lvl}-line`, "visibility", vis(layers.boundaries));
       m.setLayoutProperty(`${lvl}-selected`, "visibility", "visible");
-      for (const k of ["fill", "extrude", "grace", "line", "selected"]) m.setLayoutProperty(`${other}-${k}`, "visibility", k === "line" && layers.boundaries && lvl === "districts" ? "visible" : "none");
+      for (const k of ["fill", "extrude", "line", "selected"]) m.setLayoutProperty(`${other}-${k}`, "visibility", k === "line" && layers.boundaries && lvl === "districts" ? "visible" : "none");
       // keep clicks working when the choropleth is off: an invisible fill still needs to exist
       if (!layers.scarcity) {
         m.setLayoutProperty(`${lvl}-fill`, "visibility", "visible");
@@ -184,8 +215,12 @@ export function BangladeshMap({ divisions, districts, values, layers, selected, 
       m.setPaintProperty(`${lvl}-extrude`, "fill-extrusion-color", fill);
       m.setPaintProperty(`${lvl}-extrude`, "fill-extrusion-height", heightExpression(values, ids));
       m.setPaintProperty(`${lvl}-extrude`, "fill-extrusion-opacity", layers.opacity.scarcity);
-      m.setPaintProperty(`${lvl}-grace`, "fill-opacity", layers.opacity.groundwater);
-      if (graceColor) m.setPaintProperty(`${lvl}-grace`, "fill-color", graceColor);
+      (m.getSource("grace-cells") as maplibregl.GeoJSONSource | undefined)?.setData(graceCells ?? EMPTY_FC);
+      m.setLayoutProperty("grace-cells", "visibility", vis(layers.groundwater && !!graceCells));
+      m.moveLayer("grace-cells", `${lvl}-line`); // above the flat choropleth, below boundaries and points
+      m.setPaintProperty("grace-cells", "fill-opacity", layers.opacity.groundwater);
+      (m.getSource("weather-points") as maplibregl.GeoJSONSource | undefined)?.setData(points ?? EMPTY_FC);
+      for (const id of ["weather-points", "weather-points-label"]) m.setLayoutProperty(id, "visibility", vis(layers.weatherPoints && !!points));
       m.setLayoutProperty("gsw", "visibility", vis(layers.surfaceWater));
       m.setPaintProperty("gsw", "raster-opacity", layers.opacity.surfaceWater);
       for (const id of ["waterway", "water"]) if (m.getLayer(id)) m.setLayoutProperty(id, "visibility", vis(layers.rivers));
@@ -195,7 +230,7 @@ export function BangladeshMap({ divisions, districts, values, layers, selected, 
     };
     if (ready.current) apply();
     else pending.current = apply;
-  }, [layers, values, selected, divisions, districts, graceColor, flat, lite, colors]);
+  }, [layers, values, selected, divisions, districts, graceCells, points, flat, lite, colors]);
 
   // reset view
   useEffect(() => {

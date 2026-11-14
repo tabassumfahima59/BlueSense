@@ -86,6 +86,11 @@ export type BudgetHistory = S["BudgetHistory"];
 export type Predictions = S["Predictions"];
 export type PredictionPoint = S["PredictionPoint"];
 export type PredictionCategory = S["PredictionCategory"];
+// M6 Explorer
+export type WeatherPoints = S["WeatherPoints"];
+export type WeatherPoint = S["WeatherPoint"];
+export type WeatherCurrent = S["WeatherCurrent"];
+export type GridCell = S["GridCell"];
 
 /** Scenario with every field explicit; `null` efficiency/loss = use the baseline from config. */
 export interface Scenario {

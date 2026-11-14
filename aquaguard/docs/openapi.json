@@ -1458,6 +1458,28 @@
     }
    }
   },
+  "/api/weather/points": {
+   "get": {
+    "tags": [
+     "Data API (P3)"
+    ],
+    "summary": "Weather Points",
+    "description": "The eight representative divisional weather points (map layer, M6) with their latest current conditions.",
+    "operationId": "weather_points_api_weather_points_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_WeatherPoints_"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
   "/api/weather/forecast": {
    "get": {
     "tags": [
@@ -3667,6 +3689,23 @@
      "meta"
     ],
     "title": "Envelope[WeatherCurrent]"
+   },
+   "Envelope_WeatherPoints_": {
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/WeatherPoints"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[WeatherPoints]"
    },
    "Envelope_WeatherSeries_": {
     "properties": {
@@ -7939,6 +7978,96 @@
      "points"
     ],
     "title": "WeatherCurrent"
+   },
+   "WeatherPoint": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "title": "Id"
+     },
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "lat": {
+      "type": "number",
+      "title": "Lat"
+     },
+     "lon": {
+      "type": "number",
+      "title": "Lon"
+     },
+     "pointKind": {
+      "type": "string",
+      "title": "Pointkind"
+     },
+     "validTime": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Validtime"
+     },
+     "temperature": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/Measure"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "precipitation": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/Measure"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "id",
+     "name",
+     "lat",
+     "lon",
+     "pointKind",
+     "validTime",
+     "temperature",
+     "precipitation"
+    ],
+    "title": "WeatherPoint"
+   },
+   "WeatherPoints": {
+    "properties": {
+     "points": {
+      "items": {
+       "$ref": "#/components/schemas/WeatherPoint"
+      },
+      "type": "array",
+      "title": "Points"
+     },
+     "note": {
+      "type": "string",
+      "title": "Note"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "points",
+     "note"
+    ],
+    "title": "WeatherPoints"
    },
    "WeatherResponse": {
     "properties": {

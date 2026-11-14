@@ -50,6 +50,8 @@ from ..schemas.v2 import (
     WaterBudget,
     WaterScarcity,
     WeatherCurrent,
+    WeatherPoint,
+    WeatherPoints,
     WeatherSeries,
     WhatIf,
     WhatIfBody,
@@ -120,6 +122,37 @@ def weather_current(region: str = "bd", conn=Depends(db)) -> Envelope[WeatherCur
                                         values=values, points=cur["points"]),
                     meta=catalog.meta(["openmeteo_forecast"], ["model_current"], lvl,
                                       observed_at=_local(cur["valid_time"]), note=note))
+
+
+@router.get("/weather/points", response_model=Envelope[WeatherPoints])
+def weather_points(conn=Depends(db)) -> Envelope[WeatherPoints]:
+    """The eight representative divisional weather points (map layer, M6) with their latest current conditions."""
+    rows = conn.execute("SELECT id, name, lat, lon, point_kind FROM locations WHERE is_weather_point = 1 "
+                        "ORDER BY id").fetchall()
+    note = ("Representative divisional weather points (Open-Meteo weather model), not weather stations. Each point "
+            "stands for its whole division.")
+    points, times = [], []
+    for pid, name, lat, lon, kind in rows:
+        cur = store.current(conn, resolve(conn, pid))
+        vals = cur["values"]
+
+        def m_(var: str) -> Measure | None:
+            v = vals.get(var)
+            if not v or v["value"] is None:
+                return None
+            return mv(v["value"], v["unit"], "model_current", "openmeteo_forecast", "point",
+                      observed_at=_local(v["observed"]), digits=1,
+                      note="Weather-model estimate of current conditions, not a station reading.")
+
+        if cur["valid_time"]:
+            times.append(cur["valid_time"])
+        points.append(WeatherPoint(id=pid, name=name, lat=lat, lon=lon, pointKind=kind,
+                                   validTime=_local(cur["valid_time"]), temperature=m_("temperature_2m"),
+                                   precipitation=m_("precipitation")))
+    return Envelope(data=WeatherPoints(points=points, note=note),
+                    meta=catalog.meta(["openmeteo_forecast"], ["model_current"], "point",
+                                      observed_at=_local(min(times)) if times else None, note=note,
+                                      status=None if points else "unavailable"))
 
 
 def _series(wide: dict, labels: dict, units: dict, digits: int = 2) -> list[SeriesValues]:

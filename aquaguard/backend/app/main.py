@@ -83,7 +83,7 @@ errors.install(app)  # {"detail", "code"} error bodies; internal details only in
 
 # Per-client or fast-changing responses are not cached; live weather briefly; everything else 5 minutes.
 NO_STORE = ("/api/alerts", "/api/data/", "/api/health", "/api/search")
-SHORT_CACHE = ("/api/weather/current", "/api/weather/forecast", "/api/dashboard/")
+SHORT_CACHE = ("/api/weather/current", "/api/weather/forecast", "/api/weather/points", "/api/dashboard/")
 
 
 @app.middleware("http")

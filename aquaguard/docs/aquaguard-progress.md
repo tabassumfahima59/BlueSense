@@ -2,6 +2,17 @@
 
 Updated after every verified phase or module. A task is **done** only when a check was run and passed.
 
+## M6 Water Explorer — verified
+
+| Phase | Task | Status | Evidence (2026-11-14) |
+|---|---|---|---|
+| M6 | Layers | done | division boundaries, districts (reference layer only: a district click selects its division, decision 6), rivers, JRC surface water, **GRACE grid cells** (206 x 0.25° cells of the latest month from `/api/groundwater/trends?cells=true`, labelled "~300 km effective resolution, not a well level"; replaces the single national colour), **weather points** (new `GET /api/weather/points`: the eight representative points with current conditions, `model_current`, "not weather stations"), scarcity risk, terrain |
+| M6 | GRACE colours | done | diverging display bins (-20/-10/-3/+3/+10/+20 cm) on the validated tone palette, boundary value in the class farther from neutral, labelled "AquaGuard display bins (not an official classification)"; MapLibre `case` expression and the 2D colours agree for every value (vitest) |
+| M6 | Interaction | done | zoom / rotate / pan (MapLibre controls, reset view), cell popup with value and month, click on division / district / weather point → info panel filled from the backend: current weather (`/weather/current`), indicators with classes (`/water/scarcity/divisions`), stored 1-month prediction (`/predictions`), scarcity risk; keyboard path via "Select a division" buttons |
+| M6 | 2D fallback | done | SVG map (d3 planar projection, longitude x cos 23.7°) with the same layers that do not need tiles; used when WebGL is unavailable (says so; "Show 3D map" disabled with the reason; 3D-only layers disabled with "Needs the 3D map") and by default on screens < 768 px (can switch to 3D) |
+| M6 | Lazy loading | done | both maps are `next/dynamic` client-only chunks; GRACE cells are requested only when the layer is switched on (e2e counts the requests) |
+| M6 | Tests | done | backend `test_explorer_m6.py` 2 (full **331 passed**); vitest `map.test.ts` 4 (31 total); e2e `explorer.spec.ts` 6 (no-WebGL fallback, panel with backend data + axe, lazy GRACE, district reference, small screen, 3D + keyboard path); full Playwright **51 passed** |
+
 ## M5 Prediction Lab — verified
 
 | Phase | Task | Status | Evidence (2026-11-14) |

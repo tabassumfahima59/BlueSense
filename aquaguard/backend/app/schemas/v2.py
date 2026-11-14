@@ -49,6 +49,22 @@ class WeatherCurrent(Model):
     points: int = Field(description="weather points combined (8 for the national estimate)")
 
 
+class WeatherPoint(Model):
+    id: str
+    name: str
+    lat: float
+    lon: float
+    pointKind: str
+    validTime: str | None
+    temperature: Measure | None
+    precipitation: Measure | None
+
+
+class WeatherPoints(Model):
+    points: list[WeatherPoint]
+    note: str
+
+
 class SeriesValues(Model):
     variable: str
     label: str

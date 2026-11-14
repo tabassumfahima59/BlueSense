@@ -4,7 +4,7 @@
  */
 import { scenarioQuery } from "../store/scenario";
 import type {
-  AlertsResponse, BudgetResponse, DashboardSummary, WhatIf, WaterBudget, Predictions, DivisionIndicators, GroundwaterTrends, StatHistory, WeatherSeries, CopilotRequest, CopilotResponse, DemandResponse, Envelope, FlowRequest, FlowResponse,
+  AlertsResponse, BudgetResponse, DashboardSummary, WhatIf, WaterBudget, Predictions, WeatherPoints, WeatherCurrent, DivisionIndicators, GroundwaterTrends, StatHistory, WeatherSeries, CopilotRequest, CopilotResponse, DemandResponse, Envelope, FlowRequest, FlowResponse,
   GroundwaterResponse, IrrigationRequest, IrrigationResponse, LastUpdated, MapLayersResponse, MetricsResponse,
   OptimizeRequest, OptimizeResponse, OverviewResponse, ReadResult, RefreshResult, RegionsResponse, Scenario,
   ScarcityResponse, ScenarioRequest, ScenarioResponse, SearchResults, ShapResponse, SourceStatus, SourcesResponse,
@@ -97,8 +97,8 @@ export const api = {
       region, step: opts.step ?? "monthly",
       ...(opts.start ? { start: opts.start } : {}), ...(opts.end ? { end: opts.end } : {}),
       ...(opts.normals ? { normals: "true" } : {}) })}`),
-  groundwaterTrends: (region: string, start?: string) =>
-    request<Envelope<GroundwaterTrends>>(`/groundwater/trends?${new URLSearchParams({ region, ...(start ? { start } : {}) })}`),
+  groundwaterTrends: (region: string, start?: string, cells = false) =>
+    request<Envelope<GroundwaterTrends>>(`/groundwater/trends?${new URLSearchParams({ region, ...(start ? { start } : {}), ...(cells ? { cells: "true" } : {}) })}`),
   geo: (level: "divisions" | "districts") => request<GeoJSON.FeatureCollection>(`/geo/${level}`),
   // M4 Water Budget
   waterBudget: (mode: "national" | "derived", opts: { region?: string; period?: string; scenario?: Scenario } = {}) =>
@@ -106,4 +106,7 @@ export const api = {
   // M5 Prediction Lab
   predictions: (region: string, horizon: number, category = "water_balance") =>
     request<Envelope<Predictions>>(`/predictions?${new URLSearchParams({ region, horizon: String(horizon), category })}`),
+  // M6 Explorer
+  weatherPoints: () => request<Envelope<WeatherPoints>>("/weather/points"),
+  weatherCurrent: (region: string) => request<Envelope<WeatherCurrent>>(`/weather/current?${new URLSearchParams({ region })}`),
 };
