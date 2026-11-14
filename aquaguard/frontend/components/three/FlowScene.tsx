@@ -92,7 +92,7 @@ function Destination({ id, state }: { id: string; state: FlowState }) {
         [[-0.7, -0.5], [0.6, -0.4], [0, 0.6], [-0.9, 0.7], [0.9, 0.8]].map(([dx, dz], i) => (
           <mesh key={i} position={[dx, 0.4, dz]}>
             <boxGeometry args={[0.6, 0.8, 0.6]} />
-            <meshStandardMaterial color="#E2E8F0" />
+            <meshStandardMaterial color="#D3E4F5" />
           </mesh>
         ))}
       {id === "agricultural" && (
@@ -147,7 +147,7 @@ export function FlowScene({ state, running, lowPower }: { state: FlowState; runn
       </group>
       {/* pump station */}
       <group position={NODES.pump}>
-        <mesh position={[0, 0.5, 0]}><boxGeometry args={[1.4, 1, 1.2]} /><meshStandardMaterial color="#0D9488" /></mesh>
+        <mesh position={[0, 0.5, 0]}><boxGeometry args={[1.4, 1, 1.2]} /><meshStandardMaterial color="#0868CC" /></mesh>
         <Html position={[0, 1.8, 0]} center distanceFactor={14} zIndexRange={[10, 0]}>
           <div className="whitespace-nowrap rounded bg-white/95 px-1.5 py-0.5 text-[11px] shadow"><b>Pump</b> · {(state.pumpFlow.value ?? 0).toFixed(2)} m³/s · {(state.setpoint.value ?? 0).toFixed(1)} m</div>
         </Html>

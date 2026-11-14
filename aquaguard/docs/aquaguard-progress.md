@@ -2,7 +2,23 @@
 
 Updated after every verified phase or module. A task is **done** only when a check was run and passed.
 
-## Current phase: P3 API — implemented and verified, awaiting review (P4 not started)
+## Current phase: P4 Design system + shell — implemented and verified, awaiting review (M1 not started)
+
+| Phase | Task | Status | Evidence (2026-11-14) |
+|---|---|---|---|
+| P4 | Push of P1–P3 | done | `develop` pushed to GitHub (`4637cc5..2307fc1`) on request |
+| P4 | Blue & White tokens + glass + motion | done | `app/globals.css`; WCAG ratios asserted in `tests/design.test.ts` (ink 13.4:1, muted ≥ 4.9:1 on bg/surface/light blue, white on primary 5.4:1 / deep 7.0:1, status text ≥ 5:1, control borders 3.1:1); reduced motion/transparency via media queries and Settings |
+| P4 | Shared components | done | GlassCard, KpiCard (+ status badge, onOpen), DataStatusBadge, Skeleton, EmptyState, ErrorState, StaleBanner, Toast, Modal, ConfirmDialog, DetailDrawer, Dropdown, Popover, Tooltip (`components/ui`) |
+| P4 | Charts | done | "View as table" on every Plotly chart, the Sankey and the sparklines; sparkline gaps drawn as gaps; palette `#0868CC #C2410C #0D9488 #6250D6 #D55181` validated with the dataviz validator on white (all checks pass; first order tried failed CVD and was rejected) |
+| P4 | Shell | done | blue-gradient collapsible sidebar (saved) + mobile drawer; top bar with welcome/title, search (Ctrl/Cmd+K palette), date filter (pages that register data ranges; URL `from/to`), region selector (national + 8 divisions; district links fall back to the division), scenario chip, refresh, notifications, data-label legend, Copilot, profile menu (working items only, no fake login) |
+| P4 | Settings page | done | units (as published / MCM / km³), default region, motion, transparency, reset with confirm dialog, data-source status list; Data Sources page shows per-source status badges |
+| P4 | Mock mode removed | done | live-only API client; `public/mocks` → `tests/fixtures/mocks` (unchanged, fixtures only); SampleBanner and "Sample" tags removed; `.env.example`, README, demo script updated |
+| P4 | Unit tests | done | vitest **24 passed** (`tests/design.test.ts` 16 new: contrast, table view, units, date range, URL parsing, search, status labels) |
+| P4 | E2E + accessibility | done | Playwright **23 passed (12 shell + 11 axe route scans)** (`npm run e2e`): sidebar, region selector, district fallback, palette, mobile drawer, skip link, date filter, notifications, refresh, settings, table view, profile menu + axe WCAG 2.1 A/AA on 11 routes (no serious/critical). First run: 4 axe rule groups (accessible names not matching visible text, `role="img"` around interactive Plotly, invalid `<dl>` on Data Sources, MapLibre attribution links without underline) and a real bug (the mobile drawer was confined to the top bar because the glass `backdrop-filter` makes it the containing block; now a portal) — all fixed in code, no rule suppressed. Scroll areas were also made keyboard-focusable. Third run: all pass |
+| P4 | Visual review | done | Playwright screenshots (desktop Command Center, Settings, Water Budget, palette, notifications; mobile page and drawer) reviewed: popovers made near-opaque (content showed through the 0.72 glass), month inputs widened, top bar sticky only from tablet width |
+| P4 | Regression | done | tsc OK; eslint OK; vitest 24; `next build` OK (15 routes incl. `/settings`); backend 280 passed, ruff OK (backend change: `scripts/e2e_server.py` only) |
+
+## P3 API — verified
 
 | Phase | Task | Status | Evidence (2026-11-14) |
 |---|---|---|---|
@@ -121,8 +137,14 @@ Updated after every verified phase or module. A task is **done** only when a che
 * The test suite now takes ~3 min (was 43 s at P2): the importer/migration tests copying the real data dominate
   (~15–34 s each, unchanged code); measured under ~34 % background CPU load.
 * Docker image not built locally (no Docker on this machine); the Dockerfile no longer copies `data/sample`.
-* Frontend mock mode (`NEXT_PUBLIC_API_MODE=mock`, `frontend/public/mocks`) remains until P4; `data/sample/` is no
-  longer read by the API and stays on disk untouched; `make mocks` now exports only the OpenAPI spec.
+* `data/sample/` is no longer read by the API or the frontend and stays on disk untouched; `make mocks` exports
+  only the OpenAPI spec; the Phase-0 mock JSON is kept as frontend test fixtures.
+* P4 notes: modules keep their current content and endpoints (they were restyled through the tokens); moving each
+  module to the P3 endpoints, DataStatusBadge per value, KPI DetailDrawers, insights and choropleth is M1–M8. The
+  date filter is wired to the Command Center trend cards (within the 24 months the legacy endpoint returns); other
+  dated views register their ranges when they move to `/api/weather/history` in their module phase.
+* The units preference converts formatted values (KPIs, tables, tooltips we render); Plotly axes keep the source unit
+  and say so.
 * The UI "stale" banner and the status/refresh endpoints are P3/P4; P2 provides `app.sync.status` and the CLI.
 * The scheduler is off by default (`AQUAGUARD_SCHEDULER_ENABLED=0`); enable it on the host.
 * Admin endpoints themselves are P3; P1 delivers and tests the `require_admin` dependency.

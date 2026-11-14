@@ -99,14 +99,17 @@ make dev-frontend  # Next.js on http://localhost:3000  (frontend/.env.local: NEX
 
 Without `make`: `cd backend && ../.venv/Scripts/python -m uvicorn app.main:app --port 8001` and `cd frontend && npm run dev`.
 
-Offline switch: `AQUAGUARD_OFFLINE=1` (no outbound calls; scheduled sync skipped). The backend has no sample/mock fallback (P2); the frontend mock mode (`NEXT_PUBLIC_API_MODE=mock`) is removed in P4.
+Offline switch: `AQUAGUARD_OFFLINE=1` (no outbound calls; scheduled sync skipped). There is no sample or mock mode: the backend serves the database only (P2) and the frontend talks only to the API (P4); captured Phase-0 responses live in `frontend/tests/fixtures/mocks/` as test fixtures.
 
 ### Test and lint
 
 ```bash
 make test          # pytest (engines, API contract, migrations, sync adapters, scheduler, security, Copilot grounding) + vitest
 make lint          # ruff, eslint, tsc
+cd frontend && npm run e2e   # Playwright + axe: builds into .next-e2e, starts an offline backend on a DB copy (port 8013)
 ```
+
+First e2e run only: `cd frontend && npx playwright install chromium`.
 
 ## Deploy
 

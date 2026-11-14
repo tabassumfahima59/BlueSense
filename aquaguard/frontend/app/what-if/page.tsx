@@ -149,7 +149,7 @@ export default function WhatIf() {
                   layout={baseLayout({ barmode: "group", bargap: 0.25, yaxis: { ...(baseLayout().yaxis as object), title: axisTitle("MCM per month") } })} />
               </Card>
               <Card title="All comparisons">
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
                   <table className="w-full min-w-[520px] text-[13px]">
                     <thead className="text-left text-[12px] text-muted"><tr className="border-b border-border"><th className="py-1.5 font-medium">Output</th><th className="text-right font-medium">Baseline</th><th className="text-right font-medium">Simulated</th><th className="text-right font-medium">Change</th></tr></thead>
                     <tbody>

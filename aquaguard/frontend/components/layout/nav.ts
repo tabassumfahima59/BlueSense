@@ -1,5 +1,5 @@
 import {
-  Bot, BrainCircuit, Database, Globe2, LayoutDashboard, Sprout, Waves, Workflow, SlidersHorizontal,
+  Bot, BrainCircuit, Database, Globe2, LayoutDashboard, Settings, Sprout, Waves, Workflow, SlidersHorizontal,
 } from "lucide-react";
 
 export const MODULES = [
@@ -14,10 +14,12 @@ export const MODULES = [
 ] as const;
 
 export const DATA_SOURCES = { href: "/data-sources", label: "Data Sources", short: "Sources", icon: Database };
+export const SETTINGS = { href: "/settings", label: "Settings", short: "Settings", icon: Settings };
 
 export function titleFor(pathname: string): string {
   const m = MODULES.find((x) => pathname.startsWith(x.href));
   if (m) return m.label;
   if (pathname.startsWith("/data-sources")) return "Data Sources & Limitations";
+  if (pathname.startsWith("/settings")) return "Settings";
   return "AquaGuard";
 }

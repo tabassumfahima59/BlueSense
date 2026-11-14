@@ -1,6 +1,6 @@
 # Demo script (5–7 minutes)
 
-**Before the demo (10 min ahead):** open `<backend>/api/health` to wake the API (or rely on the keep-warm job), then open the frontend once so tiles cache. If any external service is down the app still runs: the backend serves its database, cached forecasts and the sample snapshot, and the header shows a "Sample data" banner. Emergency fallback with no backend at all: `NEXT_PUBLIC_API_MODE=mock npm run build && npm start` in `frontend/`.
+**Before the demo (10 min ahead):** open `<backend>/api/health` to wake the API (or rely on the keep-warm job), then open the frontend once so tiles cache. If a source is down, the app keeps the last valid data with its original dates and a "Some data is not current" banner (there is no sample or mock mode since P4); the refresh button in the top bar re-checks the Open-Meteo data.
 
 | Time | Screen | Say / do |
 |---|---|---|

@@ -74,7 +74,7 @@ function Outputs({ r }: { r: IrrigationResponse }) {
         <ul className="list-disc space-y-1 pl-5 text-[13.5px]">{r.recommendations.map((x) => <li key={x}>{x}</li>)}</ul>
       </Card>
       <Card title="Assumptions" subtitle="Every parameter and its source (parameters.yaml)">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
           <table className="w-full min-w-[560px] text-[12.5px]">
             <thead className="text-left text-muted"><tr className="border-b border-border"><th className="py-1 font-medium">Parameter</th><th className="font-medium">Value</th><th className="font-medium">Source</th><th className="font-medium">Type</th></tr></thead>
             <tbody>{r.assumptions.map((a) => (
@@ -184,7 +184,8 @@ export default function Irrigation() {
           {err && <ErrorCard error={err} onRetry={run} />}
           {!res && !err && <LoadingCard rows={3} label="Estimating irrigation" />}
           {res && <Outputs r={res} />}
-          {res?.sampleData && <Note>Weather came from the stored sample snapshot because live forecasts were unavailable.</Note>}
+          {res?.weatherMode === "stored" && <Note>Weather comes from the forecast stored by the last scheduled sync (live request unavailable); see the retrieval time above.</Note>}
+          {res?.weatherMode === "unavailable" && <Note tone="warn">No weather forecast is available, so no estimate can be made.</Note>}
         </div>
       </div>
     </div>

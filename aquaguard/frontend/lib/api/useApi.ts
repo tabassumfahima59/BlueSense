@@ -1,9 +1,15 @@
 "use client";
-/** Minimal data hook: keyed in-memory cache, loading/error states, retry, stale-response protection. */
+/** Minimal data hook: keyed in-memory cache, loading/error states, retry, stale-response protection.
+ * A manual refresh (store.bumpData) clears the cache and refetches every mounted view. */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useAppStore } from "../store";
 
 const cache = new Map<string, { at: number; data: unknown }>();
 const TTL_MS = 5 * 60 * 1000;
+
+export function clearApiCache(): void {
+  cache.clear();
+}
 
 export interface ApiState<T> {
   data: T | undefined;
@@ -19,6 +25,7 @@ export function useApi<T>(key: string | null, fetcher: () => Promise<T>): ApiSta
   const [error, setError] = useState<Error | undefined>();
   const [loading, setLoading] = useState<boolean>(!fresh && key !== null);
   const [nonce, setNonce] = useState(0);
+  const version = useAppStore((s) => s.dataVersion);
   const fetcherRef = useRef(fetcher);
   fetcherRef.current = fetcher;
 
@@ -50,7 +57,7 @@ export function useApi<T>(key: string | null, fetcher: () => Promise<T>): ApiSta
     return () => {
       cancelled = true;
     };
-  }, [key, nonce]);
+  }, [key, nonce, version]);
 
   const retry = useCallback(() => {
     if (key) cache.delete(key);

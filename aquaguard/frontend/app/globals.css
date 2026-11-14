@@ -1,30 +1,53 @@
 @import "tailwindcss";
 
-/* AquaGuard design tokens (section 9). Light theme only — no dark backgrounds or glow effects. */
+/*
+ * AquaGuard Blue & White design tokens (P4, master prompt §5). Contrast (WCAG 2.1) is checked by
+ * tests/contrast.test.ts: ink 13.4:1 and muted >= 4.9:1 on every surface; white on primary 5.4:1, on deep 7.0:1;
+ * sky (#55B8FF, 2.2:1) is decoration / chart accent only and never text; accent (#0878E8, 4.3:1) only for large
+ * text, icons and fills. Green/amber/orange/red are used only for status or risk and always with a text label.
+ */
 @theme {
-  --color-bg: #f5f9fc;
-  --color-sidebar: #ffffff;
+  --color-bg: #f4f9ff;
   --color-card: #ffffff;
-  --color-border: #e2e8f0;
-  --color-primary: #0d9488;
-  --color-primary-dark: #0b7a70;
-  --color-primary-soft: #e6f6f4;
-  --color-secondary: #38bdf8;
-  --color-success: #20c997;
-  --color-warning: #f5b942;
-  --color-risk: #f06464;
-  --color-ink: #172b3a;
-  --color-muted: #64748b;
+  --color-surface: #ffffff;
+  --color-light: #eaf5ff;
+  --color-sidebar: #0868cc;
+  --color-border: #d3e4f5; /* decorative separators */
+  --color-control: #7a94b0; /* form-control borders, 3.1:1 on white */
+  --color-primary: #0868cc; /* buttons and links */
+  --color-primary-dark: #0755b8; /* deep blue */
+  --color-primary-soft: #eaf5ff;
+  --color-accent: #0878e8;
+  --color-sky: #55b8ff;
+  --color-secondary: #55b8ff;
+  --color-ink: #102b50;
+  --color-muted: #536c8a;
 
-  --color-prov-observed: #15803d;
+  --color-success: #1b7f4c;
+  --color-warning: #a15c00;
+  --color-orange: #b4410f;
+  --color-risk: #c62828;
+
+  --color-prov-observed: #166534;
   --color-prov-historical: #475569;
   --color-prov-predicted: #0369a1;
   --color-prov-estimated: #92600a;
-  --color-prov-simulated: #0d9488;
+  --color-prov-simulated: #0755b8;
 
   --font-sans: var(--font-inter), "Hind Siliguri", system-ui, sans-serif;
   --font-bangla: var(--font-hind), "Hind Siliguri", system-ui, sans-serif;
-  --radius-card: 12px;
+  --radius-card: 14px;
+}
+
+:root {
+  --glass: rgba(255, 255, 255, 0.72);
+  --glass-strong: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(120, 180, 235, 0.25);
+  --glass-blur: 14px;
+  --shadow-soft: 0 1px 2px rgb(16 43 80 / 0.04), 0 8px 24px -12px rgb(8 104 204 / 0.18);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur: 200ms;
+  --sidebar-gradient: linear-gradient(180deg, #0868cc 0%, #0755b8 100%);
 }
 
 html,
@@ -33,6 +56,12 @@ body {
   color: var(--color-ink);
   font-family: var(--font-sans);
   font-size: 15px;
+}
+
+body {
+  background-image: radial-gradient(1200px 600px at 100% -10%, #eaf5ff 0%, transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, #eaf5ff 0%, transparent 55%);
+  background-attachment: fixed;
 }
 
 :lang(bn),
@@ -46,28 +75,139 @@ body {
   outline-offset: 2px;
   border-radius: 6px;
 }
+.on-blue :focus-visible,
+.on-blue:focus-visible {
+  outline-color: #ffffff;
+}
 
-.card {
-  background: var(--color-card);
-  border: 1px solid var(--color-border);
+/* Glass surfaces: cards and overlays only (at most two stacked blur layers: top bar + card, or overlay + card).
+   Cards use the 0.72 glass; floating panels (menus, popovers, tooltips, dialogs, toasts) use a near-opaque glass so
+   the content underneath never competes with their text. */
+.card,
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-card);
-  box-shadow: 0 1px 2px rgb(23 43 58 / 0.04), 0 1px 3px rgb(23 43 58 / 0.04);
+  box-shadow: var(--shadow-soft);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+}
+.glass {
+  background: rgba(255, 255, 255, 0.94);
+}
+.glass-bar {
+  background: var(--glass-strong);
+  border-bottom: 1px solid var(--glass-border);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .card,
+  .glass,
+  .glass-bar {
+    background: rgba(255, 255, 255, 0.97);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .card,
+  .glass,
+  .glass-bar {
+    background: #ffffff;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+html[data-transparency="reduce"] .card,
+html[data-transparency="reduce"] .glass,
+html[data-transparency="reduce"] .glass-bar {
+  background: #ffffff;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.sidebar-blue {
+  background: var(--sidebar-gradient);
+  color: #ffffff;
+}
+
+/* Form controls: 3:1 borders (WCAG 1.4.11) */
+select,
+input[type="text"],
+input[type="search"],
+input[type="number"],
+input[type="date"],
+input[type="month"],
+textarea {
+  border-color: var(--color-control);
+}
+
+/* Motion: 150-250 ms ease-out; nothing pulses or streams. */
+.transition,
+[class*="transition-"] {
+  transition-duration: var(--dur);
+  transition-timing-function: var(--ease-out);
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #eef2f6 25%, #f6f8fb 37%, #eef2f6 63%);
+  background: linear-gradient(90deg, #e3eefa 25%, #f1f7fe 37%, #e3eefa 63%);
   background-size: 400% 100%;
   animation: shimmer 1.4s ease infinite;
   border-radius: 8px;
 }
 
 @keyframes shimmer {
-  0% { background-position: 100% 50%; }
-  100% { background-position: 0 50%; }
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes slide-in-right {
+  from {
+    transform: translateX(16px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.animate-fade-in {
+  animation: fade-in var(--dur) var(--ease-out);
+}
+.animate-slide-in {
+  animation: slide-in-right var(--dur) var(--ease-out);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .skeleton { animation: none; }
+  html:not([data-motion="allow"]) *,
+  html:not([data-motion="allow"]) *::before,
+  html:not([data-motion="allow"]) *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+html[data-motion="reduce"] *,
+html[data-motion="reduce"] *::before,
+html[data-motion="reduce"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
 }
 
 input[type="range"] {
@@ -76,4 +216,9 @@ input[type="range"] {
 
 .maplibregl-ctrl-attrib {
   font-size: 11px;
+}
+/* attribution links must be distinguishable from the surrounding text without colour (WCAG 1.4.1);
+   more specific than maplibre-gl.css, which loads later and removes the underline */
+.maplibregl-map .maplibregl-ctrl.maplibregl-ctrl-attrib a {
+  text-decoration: underline;
 }

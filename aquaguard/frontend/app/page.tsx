@@ -17,9 +17,10 @@ export default function Landing() {
         </div>
         <p className="mt-5 text-lg font-medium text-primary">Predict Water Risks. Optimize Water Resources. Protect Every Drop.</p>
         <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-muted">
-          A decision-support prototype for Bangladesh — national, 8 divisions and 64 districts — built on public data (ERA5 reanalysis via
-          Open-Meteo, FAO AQUASTAT, GRACE/GRACE-FO, geoBoundaries, HDX). Every number is labelled Observed, Historical, Predicted,
-          Estimated or Simulated. Flow: Predict → Analyze → Visualize → Optimize → Recommend.
+          A decision-support prototype for Bangladesh — national and 8 divisions (district boundaries are shown on the map for reference) —
+          built on public data (Open-Meteo forecasts and ERA5 reanalysis, FAO AQUASTAT, GRACE/GRACE-FO, geoBoundaries, HDX). Every value
+          shows what it is (forecast, reanalysis, satellite, statistic, derived, prediction or scenario), its source, its date and whether it
+          is current. Flow: Predict → Analyze → Visualize → Optimize → Recommend.
         </p>
         <Link href="/command-center" className="mt-5 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-[14px] font-medium text-white hover:bg-primary-dark">
           Open the Command Center <ArrowRight size={16} aria-hidden />

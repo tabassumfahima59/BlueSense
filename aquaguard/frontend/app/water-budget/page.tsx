@@ -32,7 +32,7 @@ function BalanceIndicator({ s }: { s: BudgetState }) {
 
 function SectorTable({ s }: { s: BudgetState }) {
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
       <table className="w-full min-w-[560px] text-[13px]">
         <thead className="text-left text-[12px] text-muted">
           <tr className="border-b border-border"><th className="py-1.5 font-medium">Sector</th><th className="text-right font-medium">Demand</th><th className="text-right font-medium">Allocated</th><th className="text-right font-medium">Delivered</th><th className="text-right font-medium">Unmet</th><th className="text-right font-medium">Share</th></tr>

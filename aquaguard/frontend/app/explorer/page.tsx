@@ -123,7 +123,7 @@ export default function Explorer() {
                     return (
                       <li key={t.key}>
                         <label className="flex items-center gap-2 text-[13px]">
-                          <input type="checkbox" checked={layers[t.key]} onChange={(e) => setLayers({ ...layers, [t.key]: e.target.checked })} className="h-4 w-4 accent-[#0D9488]" />
+                          <input type="checkbox" checked={layers[t.key]} onChange={(e) => setLayers({ ...layers, [t.key]: e.target.checked })} className="h-4 w-4 accent-[#0868CC]" />
                           <span className="flex-1">{t.label}</span>
                           {meta && <ProvenanceBadge p={meta.provenance as Provenance} small />}
                         </label>

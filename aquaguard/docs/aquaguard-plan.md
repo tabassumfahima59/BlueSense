@@ -1,6 +1,7 @@
 # AquaGuard — Implementation Plan (Main Rebuild)
 
-Status: **P3 API implemented and verified — awaiting review before P4.** Evidence: `aquaguard-progress.md`.
+Status: **P4 Design system + shell implemented and verified — awaiting review before M1.** Evidence:
+`aquaguard-progress.md`.
 This plan implements the approved *Final Implementation Scope* and *Final Master Implementation Prompt*. It is an
 evolution of the existing repository, not a rebuild: working features, routes, tables and records are preserved.
 
@@ -253,6 +254,49 @@ configured; tokens are never logged or echoed. CORS allows only the frontend ori
 browser cannot send privileged headers cross-origin. Secrets live only in backend environment variables; nothing
 secret uses a `NEXT_PUBLIC_` name.
 
+### 7.2 Frontend design system and shell (P4, implemented)
+
+**Tokens** (`frontend/app/globals.css`, Tailwind 4 `@theme`): background `#F4F9FF`, surface `#FFFFFF`, light blue
+`#EAF5FF`, ink `#102B50`, muted `#536C8A`, primary (buttons/links) `#0868CC`, deep blue `#0755B8`, accent `#0878E8`
+(large text, icons, fills only), sky `#55B8FF` (decoration and chart accents only), form-control borders `#7A94B0`
+(3.1:1), status text green `#1B7F4C` / amber `#A15C00` / orange `#B4410F` / red `#C62828` (always with a label or icon).
+WCAG ratios are asserted in `frontend/tests/design.test.ts`.
+
+**Glass:** `.card` / `.glass` = `rgba(255,255,255,0.72)`, 1 px `rgba(120,180,235,0.25)` border, 14 px blur, soft blue
+shadow; the top bar uses a stronger glass. Overlay backdrops have no blur, so at most two blur layers stack.
+`@supports` fallback to near-opaque white; `prefers-reduced-transparency` and the Settings switch give solid white.
+**Motion:** 150–250 ms ease-out; `prefers-reduced-motion` and the Settings choice (system / reduce / allow) disable
+transitions and animations; nothing pulses or streams.
+
+**Shared components** (`frontend/components/ui`): `GlassCard` (`Card`), `KpiCard` (status badge, optional
+`onOpen` for the M1 DetailDrawer), `DataStatusBadge` (source, data kind, observed and retrieved times, status;
+"Live" only for fresh Open-Meteo data, "Latest: <month>" for GRACE, "Reference year <yyyy>" for AQUASTAT),
+`Skeleton`, `EmptyState`, `ErrorState`, `StaleBanner`, `Toast`, `Modal`, `ConfirmDialog`, `DetailDrawer`, `Dropdown`,
+`Popover`, `Tooltip`. Dialogs trap focus, close on Escape/backdrop and return focus; menus support arrow keys.
+Every Plotly chart, the Sankey and the trend sparklines have a "View as table" toggle; sparklines draw gaps as gaps.
+**Chart palette:** `#0868CC, #C2410C, #0D9488, #6250D6, #D55181` (fixed order, validated with the dataviz validator on
+white: adjacent CVD ΔE ≥ 13.7, normal-vision ΔE ≥ 24.7, all ≥ 3:1).
+
+**Shell:** blue-gradient sidebar (`#0868CC → #0755B8`, white labels) with the eight modules, Settings and Data Sources;
+collapsible on desktop (saved), drawer on mobile. Top bar: welcome + page title, search (Ctrl/Cmd+K command palette
+over `/api/search` and the module list; combobox/listbox, arrows + Enter), date filter (only on pages that register
+their data range with `useDateBounds`; kept in `?from=&to=`), region selector (national + 8 divisions; district ids
+from old links fall back to their division with a notice), scenario chip, manual refresh (`POST /api/refresh`,
+toast; 429/offline handled), notifications (stored alerts, unread count, per-browser read marks), data-label legend,
+Copilot and a profile menu with working items only (no accounts exist: Settings, Data sources & status, Keyboard
+shortcuts). Global state (Zustand) holds region, date range and scenario (all in the URL) plus saved preferences.
+
+**Settings** (`/settings`): water-volume units (as published / MCM / km³; applied to every formatted value and KPI,
+charts keep their axis unit), default region, motion, transparency, reset (confirm dialog) and the data-source status
+list. **Mock mode removed** (decision 5): the API client is live-only; `frontend/public/mocks` moved to
+`frontend/tests/fixtures/mocks` (test fixtures only); the sample banner and "Sample" tags are gone.
+
+**Tests:** vitest (`tests/design.test.ts`: token contrast, table view, units, date range, search, status labels);
+Playwright (`frontend/e2e`, `npm run e2e`): shell, drawer, palette, keyboard, date filter, notifications, refresh,
+settings, table view, profile menu, and axe (WCAG 2.1 A/AA, no serious or critical violations) on all 11 routes.
+The e2e run builds into `.next-e2e` (env `NEXT_DIST_DIR`) and uses `backend/scripts/e2e_server.py` (database copy,
+offline, port 8013), so neither the regular build nor the real database is touched.
+
 ## 8. Dependency strategy
 
 * Pin exact versions; prefer releases at least two weeks old; check OSV (Python) and `npm audit` (Node) before and
@@ -279,8 +323,8 @@ secret uses a `NEXT_PUBLIC_` name.
 |---|---|---|
 | P1 Foundation | audit, docs, backup, migration runner, migrations 0001–0007, SQLite config, settings, HTTP client, admin auth, dependencies | implemented and verified |
 | P2 Sources + scheduler | Open-Meteo, AQUASTAT, GRACE CSR adapters; APScheduler + DB lease lock; status; bootstrap seed; backend sample fallback removed; approved security upgrades | implemented and verified |
-| P3 API | new endpoints, meta envelope, alerts engine, search, refresh, admin sync | implemented and verified; awaiting review |
-| P4 Design + shell | Blue & White glass tokens, shared components, TopBar, Settings, mock mode removal | not started |
+| P3 API | new endpoints, meta envelope, alerts engine, search, refresh, admin sync | implemented and verified |
+| P4 Design + shell | Blue & White glass tokens, shared components, TopBar, Settings, mock mode removal | implemented and verified; awaiting review |
 | M1–M8 | Command Center → Irrigation → What-if → Water Budget → Prediction Lab → Explorer → Water Flow → Copilot | not started |
 | P5 Verification | §7 checks of the master prompt, final report | not started |
 

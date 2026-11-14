@@ -5,6 +5,7 @@ import { CloudRain, Download, Droplets, Gauge, Layers, TrendingDown, Waves } fro
 import { Plot } from "@/components/charts/Plot";
 import { Sparkline } from "@/components/charts/Sparkline";
 import { axisTitle, baseLayout, NEUTRAL, SECTOR_COLOR, SERIES } from "@/components/charts/theme";
+import { effectiveRange, inRange, useDateBounds } from "@/components/layout/DateFilter";
 import { MODULES } from "@/components/layout/nav";
 import { useShareQuery } from "@/components/layout/UrlSync";
 import { DEFAULT_LAYERS } from "@/components/maps/layers";
@@ -18,7 +19,7 @@ import { useApi } from "@/lib/api/useApi";
 import { downloadText, fmtMeasure, MONTHS, toCsv } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
 import { useRegionScenario } from "@/lib/store/hooks";
-import type { Alert, OverviewResponse } from "@/lib/types/contract";
+import type { Alert, OverviewResponse, Series } from "@/lib/types/contract";
 
 const BangladeshMap = dynamic(() => import("@/components/maps/BangladeshMap").then((m) => m.BangladeshMap), {
   ssr: false,
@@ -97,14 +98,14 @@ function SectorChart({ o }: { o: OverviewResponse }) {
 
 function RegionalTable({ o, onSelect }: { o: OverviewResponse; onSelect: (id: string) => void }) {
   const exportCsv = () => {
-    const rows = [["Division", "Availability (MCM/yr)", "Demand (MCM/yr)", "Annual stress ratio", "Dry-season stress ratio", "Risk", "Provenance", "Sample"],
-      ...o.regional.map((r) => [r.name, r.availability.value, r.demand.value, r.stressRatio.value, r.dryStressRatio.value, r.risk, r.availability.provenance, r.availability.isSample ? "yes" : "no"])];
+    const rows = [["Division", "Availability (MCM/yr)", "Demand (MCM/yr)", "Annual stress ratio", "Dry-season stress ratio", "Risk", "Provenance"],
+      ...o.regional.map((r) => [r.name, r.availability.value, r.demand.value, r.stressRatio.value, r.dryStressRatio.value, r.risk, r.availability.provenance])];
     downloadText(`aquaguard-regional-comparison${o.context.scenarioActive ? "-scenario" : ""}.csv`, toCsv(rows));
   };
   return (
     <Card title="Regional comparison — 8 divisions" subtitle="Click a row to focus that division"
       actions={<button onClick={exportCsv} className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[12px] hover:bg-bg"><Download size={13} aria-hidden /> CSV</button>}>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
         <table className="w-full min-w-[640px] text-[13px]">
           <thead className="text-left text-[12px] text-muted">
             <tr className="border-b border-border">
@@ -136,6 +137,28 @@ function RegionalTable({ o, onSelect }: { o: OverviewResponse; onSelect: (id: st
         Values: <MeasureBadge m={o.regional[0]?.availability} small /> (division splits of national AQUASTAT totals)
       </div>
     </Card>
+  );
+}
+
+/** Monthly trend cards follow the global date filter (within the months the API returned). */
+function Trends({ trends }: { trends: Series[] }) {
+  const all = trends.flatMap((t) => t.points.map((p) => p.t.slice(0, 7))).sort();
+  const bounds = all.length ? { min: all[0], max: all[all.length - 1], label: "Monthly trends" } : null;
+  useDateBounds(bounds);
+  const range = effectiveRange(useAppStore((s) => s.dateRange), bounds);
+  return (
+    <div className="grid gap-5 lg:grid-cols-2">
+      {trends.map((full) => {
+        const t = { ...full, points: full.points.filter((p) => inRange(p.t, range)) };
+        return (
+          <Card key={t.id} title={t.label}
+                subtitle={t.points.length ? `${t.points.length} months · ${t.points[0].t} to ${t.points.at(-1)!.t} · blue = above normal, orange = below` : "No data in this range"}
+                actions={<MeasureBadge m={full.points[0]?.v} small />}>
+            {t.points.length ? <Sparkline series={t} /> : <p className="text-[13px] text-muted">No data in this range. Widen the date filter (available {bounds?.min} to {bounds?.max}).</p>}
+          </Card>
+        );
+      })}
+    </div>
   );
 }
 
@@ -208,13 +231,7 @@ export default function CommandCenter() {
               </Card>
             </div>
             <RegionalTable o={o} onSelect={setRegion} />
-            <div className="grid gap-5 lg:grid-cols-2">
-              {o.trends.map((t) => (
-                <Card key={t.id} title={t.label} subtitle={`Last ${t.points.length} months · ${t.points[0]?.t} to ${t.points.at(-1)?.t} · teal = above normal, orange = below`} actions={<MeasureBadge m={t.points[0]?.v} small />}>
-                  <Sparkline series={t} />
-                </Card>
-              ))}
-            </div>
+            <Trends trends={o.trends} />
             {o.validation.length > 0 && (
               <Card title="Model checks against official statistics" subtitle="AquaGuard engine outputs compared with FAO AQUASTAT">
                 <ul className="space-y-2 text-[13px]">

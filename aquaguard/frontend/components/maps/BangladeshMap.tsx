@@ -106,7 +106,7 @@ export function BangladeshMap({ divisions, districts, values, layers, selected, 
         m.addLayer({ id: `${lvl}-line`, type: "line", source: lvl, paint: { "line-color": "#334155", "line-width": lvl === "divisions" ? 1.4 : 0.6, "line-opacity": 0.7 } });
         m.addLayer({
           id: `${lvl}-selected`, type: "line", source: lvl, filter: ["==", ["get", "id"], ""],
-          paint: { "line-color": "#0D9488", "line-width": 3 },
+          paint: { "line-color": "#0755B8", "line-width": 3 },
         });
         m.on("click", `${lvl}-fill`, (e: MapLayerMouseEvent) => {
           const id = e.features?.[0]?.properties?.id;

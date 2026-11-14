@@ -43,7 +43,7 @@ function ScarcityCharts({ s }: { s: ScarcityResponse }) {
         <Plot filename="actual-vs-predicted" ariaLabel="Actual versus predicted climatic water balance on the test period" height={300}
           data={[
             { type: "scatter", mode: "lines", x: tx, y: s.test.map((p) => p.predicted.uncertainty?.high), line: { width: 0 }, showlegend: false, hoverinfo: "skip" },
-            { type: "scatter", mode: "lines", name: "90% interval", x: tx, y: s.test.map((p) => p.predicted.uncertainty?.low), fill: "tonexty", fillcolor: "rgba(13,148,136,0.14)", line: { width: 0 }, hoverinfo: "skip" },
+            { type: "scatter", mode: "lines", name: "90% interval", x: tx, y: s.test.map((p) => p.predicted.uncertainty?.low), fill: "tonexty", fillcolor: NEUTRAL.band, line: { width: 0 }, hoverinfo: "skip" },
             { type: "scatter", mode: "lines", name: "Actual (ERA5)", x: tx, y: s.test.map((p) => p.actual.value), line: { color: NEUTRAL.reference, width: 2 }, hovertemplate: "%{y:.0f} mm" },
             { type: "scatter", mode: "lines", name: "Predicted", x: tx, y: s.test.map((p) => p.predicted.value), line: { color: SERIES[0], width: 2 }, hovertemplate: "%{y:.0f} mm" },
           ]}
@@ -64,7 +64,7 @@ function MetricsPanel({ m, horizon }: { m: MetricsResponse; horizon: number }) {
   const cls = h.classification;
   return (
     <Card title="Model evaluation (test period)" subtitle={`${h.testPeriod} · ${h.samples} samples · selected: ${MODEL_LABEL[h.selectedModel]} (lowest validation RMSE) · read from ml/artifacts/metrics.json`}>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
         <table className="w-full min-w-[460px] text-[13px]">
           <thead className="text-left text-[12px] text-muted">
             <tr className="border-b border-border"><th className="py-1.5 font-medium">Model</th><th className="text-right font-medium">MAE (mm)</th><th className="text-right font-medium">RMSE (mm)</th><th className="text-right font-medium">R²</th></tr>
@@ -88,7 +88,7 @@ function MetricsPanel({ m, horizon }: { m: MetricsResponse; horizon: number }) {
           <div>90% interval test coverage: {(h.interval.testCoverage * 100).toFixed(1)}%</div>
           <p className="mt-1 text-muted">{cls.confusionAxes}</p>
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
           <table className="text-[11.5px]">
             <thead><tr><th />{cls.classes.map((c: string) => <th key={c} className="px-1 text-muted font-medium">{c.split(" ")[0]}</th>)}</tr></thead>
             <tbody>
@@ -187,7 +187,7 @@ function Demand() {
               <Plot filename="demand-projection" ariaLabel="Projected annual water demand by sector" height={320}
                 data={sectors.map((k) => ({ type: "bar", name: k[0].toUpperCase() + k.slice(1), x: yrs, y: d.years.map((y) => y[k].value), marker: { color: SECTOR_COLOR[k], line: { color: "#fff", width: 2 } }, hovertemplate: "%{y:,.0f} MCM" }))}
                 layout={baseLayout({ barmode: "stack", yaxis: { ...(baseLayout().yaxis as object), title: axisTitle("MCM per year") }, xaxis: { ...(baseLayout().xaxis as object), title: axisTitle("Year"), type: "category" } })} />
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
                 <table className="mt-2 w-full min-w-[520px] text-[12.5px]">
                   <thead className="text-left text-muted"><tr className="border-b border-border"><th className="py-1 font-medium">Year</th><th className="text-right font-medium">Population</th><th className="text-right font-medium">Domestic</th><th className="text-right font-medium">Total (MCM)</th></tr></thead>
                   <tbody>{d.years.map((y) => (

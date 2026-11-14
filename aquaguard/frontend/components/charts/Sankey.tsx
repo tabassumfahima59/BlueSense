@@ -1,10 +1,11 @@
 "use client";
 /** D3 Sankey (d3-sankey) with hover tooltips, % shares and PNG export. Values in MCM. */
 import { sankey, sankeyLinkHorizontal, type SankeyGraph } from "d3-sankey";
-import { Download } from "lucide-react";
+import { BarChart3, Download, Table2 } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { fmtNumber } from "@/lib/format";
 import type { BudgetState } from "@/lib/types/contract";
+import { DataTable } from "./Plot";
 import { NEUTRAL, SECTOR_COLOR, SERIES } from "./theme";
 
 type N = { id: string; label: string; kind: string };
@@ -22,6 +23,7 @@ export function SankeyChart({ state, height = 380, filename }: { state: BudgetSt
   const width = 1040;
   const svgRef = useRef<SVGSVGElement>(null);
   const [hover, setHover] = useState<{ x: number; y: number; text: string } | null>(null);
+  const [asTable, setAsTable] = useState(false);
   const total = state.supply.value ?? 0;
 
   const graph = useMemo(() => {
@@ -66,12 +68,27 @@ export function SankeyChart({ state, height = 380, filename }: { state: BudgetSt
 
   return (
     <div className="relative">
-      <div className="mb-1 flex justify-end">
-        <button onClick={downloadPng} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] text-muted hover:bg-bg" aria-label="Download Sankey as PNG">
-          <Download size={13} aria-hidden /> PNG
+      <div className="mb-1 flex justify-end gap-1">
+        <button type="button" onClick={() => setAsTable((v) => !v)} aria-pressed={asTable}
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] font-medium text-muted transition hover:bg-light hover:text-ink">
+          {asTable ? <BarChart3 size={13} aria-hidden /> : <Table2 size={13} aria-hidden />}
+          {asTable ? "View as chart" : "View as table"}
         </button>
+        {!asTable && (
+          <button onClick={downloadPng} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] text-muted transition hover:bg-light" aria-label="Download Sankey as PNG">
+            <Download size={13} aria-hidden /> PNG
+          </button>
+        )}
       </div>
-      <div className="overflow-x-auto">
+      {asTable ? (
+        <DataTable caption="Water budget flows" head={["From", "To", "MCM", "Share of supply"]}
+                   rows={state.links.map((l) => {
+                     const lab = (id: string) => state.nodes.find((n) => n.id === id)?.label ?? id;
+                     const v = l.value.value ?? null;
+                     return [lab(l.source), lab(l.target), v, v === null ? null : pct(v)];
+                   })} />
+      ) : (
+      <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Water budget Sankey (scrollable)">
         <svg
           ref={svgRef}
           viewBox={`0 0 ${width} ${height}`}
@@ -117,7 +134,8 @@ export function SankeyChart({ state, height = 380, filename }: { state: BudgetSt
           })}
         </svg>
       </div>
-      {hover && (
+      )}
+      {hover && !asTable && (
         <div className="pointer-events-none absolute z-10 rounded-md border border-border bg-white px-2 py-1 text-[12px] shadow" style={{ left: hover.x + 12, top: hover.y + 8 }}>
           {hover.text}
         </div>

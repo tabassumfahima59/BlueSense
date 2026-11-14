@@ -12,7 +12,8 @@
     "prebuild": "node scripts/copy-maplibre-worker.mjs",
     "test": "node scripts/vitest.mjs run",
     "gen:api": "openapi-typescript ../docs/openapi.json -o lib/types/api.d.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "e2e": "node scripts/e2e.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",

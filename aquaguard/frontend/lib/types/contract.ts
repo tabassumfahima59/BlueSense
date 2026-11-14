@@ -51,6 +51,19 @@ export type CopilotRequest = S["CopilotRequest"];
 export type CopilotResponse = S["CopilotResponse"];
 export type ChatTurn = S["ChatTurn"];
 
+// P3 envelope endpoints
+/** `{ data, meta }` returned by the P3 endpoints (generated as Envelope_<Name>_ in api.d.ts). */
+export interface Envelope<T> {
+  data: T;
+  meta: Meta;
+}
+export type SearchResults = S["SearchResults"];
+export type SearchItem = S["SearchItem"];
+export type SourceStatus = S["SourceStatus"];
+export type LastUpdated = S["LastUpdated"];
+export type RefreshResult = S["RefreshResult"];
+export type ReadResult = S["ReadResult"];
+
 /** Scenario with every field explicit; `null` efficiency/loss = use the baseline from config. */
 export interface Scenario {
   rainfallChangePct: number;

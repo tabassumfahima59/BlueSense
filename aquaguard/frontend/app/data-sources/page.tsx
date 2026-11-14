@@ -1,6 +1,7 @@
 "use client";
 import { ExternalLink } from "lucide-react";
 import { Card, PageHeader } from "@/components/ui/Card";
+import { DataStatusBadge } from "@/components/ui/DataStatus";
 import { Async } from "@/components/ui/States";
 import { api } from "@/lib/api/client";
 import { useApi } from "@/lib/api/useApi";
@@ -20,6 +21,8 @@ const LIMITATIONS = [
 
 export default function DataSources() {
   const s = useApi("sources", api.sources);
+  const st = useApi("data-sources", api.dataSources);
+  const status = new Map((st.data?.data ?? []).map((x) => [x.id, x]));
   return (
     <div className="space-y-5">
       <PageHeader title="Data Sources & Limitations" description="Every dataset AquaGuard uses, with licence, resolution and the time it was retrieved, plus every model parameter and its source." />
@@ -28,24 +31,28 @@ export default function DataSources() {
           <>
             <div className="grid gap-4 md:grid-cols-2">
               {d.sources.map((x) => (
-                <Card key={x.id} title={x.name} subtitle={<code className="text-[11.5px]">{x.id}</code>}>
+                <Card key={x.id} id={x.id} title={x.name} subtitle={<code className="text-[11.5px]">{x.id}</code>}
+                      actions={status.get(x.id) && (() => { const v = status.get(x.id)!; return (
+                        <DataStatusBadge info={{ status: v.status, kind: v.dataKind, observedAt: v.latestObservation,
+                                                 retrievedAt: v.lastSuccessAt ?? v.retrievedAt, sources: [v.id],
+                                                 attribution: [v.attribution], spatialLevel: v.spatialLevel, note: v.note }} />); })()}>
                   <dl className="space-y-1 text-[12.5px]">
                     <div><dt className="inline text-muted">Licence: </dt><dd className="inline">{x.license}</dd></div>
                     <div><dt className="inline text-muted">Spatial: </dt><dd className="inline">{x.spatialResolution}</dd></div>
                     <div><dt className="inline text-muted">Temporal: </dt><dd className="inline">{x.temporalResolution}</dd></div>
                     <div><dt className="inline text-muted">Retrieved: </dt><dd className="inline tabular-nums">{x.retrievedAt}</dd></div>
-                    <p className="pt-1 text-muted">{x.notes}</p>
-                    {x.url.startsWith("http") && (
-                      <a href={x.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
-                        {x.url} <ExternalLink size={12} aria-hidden />
-                      </a>
-                    )}
                   </dl>
+                  <p className="pt-1 text-[12.5px] text-muted">{x.notes}</p>
+                  {x.url.startsWith("http") && (
+                    <a href={x.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 break-all text-[12.5px] text-primary underline-offset-2 hover:underline">
+                      {x.url} <ExternalLink size={12} aria-hidden />
+                    </a>
+                  )}
                 </Card>
               ))}
             </div>
             <Card title="Model parameters" subtitle="From backend/app/config/parameters.yaml — the single home of every assumption">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
                 <table className="w-full min-w-[720px] text-[12.5px]">
                   <thead className="text-left text-muted"><tr className="border-b border-border"><th className="py-1 font-medium">Parameter</th><th className="font-medium">Value</th><th className="font-medium">Unit</th><th className="font-medium">Source</th><th className="font-medium">Type</th></tr></thead>
                   <tbody>
@@ -75,7 +82,6 @@ export default function DataSources() {
           <li><b>Predicted</b> — ML or third-party forecast output.</li>
           <li><b>Estimated</b> — calculated from formulas plus documented assumptions.</li>
           <li><b>Simulated</b> — output of a hypothetical scenario or simulation.</li>
-          <li><b>Sample</b> — from the frozen snapshot used when live data or the database is unavailable.</li>
         </ul>
       </Card>
     </div>

@@ -24,6 +24,9 @@ export function Card({ title, subtitle, actions, children, className = "", id }:
   );
 }
 
+/** Glass surface (master prompt §5). `Card` is kept as the name used across the existing pages. */
+export const GlassCard = Card;
+
 export function PageHeader({ title, description, children }: { title: string; description: ReactNode; children?: ReactNode }) {
   return (
     <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
@@ -47,8 +50,8 @@ export function Button({ children, onClick, variant = "primary", disabled, type 
 }) {
   const v = {
     primary: "bg-primary text-white hover:bg-primary-dark",
-    secondary: "border border-border bg-white text-ink hover:bg-bg",
-    ghost: "text-muted hover:bg-bg hover:text-ink",
+    secondary: "border border-control bg-white text-ink hover:bg-light",
+    ghost: "text-muted hover:bg-light hover:text-ink",
   }[variant];
   return (
     <button
@@ -70,7 +73,7 @@ export function Segmented<T extends string | number>({ value, options, onChange,
   label: string;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className="inline-flex rounded-lg border border-border bg-white p-0.5">
+    <div role="radiogroup" aria-label={label} className="inline-flex rounded-lg border border-control bg-white p-0.5">
       {options.map((o) => (
         <button
           key={String(o.value)}
@@ -87,6 +90,6 @@ export function Segmented<T extends string | number>({ value, options, onChange,
 }
 
 export function Note({ children, tone = "info" }: { children: ReactNode; tone?: "info" | "warn" }) {
-  const t = tone === "warn" ? "border-warning/50 bg-[#fdf6e7] text-[#6b4a07]" : "border-border bg-bg text-muted";
+  const t = tone === "warn" ? "border-warning/50 bg-[#fff6e6] text-[#6b4a07]" : "border-border bg-light/70 text-muted";
   return <div className={`rounded-lg border px-3 py-2 text-[12.5px] leading-relaxed ${t}`}>{children}</div>;
 }
