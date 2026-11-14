@@ -2,6 +2,16 @@
 
 Updated after every verified phase or module. A task is **done** only when a check was run and passed.
 
+## M7 Water Flow — verified
+
+| Phase | Task | Status | Evidence (2026-11-14) |
+|---|---|---|---|
+| M7 | Conceptual label | done | page titled "Water Flow (conceptual)", banner and in-scene badge "Conceptual illustration"; every network value has data kind `conceptual` (legacy provenance "simulated" kept for old clients; "SIMULATED" kept in the disclaimer); response `label` = "Conceptual illustration" (tests) |
+| M7 | Real parts marked | done | `realPartsUsed` = [] (the network uses no real data; the loss rate is a stated assumption, `parameters.yaml distribution_loss_rate`); `scaleContext` = AQUASTAT municipal / industrial / agricultural withdrawals as `statistic` with reference years, "not used by the network"; "What is real here?" card with a for-scale comparison (network ≈ 0.3 % of national municipal withdrawal) |
+| M7 | Controls | done | Play / Pause (one toggle), animation speed 0.25x–3x (animation only), layer switches (pipes, particles, leak markers, labels), pump, set-point, leaks, optimise, reset; `particleStep` pure function tested (paused / zero speed → no movement, linear in speed, wraps) |
+| M7 | Fixes | done | camera re-centred so the reservoir is in frame; the 3D canvas wrapper had an `aria-label` without a role (axe aria-prohibited-attr) → `role="img"` with a label pointing to the Results table |
+| M7 | Tests | done | backend `test_flow_m7.py` 3 (+ legacy `test_api.py` flow test unchanged; full **334 passed**); vitest `flow.test.ts` 3 (34 total); e2e `water-flow.spec.ts` 3 incl. axe; full Playwright **54 passed** |
+
 ## M6 Water Explorer — verified
 
 | Phase | Task | Status | Evidence (2026-11-14) |

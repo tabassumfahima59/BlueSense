@@ -273,6 +273,13 @@ class FlowState(Model):
     massBalanceError: Measure
 
 
+class ScaleItem(Model):
+    """A real national magnitude shown beside the conceptual network for scale (never used by it)."""
+    key: str
+    label: str
+    value: Measure
+
+
 class FlowResponse(Model):
     state: FlowState
     optimized: FlowState | None
@@ -280,6 +287,9 @@ class FlowResponse(Model):
     savings: dict[str, Measure] | None
     backgroundLossRate: Measure
     disclaimer: str
+    label: str = "Conceptual illustration"
+    realPartsUsed: list[str] = Field(default_factory=list, description="real data used by the network (none today)")
+    scaleContext: list[ScaleItem] = Field(default_factory=list)
 
 
 # ---------------------------------------------------------------- budget

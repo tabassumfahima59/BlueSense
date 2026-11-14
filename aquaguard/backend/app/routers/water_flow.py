@@ -1,21 +1,30 @@
-"""M4 3D Water Flow: /flow/simulate (every value Simulated)."""
+"""3D Water Flow: /flow/simulate. M7: a conceptual illustration. Every network value has data kind
+``conceptual`` (legacy provenance "simulated"); real AQUASTAT magnitudes are returned separately for scale and are
+never used by the network."""
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from ..config.params import pval
 from ..engine import flow_sim
-from ..schemas.modules import DestinationState, FlowRequest, FlowResponse, FlowState, PipeState
-from ..services.measure import m
+from ..schemas.modules import DestinationState, FlowRequest, FlowResponse, FlowState, PipeState, ScaleItem
+from ..services import store
+from ..services.catalog import mv
+from .data_api import db
 
 router = APIRouter(tags=["3D Water Flow"])
 SRC = "aquaguard_engine"
-DISCLAIMER = ("SIMULATED hypothetical network. AquaGuard has no IoT sensors, no real-time pipe pressure and no "
-              "pump or valve control; it does not detect physical leaks.")
+DISCLAIMER = ("CONCEPTUAL ILLUSTRATION (SIMULATED hypothetical network). AquaGuard has no IoT sensors, no real-time "
+              "pipe pressure and no pump or valve control; it does not detect physical leaks. The network uses no real "
+              "data; the national AQUASTAT magnitudes are shown beside it for scale only.")
+NOTE = "Conceptual illustration: hypothetical network, not a real system."
+SCALE = [(4251, "municipal", "Municipal water withdrawal, Bangladesh"),
+         (4252, "industrial", "Industrial water withdrawal, Bangladesh"),
+         (4250, "agricultural", "Agricultural water withdrawal, Bangladesh")]
 
 
 def _s(v: float, unit: str, digits: int = 4):
-    return m(v, unit, "simulated", SRC, digits=digits)
+    return mv(v, unit, "conceptual", SRC, None, digits=digits, note=NOTE)  # type: ignore[arg-type]
 
 
 def to_state(st: dict) -> FlowState:
@@ -35,8 +44,20 @@ def to_state(st: dict) -> FlowState:
         lossPct=_s(st["lossPct"], "%", 2), massBalanceError=_s(st["massBalanceErrorM3s"], "m³/s", 9))
 
 
+def _scale(conn) -> list[ScaleItem]:
+    out = []
+    for code, key, label in SCALE:
+        s = store.stat(conn, code)
+        if s:
+            unit = store.AQUASTAT_UNIT.get(s["unit"], s["unit"])
+            out.append(ScaleItem(key=key, label=label, value=mv(
+                s["value"], unit, "statistic", "fao_aquastat", "national", observed_at=str(s["year"]),
+                reference_year=s["year"], digits=2, note="Real national statistic, shown for scale; not used by the network.")))
+    return out
+
+
 @router.post("/flow/simulate", response_model=FlowResponse)
-def simulate(req: FlowRequest) -> FlowResponse:
+def simulate(req: FlowRequest, conn=Depends(db)) -> FlowResponse:
     for pid, sev in req.leaks.items():
         if not 0 <= sev <= 3:
             raise HTTPException(status_code=422, detail=f"leak severity for '{pid}' must be between 0 and 3")
@@ -55,5 +76,8 @@ def simulate(req: FlowRequest) -> FlowResponse:
             "deliveredGain": _s((opt["deliveredTotalM3s"] - st["deliveredTotalM3s"]) * 86400, "m³/day", 0),
             "setpointReduction": _s(st["setpointM"] - opt["setpointM"], "m", 2),
         }
+    loss_m = mv(loss, "ratio", "conceptual", SRC, None, digits=3,  # type: ignore[arg-type]
+                note="Assumption (parameters.yaml distribution_loss_rate or the What-if lever), not a statistic.")
     return FlowResponse(state=to_state(st), optimized=to_state(opt) if opt else None, optimizationNote=note,
-                        savings=savings, backgroundLossRate=_s(loss, "ratio", 3), disclaimer=DISCLAIMER)
+                        savings=savings, backgroundLossRate=loss_m, disclaimer=DISCLAIMER,
+                        realPartsUsed=[], scaleContext=_scale(conn))

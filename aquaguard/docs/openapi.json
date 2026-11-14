@@ -3867,6 +3867,26 @@
      "disclaimer": {
       "type": "string",
       "title": "Disclaimer"
+     },
+     "label": {
+      "type": "string",
+      "title": "Label",
+      "default": "Conceptual illustration"
+     },
+     "realPartsUsed": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Realpartsused",
+      "description": "real data used by the network (none today)"
+     },
+     "scaleContext": {
+      "items": {
+       "$ref": "#/components/schemas/ScaleItem"
+      },
+      "type": "array",
+      "title": "Scalecontext"
      }
     },
     "additionalProperties": false,
@@ -6492,6 +6512,30 @@
      "kind"
     ],
     "title": "SankeyNode"
+   },
+   "ScaleItem": {
+    "properties": {
+     "key": {
+      "type": "string",
+      "title": "Key"
+     },
+     "label": {
+      "type": "string",
+      "title": "Label"
+     },
+     "value": {
+      "$ref": "#/components/schemas/Measure"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "key",
+     "label",
+     "value"
+    ],
+    "title": "ScaleItem",
+    "description": "A real national magnitude shown beside the conceptual network for scale (never used by it)."
    },
    "ScarcityIndicator": {
     "properties": {

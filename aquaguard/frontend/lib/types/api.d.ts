@@ -1077,6 +1077,18 @@ export interface components {
             backgroundLossRate: components["schemas"]["Measure"];
             /** Disclaimer */
             disclaimer: string;
+            /**
+             * Label
+             * @default Conceptual illustration
+             */
+            label: string;
+            /**
+             * Realpartsused
+             * @description real data used by the network (none today)
+             */
+            realPartsUsed?: string[];
+            /** Scalecontext */
+            scaleContext?: components["schemas"]["ScaleItem"][];
         };
         /** FlowState */
         FlowState: {
@@ -1837,6 +1849,17 @@ export interface components {
              * @enum {string}
              */
             kind: "source" | "pool" | "sector" | "loss" | "storage";
+        };
+        /**
+         * ScaleItem
+         * @description A real national magnitude shown beside the conceptual network for scale (never used by it).
+         */
+        ScaleItem: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            value: components["schemas"]["Measure"];
         };
         /** ScarcityIndicator */
         ScarcityIndicator: {

@@ -25,7 +25,7 @@ _cache: dict[str, object] = {"at": 0.0, "value": None}
 PROVENANCE: dict[str, Provenance] = {
     "observed": "observed", "model_current": "estimated", "forecast": "predicted", "reanalysis": "historical",
     "satellite_monthly": "historical", "satellite_historical": "historical", "statistic": "historical",
-    "derived": "estimated", "prediction": "predicted", "scenario": "simulated", "conceptual": "estimated",
+    "derived": "estimated", "prediction": "predicted", "scenario": "simulated", "conceptual": "simulated",
     "reference": "historical",
 }
 NATIONAL_WEATHER_NOTE = "National estimate based on eight representative divisional weather points."

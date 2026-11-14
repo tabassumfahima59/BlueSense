@@ -1,14 +1,16 @@
 "use client";
 /**
- * Low-poly R3F scene of the simulated network. Particle speed follows simulated velocity, pipes are coloured
- * by end pressure (sequential teal ramp), red markers show burst leaks. Rendering pauses when paused or the
- * tab is hidden; device pixel ratio is capped.
+ * Low-poly R3F scene of the conceptual (hypothetical) network. Particle speed follows the computed velocity times
+ * the user's speed setting, pipes are coloured by end pressure (sequential teal ramp), red markers show burst leaks.
+ * Layers (pipes, particles, leaks, labels) can be switched off. Rendering stops when the tab is hidden; device pixel
+ * ratio is capped.
  */
 import { Html, OrbitControls } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import type { FlowState } from "@/lib/types/contract";
+import { ALL_FLOW_LAYERS, type FlowLayers, particleStep } from "./flow";
 
 const NODES: Record<string, [number, number, number]> = {
   reservoir: [-10, 0, 0],
@@ -27,7 +29,7 @@ export function pressureColor(p: number, min = 0, max = 50): string {
   return new THREE.Color("#CCEFEA").lerp(new THREE.Color("#0B5F58"), t).getStyle();
 }
 
-function Pipe({ id, state, running, lowPower }: { id: string; state: FlowState; running: boolean; lowPower: boolean }) {
+function Pipe({ id, state, running, lowPower, speed, layers }: { id: string; state: FlowState; running: boolean; lowPower: boolean; speed: number; layers: FlowLayers }) {
   const p = state.pipes.find((x) => x.id === id)!;
   const [a, b] = PIPE_ENDS[id];
   const start = useMemo(() => new THREE.Vector3(...NODES[a]).setY(0.4), [a]);
@@ -40,13 +42,13 @@ function Pipe({ id, state, running, lowPower }: { id: string; state: FlowState; 
   const count = lowPower ? 10 : 24;
   const inst = useRef<THREE.InstancedMesh>(null);
   const offsets = useMemo(() => Array.from({ length: count }, (_, i) => i / count), [count]);
-  const speed = Math.max(0.02, (p.velocity.value ?? 0) * 0.25); // visual units per second, proportional to velocity
+  const velocity = p.velocity.value ?? 0;
   const tmp = useMemo(() => new THREE.Object3D(), []);
 
   useFrame((_, dt) => {
     if (!inst.current) return;
     for (let i = 0; i < count; i++) {
-      if (running) offsets[i] = (offsets[i] + (speed * dt) / (len / 10)) % 1;
+      offsets[i] = particleStep(offsets[i], velocity, speed, dt, len, running);
       tmp.position.copy(start).addScaledVector(dir, offsets[i]);
       tmp.updateMatrix();
       inst.current.setMatrixAt(i, tmp.matrix);
@@ -58,15 +60,15 @@ function Pipe({ id, state, running, lowPower }: { id: string; state: FlowState; 
   const leak = p.burstSeverity > 0;
   return (
     <group>
-      <mesh position={mid} quaternion={quat}>
+      <mesh position={mid} quaternion={quat} visible={layers.pipes}>
         <cylinderGeometry args={[radius, radius, len, 10, 1, true]} />
         <meshStandardMaterial color={color} transparent opacity={0.55} side={THREE.DoubleSide} />
       </mesh>
-      <instancedMesh ref={inst} args={[undefined, undefined, count]}>
+      <instancedMesh ref={inst} args={[undefined, undefined, count]} visible={layers.particles}>
         <sphereGeometry args={[0.09, 6, 6]} />
         <meshBasicMaterial color="#2A78D6" />
       </instancedMesh>
-      {leak && (
+      {leak && layers.leaks && (
         <group position={mid.clone().setY(0.9)}>
           <mesh>
             <sphereGeometry args={[0.18 + 0.08 * p.burstSeverity, 10, 10]} />
@@ -83,7 +85,7 @@ function Pipe({ id, state, running, lowPower }: { id: string; state: FlowState; 
   );
 }
 
-function Destination({ id, state }: { id: string; state: FlowState }) {
+function Destination({ id, state, labels }: { id: string; state: FlowState; labels: boolean }) {
   const d = state.destinations.find((x) => x.id === id)!;
   const [x, , z] = NODES[id];
   return (
@@ -107,17 +109,17 @@ function Destination({ id, state }: { id: string; state: FlowState }) {
           <mesh position={[0.6, 1.5, 0.2]}><cylinderGeometry args={[0.15, 0.15, 1.2, 8]} /><meshStandardMaterial color="#94A3B8" /></mesh>
         </>
       )}
-      <Html position={[0, 2.2, 0]} center distanceFactor={14} zIndexRange={[10, 0]}>
+      {labels && <Html position={[0, 2.2, 0]} center distanceFactor={14} zIndexRange={[10, 0]}>
         <div className={`whitespace-nowrap rounded border bg-white/95 px-1.5 py-0.5 text-[11px] shadow ${d.serviceOk ? "border-[#E2E8F0]" : "border-[#F06464]"}`}>
           <b>{LABEL[id]}</b> · {(d.deliveredDaily.value ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 })} m³/day · {(d.pressure.value ?? 0).toFixed(1)} m
           {!d.serviceOk && <span className="text-[#b42318]"> · below min</span>}
         </div>
-      </Html>
+      </Html>}
     </group>
   );
 }
 
-export function FlowScene({ state, running, lowPower }: { state: FlowState; running: boolean; lowPower: boolean }) {
+export function FlowScene({ state, running, lowPower, speed = 1, layers = ALL_FLOW_LAYERS }: { state: FlowState; running: boolean; lowPower: boolean; speed?: number; layers?: FlowLayers }) {
   const [visible, setVisible] = useState(true);
   useEffect(() => {
     const on = () => setVisible(!document.hidden);
@@ -126,11 +128,12 @@ export function FlowScene({ state, running, lowPower }: { state: FlowState; runn
   }, []);
   return (
     <Canvas
-      camera={{ position: [1, 17, 21], fov: 42 }}
+      camera={{ position: [-1, 18, 23], fov: 46 }}
       dpr={[1, lowPower ? 1 : 1.5]}
       frameloop={visible ? "always" : "never"}
       gl={{ antialias: !lowPower, powerPreference: "low-power" }}
-      aria-label="3D simulated water distribution network"
+      role="img"
+      aria-label="Conceptual 3D water distribution network (hypothetical); the values are listed in the Results table"
     >
       <color attach="background" args={["#F5F9FC"]} />
       <ambientLight intensity={1.1} />
@@ -143,22 +146,22 @@ export function FlowScene({ state, running, lowPower }: { state: FlowState; runn
       <group position={NODES.reservoir}>
         <mesh position={[0, 0.7, 0]}><cylinderGeometry args={[1.6, 1.6, 1.4, 20]} /><meshStandardMaterial color="#CBD5E1" /></mesh>
         <mesh position={[0, 1.25, 0]}><cylinderGeometry args={[1.5, 1.5, 0.12, 20]} /><meshStandardMaterial color="#38BDF8" /></mesh>
-        <Html position={[0, 2.4, 0]} center distanceFactor={14} zIndexRange={[10, 0]}><div className="whitespace-nowrap rounded bg-white/95 px-1.5 py-0.5 text-[11px] shadow"><b>Reservoir</b></div></Html>
+        {layers.labels && <Html position={[0, 2.4, 0]} center distanceFactor={14} zIndexRange={[10, 0]}><div className="whitespace-nowrap rounded bg-white/95 px-1.5 py-0.5 text-[11px] shadow"><b>Reservoir</b></div></Html>}
       </group>
       {/* pump station */}
       <group position={NODES.pump}>
         <mesh position={[0, 0.5, 0]}><boxGeometry args={[1.4, 1, 1.2]} /><meshStandardMaterial color="#0868CC" /></mesh>
-        <Html position={[0, 1.8, 0]} center distanceFactor={14} zIndexRange={[10, 0]}>
+        {layers.labels && <Html position={[0, 1.8, 0]} center distanceFactor={14} zIndexRange={[10, 0]}>
           <div className="whitespace-nowrap rounded bg-white/95 px-1.5 py-0.5 text-[11px] shadow"><b>Pump</b> · {(state.pumpFlow.value ?? 0).toFixed(2)} m³/s · {(state.setpoint.value ?? 0).toFixed(1)} m</div>
-        </Html>
+        </Html>}
       </group>
       <mesh position={[(NODES.reservoir[0] + NODES.pump[0]) / 2, 0.4, 0]} rotation={[0, 0, Math.PI / 2]}>
         <cylinderGeometry args={[0.22, 0.22, 4, 10]} /><meshStandardMaterial color="#94A3B8" />
       </mesh>
       <mesh position={[0, 0.4, 0]}><sphereGeometry args={[0.35, 12, 12]} /><meshStandardMaterial color="#64748B" /></mesh>
-      {Object.keys(PIPE_ENDS).map((id) => <Pipe key={id} id={id} state={state} running={running} lowPower={lowPower} />)}
-      {["residential", "agricultural", "industrial"].map((id) => <Destination key={id} id={id} state={state} />)}
-      <OrbitControls enablePan={false} minDistance={8} maxDistance={40} maxPolarAngle={Math.PI / 2.15} />
+      {Object.keys(PIPE_ENDS).map((id) => <Pipe key={id} id={id} state={state} running={running} lowPower={lowPower} speed={speed} layers={layers} />)}
+      {["residential", "agricultural", "industrial"].map((id) => <Destination key={id} id={id} state={state} labels={layers.labels} />)}
+      <OrbitControls target={[-1, 0, 0]} enablePan={false} minDistance={8} maxDistance={40} maxPolarAngle={Math.PI / 2.15} />
     </Canvas>
   );
 }
