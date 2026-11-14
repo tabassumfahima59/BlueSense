@@ -91,7 +91,7 @@ def test_post_endpoints(client):
     assert "validate locally" in r.json()["note"]
 
     r = client.post("/api/copilot/chat", json={"message": "Summarize Dhaka", "region": "dhaka"})
-    assert r.status_code == 200 and r.json()["mode"] == "fallback"
+    assert r.status_code == 503 and r.json()["code"] == "not_configured"  # M8: no canned answers without a key
 
 
 @pytest.mark.parametrize("path,body", [

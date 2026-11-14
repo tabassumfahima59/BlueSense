@@ -293,6 +293,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/copilot/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Status */
+        get: operations["status_api_copilot_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/copilot/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Stream */
+        post: operations["stream_api_copilot_stream_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/copilot/chat": {
         parameters: {
             query?: never;
@@ -861,6 +895,8 @@ export interface components {
             scenario?: components["schemas"]["ScenarioParams"];
             /** History */
             history?: components["schemas"]["ChatTurn"][];
+            /** Clientid */
+            clientId?: string | null;
         };
         /** CopilotResponse */
         CopilotResponse: {
@@ -875,6 +911,71 @@ export interface components {
             references: components["schemas"]["CopilotReference"][];
             /** Intent */
             intent: string;
+            /** Tools */
+            tools?: components["schemas"]["CopilotToolCall"][];
+            /** Unverifiednumbers */
+            unverifiedNumbers?: number[];
+        };
+        /** CopilotStatus */
+        CopilotStatus: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ready" | "not_configured";
+            /** Provider */
+            provider: string;
+            /** Model */
+            model: string;
+            /** Reason */
+            reason: string | null;
+            /**
+             * Readonly
+             * @default true
+             */
+            readOnly: boolean;
+            /** Tools */
+            tools: components["schemas"]["CopilotToolInfo"][];
+            /** Ratelimitpermin */
+            rateLimitPerMin: number;
+            /**
+             * Streaming
+             * @default true
+             */
+            streaming: boolean;
+        };
+        /** CopilotToolCall */
+        CopilotToolCall: {
+            /** Name */
+            name: string;
+            /** Module */
+            module?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "running" | "done" | "error";
+            /** Input */
+            input?: {
+                [key: string]: unknown;
+            } | null;
+            /** Datakind */
+            dataKind?: string[] | null;
+            /** Source */
+            source?: string[] | null;
+            /** Observedat */
+            observedAt?: string | null;
+            /** Ms */
+            ms?: number | null;
+        };
+        /** CopilotToolInfo */
+        CopilotToolInfo: {
+            /** Name */
+            name: string;
+            /** Description */
+            description: string;
+            /** Module */
+            module: string;
         };
         /** DashboardSummary */
         DashboardSummary: {
@@ -3016,6 +3117,60 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IrrigationResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    status_api_copilot_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CopilotStatus"];
+                };
+            };
+        };
+    };
+    stream_api_copilot_stream_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CopilotRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                    "text/event-stream": unknown;
                 };
             };
             /** @description Validation Error */

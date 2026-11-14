@@ -50,6 +50,8 @@ export type IrrigationResponse = S["IrrigationResponse"];
 export type CopilotRequest = S["CopilotRequest"];
 export type CopilotResponse = S["CopilotResponse"];
 export type ChatTurn = S["ChatTurn"];
+export type CopilotStatus = S["CopilotStatus"];
+export type CopilotToolCall = S["CopilotToolCall"];
 
 // P3 envelope endpoints
 /** `{ data, meta }` returned by the P3 endpoints (generated as Envelope_<Name>_ in api.d.ts). */

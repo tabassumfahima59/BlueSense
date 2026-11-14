@@ -1374,6 +1374,67 @@
     }
    }
   },
+  "/api/copilot/status": {
+   "get": {
+    "tags": [
+     "AI Copilot"
+    ],
+    "summary": "Status",
+    "operationId": "status_api_copilot_status_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CopilotStatus"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/copilot/stream": {
+   "post": {
+    "tags": [
+     "AI Copilot"
+    ],
+    "summary": "Stream",
+    "operationId": "stream_api_copilot_stream_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CopilotRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       },
+       "text/event-stream": {}
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
   "/api/copilot/chat": {
    "post": {
     "tags": [
@@ -3178,6 +3239,19 @@
       "type": "array",
       "maxItems": 12,
       "title": "History"
+     },
+     "clientId": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 64,
+        "pattern": "^[A-Za-z0-9_-]+$"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Clientid"
      }
     },
     "additionalProperties": false,
@@ -3211,6 +3285,20 @@
      "intent": {
       "type": "string",
       "title": "Intent"
+     },
+     "tools": {
+      "items": {
+       "$ref": "#/components/schemas/CopilotToolCall"
+      },
+      "type": "array",
+      "title": "Tools"
+     },
+     "unverifiedNumbers": {
+      "items": {
+       "type": "number"
+      },
+      "type": "array",
+      "title": "Unverifiednumbers"
      }
     },
     "additionalProperties": false,
@@ -3222,6 +3310,190 @@
      "intent"
     ],
     "title": "CopilotResponse"
+   },
+   "CopilotStatus": {
+    "properties": {
+     "status": {
+      "type": "string",
+      "enum": [
+       "ready",
+       "not_configured"
+      ],
+      "title": "Status"
+     },
+     "provider": {
+      "type": "string",
+      "title": "Provider"
+     },
+     "model": {
+      "type": "string",
+      "title": "Model"
+     },
+     "reason": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Reason"
+     },
+     "readOnly": {
+      "type": "boolean",
+      "title": "Readonly",
+      "default": true
+     },
+     "tools": {
+      "items": {
+       "$ref": "#/components/schemas/CopilotToolInfo"
+      },
+      "type": "array",
+      "title": "Tools"
+     },
+     "rateLimitPerMin": {
+      "type": "integer",
+      "title": "Ratelimitpermin"
+     },
+     "streaming": {
+      "type": "boolean",
+      "title": "Streaming",
+      "default": true
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "status",
+     "provider",
+     "model",
+     "reason",
+     "tools",
+     "rateLimitPerMin"
+    ],
+    "title": "CopilotStatus"
+   },
+   "CopilotToolCall": {
+    "properties": {
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "module": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Module"
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "running",
+       "done",
+       "error"
+      ],
+      "title": "Status"
+     },
+     "input": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Input"
+     },
+     "dataKind": {
+      "anyOf": [
+       {
+        "items": {
+         "type": "string"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Datakind"
+     },
+     "source": {
+      "anyOf": [
+       {
+        "items": {
+         "type": "string"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Source"
+     },
+     "observedAt": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Observedat"
+     },
+     "ms": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Ms"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "name",
+     "status"
+    ],
+    "title": "CopilotToolCall"
+   },
+   "CopilotToolInfo": {
+    "properties": {
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "description": {
+      "type": "string",
+      "title": "Description"
+     },
+     "module": {
+      "type": "string",
+      "title": "Module"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "name",
+     "description",
+     "module"
+    ],
+    "title": "CopilotToolInfo"
    },
    "DashboardSummary": {
     "properties": {

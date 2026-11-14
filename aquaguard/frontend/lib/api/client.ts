@@ -4,7 +4,7 @@
  */
 import { scenarioQuery } from "../store/scenario";
 import type {
-  AlertsResponse, BudgetResponse, DashboardSummary, WhatIf, WaterBudget, Predictions, WeatherPoints, WeatherCurrent, DivisionIndicators, GroundwaterTrends, StatHistory, WeatherSeries, CopilotRequest, CopilotResponse, DemandResponse, Envelope, FlowRequest, FlowResponse,
+  AlertsResponse, BudgetResponse, DashboardSummary, WhatIf, WaterBudget, Predictions, WeatherPoints, WeatherCurrent, CopilotStatus, DivisionIndicators, GroundwaterTrends, StatHistory, WeatherSeries, CopilotRequest, CopilotResponse, DemandResponse, Envelope, FlowRequest, FlowResponse,
   GroundwaterResponse, IrrigationRequest, IrrigationResponse, LastUpdated, MapLayersResponse, MetricsResponse,
   OptimizeRequest, OptimizeResponse, OverviewResponse, ReadResult, RefreshResult, RegionsResponse, Scenario,
   ScarcityResponse, ScenarioRequest, ScenarioResponse, SearchResults, ShapResponse, SourceStatus, SourcesResponse,
@@ -79,6 +79,7 @@ export const api = {
   whatif: (body: ScenarioRequest & { basis: "latest" | "normal" }) => post<Envelope<WhatIf>>("/whatif", body),
   irrigation: (body: IrrigationRequest) => post<IrrigationResponse>("/irrigation/estimate", body),
   copilot: (body: CopilotRequest) => post<CopilotResponse>("/copilot/chat", body),
+  copilotStatus: () => request<CopilotStatus>("/copilot/status"),
   // P3 platform endpoints used by the shell
   search: (query: string, limit = 12) =>
     request<Envelope<SearchResults>>(`/search?${new URLSearchParams({ q: query, limit: String(limit) })}`),

@@ -17,7 +17,7 @@ Every number on screen is a `Measure` labelled **Observed, Historical, Predicted
 | Water Budget Sankey | `/water-budget` | D3 Sankey, balance check (0.01 MCM), LP allocation optimizer, custom shares |
 | What-if Simulator | `/what-if` | Six levers, presets, baseline vs simulated, "Apply across platform" |
 | Smart Irrigation | `/irrigation` | FAO-56 with Open-Meteo forecast: requirement, timing, quantity, assumptions |
-| AI Copilot | `/copilot` + floating panel | Answers only from platform data; LLM mode with number checking, rule-based fallback |
+| AI Copilot | `/copilot` + floating panel | Claude with read-only AquaGuard tools, streamed answers, tool use shown, unmatched numbers flagged; `not_configured` (no answers) without a server-side key |
 | Data Sources | `/data-sources` | Licences, retrieval times, every parameter and its source, limitations |
 
 More screenshots: [explorer](docs/screenshots/explorer.png) · [prediction lab](docs/screenshots/prediction-lab.png) · [water flow](docs/screenshots/water-flow.png) · [water budget](docs/screenshots/water-budget.png) · [what-if](docs/screenshots/what-if.png) · [irrigation](docs/screenshots/irrigation.png)

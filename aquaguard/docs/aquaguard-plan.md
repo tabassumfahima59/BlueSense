@@ -1,6 +1,6 @@
 # AquaGuard — Implementation Plan (Main Rebuild)
 
-Status: **M1–M7 implemented and verified; M8 and P5 in progress (authorised together).** Evidence:
+Status: **M1–M8 implemented and verified; P5 (final verification) in progress.** Evidence:
 `aquaguard-progress.md`.
 This plan implements the approved *Final Implementation Scope* and *Final Master Implementation Prompt*. It is an
 evolution of the existing repository, not a rebuild: working features, routes, tables and records are preserved.
@@ -358,7 +358,7 @@ The legacy engine KPIs, engine-based division stress, risk map and sector chart 
 | M5 Prediction Lab | event-driven inference after the archive sync into predictions_v2 with input snapshots, DB-first serving, model card, region/category/horizon, history + band, input viewer | implemented and verified |
 | M6 Water Explorer | GRACE grid cells (~300 km), weather points, districts as reference layer, backend info panel, 2D fallback (no WebGL / small screen), lazy layers | implemented and verified |
 | M7 Water Flow | conceptual illustration (data kind `conceptual`), real AQUASTAT magnitudes marked and kept separate, play/pause, speed, layer switches | implemented and verified |
-| M8 | Copilot | in progress |
+| M8 Copilot | Claude with 11 read-only backend tools, streamed answers, validated inputs, logged tool calls, per-client rate limit, unmatched numbers flagged, `not_configured` without a key (no canned answers) | implemented and verified |
 | P5 Verification | §7 checks of the master prompt, final report | not started |
 
 ## 10. Known limitations

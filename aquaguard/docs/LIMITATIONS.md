@@ -11,5 +11,5 @@
 9. **No observed groundwater levels.** The BWDB importer is ready but no station data are bundled.
 10. **Demand projection** is not an ML forecast and holds irrigated area, climate and industry constant.
 11. **Irrigation advice** uses forecast weather, FAO-56 table values and model soil moisture: estimate only — validate locally.
-12. **Copilot** answers only from platform facts; in fallback mode Bangla questions receive an English template answer with a Bangla note.
+12. **Copilot** needs a server-side Anthropic API key; without one it gives no answers. It answers from what its read-only tools return; the number check flags unmatched numbers but cannot prove an answer correct.
 13. **Licences.** AQUASTAT data are CC BY-NC-SA 4.0 (non-commercial); CARTO basemaps are free for non-commercial use. Commercial use would need other sources.

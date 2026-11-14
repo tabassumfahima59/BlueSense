@@ -473,6 +473,7 @@ class CopilotRequest(Model):
     region: str = "bd"
     scenario: ScenarioParams = Field(default_factory=ScenarioParams)
     history: list[ChatTurn] = Field(default_factory=list, max_length=12)
+    clientId: str | None = Field(None, max_length=64, pattern=r"^[A-Za-z0-9_-]+$")
 
 
 class CopilotReference(Model):
@@ -481,8 +482,38 @@ class CopilotReference(Model):
     measure: Measure | None = None
 
 
+class CopilotToolCall(Model):
+    name: str
+    module: str | None = None
+    status: Literal["running", "done", "error"]
+    input: dict | None = None
+    dataKind: list[str] | None = None
+    source: list[str] | None = None
+    observedAt: str | None = None
+    ms: int | None = None
+
+
 class CopilotResponse(Model):
     answer: str
-    mode: Literal["llm", "fallback"]
+    mode: Literal["llm", "fallback"]  # "fallback" is no longer produced (M8: no canned answers)
     references: list[CopilotReference]
     intent: str
+    tools: list[CopilotToolCall] = Field(default_factory=list)
+    unverifiedNumbers: list[float] = Field(default_factory=list)
+
+
+class CopilotToolInfo(Model):
+    name: str
+    description: str
+    module: str
+
+
+class CopilotStatus(Model):
+    status: Literal["ready", "not_configured"]
+    provider: str
+    model: str
+    reason: str | None
+    readOnly: bool = True
+    tools: list[CopilotToolInfo]
+    rateLimitPerMin: int
+    streaming: bool = True

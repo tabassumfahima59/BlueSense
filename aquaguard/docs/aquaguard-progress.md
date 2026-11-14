@@ -2,6 +2,21 @@
 
 Updated after every verified phase or module. A task is **done** only when a check was run and passed.
 
+## M8 Copilot — verified
+
+| Phase | Task | Status | Evidence (2026-11-14) |
+|---|---|---|---|
+| M8 | Configuration | done | `LLM_PROVIDER` (only `anthropic`), `ANTHROPIC_API_KEY` (legacy `LLM_API_KEY`), `LLM_MODEL` (default `claude-opus-5-5`, effort `medium`, server-side refusal fallback `default`); `GET /api/copilot/status` → `ready` / `not_configured` with the reason, never the key (test with a set key); `/api/health` `llmEnabled` now follows the same check (it previously required `LLM_MODEL` as well) |
+| M8 | No canned answers | done | rule-based intents / templates removed; without a key `/copilot/stream` and `/copilot/chat` return 503 `not_configured` and the UI disables the input and says why (backend + e2e against the real keyless e2e server) |
+| M8 | Read-only tools | done | 11 tools calling the existing backend functions on a read-only connection: current weather, forecast, dashboard KPIs, division indicators, AQUASTAT statistics, national budget, GRACE trend, alerts, prediction, irrigation estimate, what-if (computes only). No SQL or write tool; pydantic validation with extra fields forbidden; unknown tools, invalid input and backend errors return error results (tests); results compacted and size-capped |
+| M8 | Streaming | done | `POST /api/copilot/stream` (server-sent events `tool`, `delta`, `done`, `error`), manual tool loop on `client.beta.messages.stream` with eager input streaming, refusal / max_tokens / pause_turn handling, at most 6 model turns; `/copilot/chat` returns the same answer as JSON |
+| M8 | Untrusted input | done | system prompt treats user text, history and tool results as data; history limited to user/assistant text (a forged `tool` turn is dropped, test); app context (validated region id) in a separate block from the user's words |
+| M8 | Logging, rate limit | done | every tool call logged with tool, validated input, outcome, duration and a hashed client id; the question text and key never logged (test); 429 `rate_limited` per IP and per client id with `Retry-After` (test) |
+| M8 | Honesty check | done | numbers in the answer not found in the tool results are returned as `unverifiedNumbers` and flagged in the UI (years and counts <= 12 ignored) |
+| M8 | Tests | done | backend `test_copilot.py` 17 with a fake Anthropic client (no real API call); full **327 passed** (the old rule-based fallback tests were removed with the fallback); vitest `copilot.test.ts` 4 (38 total); e2e `copilot.spec.ts` 3 (keyless server + axe; recorded event streams for the configured UI); full Playwright **57 passed** |
+
+Note: the configured path was verified with a fake client and recorded streams only; no real Claude request was made (no API key on this machine).
+
 ## M7 Water Flow — verified
 
 | Phase | Task | Status | Evidence (2026-11-14) |

@@ -25,7 +25,9 @@ Every numeric field is a `Measure`: `{value, unit, provenance, isSample, sourceI
 | POST | `/api/budget/optimize` | `{region, period, scenario, mode: optimized\|shares, shares?}` → current vs proposed + savings | Water Budget |
 | POST | `/api/scenario/run` | `{region, params}` → baseline vs simulated comparisons, risk, monthly series, summary | What-if |
 | POST | `/api/irrigation/estimate` | `{crop, region\|lat+lon, soil, plantingDate\|stage, areaHa, efficiency?, overrides}` → requirement, timing, quantity, assumptions | Irrigation |
-| POST | `/api/copilot/chat` | `{message, region, scenario, history}` → answer, mode, references (rate-limited per IP) | Copilot |
+| GET | `/api/copilot/status` | `ready` / `not_configured` (reason), provider, model, read-only tool list, rate limit; never the key | Copilot |
+| POST | `/api/copilot/stream` | `{message, region, history, clientId}` → server-sent events `tool`, `delta`, `done` (tools used, unverified numbers) or `error`; 503 `not_configured` without a key; 429 per IP and client id | Copilot |
+| POST | `/api/copilot/chat` | same as `/copilot/stream` as one JSON response (answer, tools, references, unverifiedNumbers); 503 `not_configured` without a key | Copilot |
 
 Example:
 
