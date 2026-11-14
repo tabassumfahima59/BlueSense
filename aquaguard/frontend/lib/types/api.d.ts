@@ -1591,6 +1591,17 @@ export interface components {
             /** Burstseverity */
             burstSeverity: number;
         };
+        /** PredictionCategory */
+        PredictionCategory: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Available */
+            available: boolean;
+            /** Reason */
+            reason?: string | null;
+        };
         /** PredictionPoint */
         PredictionPoint: {
             /** Horizon */
@@ -1604,12 +1615,27 @@ export interface components {
             z: components["schemas"]["Measure"];
             /** Drynessclass */
             drynessClass: string | null;
+            /**
+             * Storage
+             * @enum {string}
+             */
+            storage: "database" | "artifact";
+            /** Generatedat */
+            generatedAt: string | null;
+            /** Predictionids */
+            predictionIds: number[];
+            /** Inputsnapshot */
+            inputSnapshot?: {
+                [key: string]: unknown;
+            } | null;
         };
         /** Predictions */
         Predictions: {
             region: components["schemas"]["RegionRef"];
             /** Category */
             category: string;
+            /** Categories */
+            categories: components["schemas"]["PredictionCategory"][];
             /** Target */
             target: string;
             /** Horizon */
@@ -1627,6 +1653,8 @@ export interface components {
              * @enum {string}
              */
             storage: "database" | "artifact";
+            /** Aggregation */
+            aggregation: string | null;
         };
         /** Rainfall30d */
         Rainfall30d: {

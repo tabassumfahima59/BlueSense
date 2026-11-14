@@ -1,6 +1,6 @@
 # AquaGuard — Implementation Plan (Main Rebuild)
 
-Status: **M1–M4 implemented and verified; M5–M8 and P5 in progress (authorised together).** Evidence:
+Status: **M1–M5 implemented and verified; M6–M8 and P5 in progress (authorised together).** Evidence:
 `aquaguard-progress.md`.
 This plan implements the approved *Final Implementation Scope* and *Final Master Implementation Prompt*. It is an
 evolution of the existing repository, not a rebuild: working features, routes, tables and records are preserved.
@@ -355,7 +355,8 @@ The legacy engine KPIs, engine-based division stress, risk map and sector chart 
 | M2 Smart Irrigation | stored 7-day forecast of the nearest divisional point, no zero-filled days, "why" list with ages, conditions context, data kinds | implemented and verified |
 | M3 What-if | national deterministic model, latest-12-month baseline (or 1991-2020 normal), agricultural consumption lever, every output labelled, URL state, documented method | implemented and verified |
 | M4 Water Budget | national AQUASTAT Sankey default (sources → total → uses, own reference years, mixed-year warning, no-data parts, genuine-year comparison, node details) + monthly model tab (derived/scenario, national) | implemented and verified |
-| M5–M8 | Prediction Lab → Explorer → Water Flow → Copilot | in progress |
+| M5 Prediction Lab | event-driven inference after the archive sync into predictions_v2 with input snapshots, DB-first serving, model card, region/category/horizon, history + band, input viewer | implemented and verified |
+| M6–M8 | Explorer → Water Flow → Copilot | in progress |
 | P5 Verification | §7 checks of the master prompt, final report | not started |
 
 ## 10. Known limitations

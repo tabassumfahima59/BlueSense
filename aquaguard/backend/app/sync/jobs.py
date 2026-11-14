@@ -90,6 +90,20 @@ def _evaluate_alerts(conn, now) -> None:
         log.error("alert evaluation failed with %s", type(exc).__name__)
 
 
+def _run_inference(conn, now) -> None:
+    """M5: after new reanalysis months arrive, issue predictions with the stored models (never trains). An inference
+    error never fails the sync job; the API keeps serving the last stored prediction or the artifact."""
+    from ..services import inference
+
+    try:
+        out = inference.run(conn, now=now)
+        log.info("inference after archive sync: %s, inserted %d", out["status"], out["inserted"])
+    except Exception as exc:  # noqa: BLE001
+        if conn.in_transaction:
+            conn.execute("ROLLBACK")
+        log.error("inference failed with %s", type(exc).__name__)
+
+
 def run_job(name: str, *, settings=None, client: HttpClient | None = None, force: bool = False,
             now: datetime | None = None, owner: str | None = None) -> JobResult:
     if settings is None:
@@ -128,6 +142,10 @@ def run_job(name: str, *, settings=None, client: HttpClient | None = None, force
             finally:
                 if own_client:
                     http.close()
+            if status in ("success", "partial") and name == "archive":
+                # before finish_run (other processes invalidate their caches on the run's finished_at) and before
+                # the alerts, so the predicted-dryness rule sees the new predictions
+                _run_inference(conn, now)
             finished = now or utcnow()
             finish_run(conn, run_id, status, stats, now=finished)
             if status in ("success", "partial") and stats.retrieved:

@@ -100,9 +100,11 @@ def table(name: str) -> Table:
 def _clear_derived() -> None:
     """Engine inputs built from tables (latest-12-month climate, balances) follow the table cache."""
     from . import inputs, regional
+    from . import ml_artifacts as mla
 
     inputs.clear()
     regional._division_balance.cache_clear()
+    mla.clear_stored()  # predictions stored by the post-sync inference (M5)
 
 
 def clear_cache() -> None:

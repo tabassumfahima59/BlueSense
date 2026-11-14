@@ -2,6 +2,18 @@
 
 Updated after every verified phase or module. A task is **done** only when a check was run and passed.
 
+## M5 Prediction Lab — verified
+
+| Phase | Task | Status | Evidence (2026-11-14) |
+|---|---|---|---|
+| M5 | Event-driven inference | done | `services/inference.py` re-runs the stored models (never trains) on the newest complete month of `weather_monthly` for 8 divisions x 3 horizons; runs inside the archive sync job before `finish_run` and before the alerts; an inference error never fails the sync (test); CLI `python -m app.sync.run predict` |
+| M5 | predictions_v2 + input_snapshot | done | each row stores the exact 53 feature values, issue month, source, interval quantiles, z and class; idempotent (`ON CONFLICT DO NOTHING`, rerun inserts 0); never issued from an older month when the newest month lacks a feature (test); reproduces predictions.json exactly for the same month (test) |
+| M5 | Real DB | done | verified backup `data/backups/aquaguard-pre-m5-20261114T063152Z.db` (integrity ok, 25 tables, counts equal), then `predict`: 24 rows inserted, issued 2026-10; only `predictions_v2` changed (0 → 24) |
+| M5 | Serving | done | `ml_artifacts.baseline_forecast` prefers stored predictions when at least as recent as the artifact (alerts, KPIs, what-if follow); `/api/predictions` reports `storage` (database/artifact), `generatedAt`, `predictionIds`, `inputSnapshot` (single division), `aggregation` for the national mean, categories with reasons (rainfall / groundwater: no model, 422) |
+| M5 | Model card | done | name, algorithm, version, target, training data (real ERA5), data period, split, samples, test RMSE vs climatology and persistence, MAE, R², interval coverage (83.9 % < 90 % shown as too narrow), macro-F1 = climatology, "predicted none of the 93 dry months" warning; "Experimental" badge only for synthetic training data |
+| M5 | Page | done | region (header), category (only the working model enabled, others say why), horizon (URL `h`), section (URL `tab`); history + 1/3/6-month predictions with 90 % band; storage line; "View model inputs" drawer with readable feature names; test-period chart, metrics, SHAP kept |
+| M5 | Tests | done | backend `test_predictions_m5.py` 7; vitest `ml.test.ts` 3 (27 total); e2e `prediction-lab.spec.ts` 4 incl. axe with the inputs drawer open |
+
 ## M4 Water Budget — verified
 
 | Phase | Task | Status | Evidence (2026-11-14) |
@@ -185,7 +197,7 @@ source scan; no frontend source file contains a secret name.
 
 ## Remaining issues / open items
 
-* P3 notes: `/api/predictions` reads the ML artifacts until M5 stores runs in `predictions_v2`; KPI insights,
+* P3 notes: `/api/predictions` reads `predictions_v2` first since M5 (artifact fallback); KPI insights,
   DetailDrawer and UI wiring are M1; what-if baseline semantics are M3; the national AQUASTAT Sankey UI is M4 (done).
 * The test suite now takes ~3 min (was 43 s at P2): the importer/migration tests copying the real data dominate
   (~15–34 s each, unchanged code); measured under ~34 % background CPU load.

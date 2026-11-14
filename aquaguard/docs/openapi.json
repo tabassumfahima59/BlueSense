@@ -5784,6 +5784,41 @@
     ],
     "title": "PipeState"
    },
+   "PredictionCategory": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "title": "Id"
+     },
+     "label": {
+      "type": "string",
+      "title": "Label"
+     },
+     "available": {
+      "type": "boolean",
+      "title": "Available"
+     },
+     "reason": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Reason"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "id",
+     "label",
+     "available"
+    ],
+    "title": "PredictionCategory"
+   },
    "PredictionPoint": {
     "properties": {
      "horizon": {
@@ -5817,6 +5852,44 @@
        }
       ],
       "title": "Drynessclass"
+     },
+     "storage": {
+      "type": "string",
+      "enum": [
+       "database",
+       "artifact"
+      ],
+      "title": "Storage"
+     },
+     "generatedAt": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Generatedat"
+     },
+     "predictionIds": {
+      "items": {
+       "type": "integer"
+      },
+      "type": "array",
+      "title": "Predictionids"
+     },
+     "inputSnapshot": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Inputsnapshot"
      }
     },
     "additionalProperties": false,
@@ -5828,7 +5901,10 @@
      "value",
      "normal",
      "z",
-     "drynessClass"
+     "drynessClass",
+     "storage",
+     "generatedAt",
+     "predictionIds"
     ],
     "title": "PredictionPoint"
    },
@@ -5840,6 +5916,13 @@
      "category": {
       "type": "string",
       "title": "Category"
+     },
+     "categories": {
+      "items": {
+       "$ref": "#/components/schemas/PredictionCategory"
+      },
+      "type": "array",
+      "title": "Categories"
      },
      "target": {
       "type": "string",
@@ -5896,6 +5979,17 @@
        "artifact"
       ],
       "title": "Storage"
+     },
+     "aggregation": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Aggregation"
      }
     },
     "additionalProperties": false,
@@ -5903,13 +5997,15 @@
     "required": [
      "region",
      "category",
+     "categories",
      "target",
      "horizon",
      "history",
      "forecast",
      "allHorizons",
      "model",
-     "storage"
+     "storage",
+     "aggregation"
     ],
     "title": "Predictions"
    },

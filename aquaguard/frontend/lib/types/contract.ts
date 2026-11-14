@@ -82,6 +82,10 @@ export type WaterBudget = S["WaterBudget"];
 export type NationalBudget = S["NationalBudget"];
 export type BudgetNode = S["BudgetNode"];
 export type BudgetHistory = S["BudgetHistory"];
+// M5 Prediction Lab
+export type Predictions = S["Predictions"];
+export type PredictionPoint = S["PredictionPoint"];
+export type PredictionCategory = S["PredictionCategory"];
 
 /** Scenario with every field explicit; `null` efficiency/loss = use the baseline from config. */
 export interface Scenario {

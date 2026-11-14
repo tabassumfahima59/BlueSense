@@ -37,6 +37,7 @@ from ..schemas.v2 import (
     Insight,
     Kpi,
     NationalBudget,
+    PredictionCategory,
     PredictionPoint,
     Predictions,
     RegionRef,
@@ -559,8 +560,19 @@ def geo(level: Literal["divisions", "districts"]) -> Response:
 
 # ---------------------------------------------------------------- predictions
 
-def _prediction_point(f: dict, h: int, lvl: str) -> PredictionPoint:
+PREDICTION_CATEGORIES = [
+    PredictionCategory(id="water_balance", label="Climatic water balance (P - ET0)", available=True),
+    PredictionCategory(id="rainfall", label="Rainfall", available=False,
+                       reason="No rainfall model is trained; rainfall is a model input, not a target."),
+    PredictionCategory(id="groundwater", label="Groundwater storage", available=False,
+                       reason="No ML model: GRACE shows a regional storage anomaly trend (see the Groundwater tab)."),
+]
+
+
+def _prediction_point(f: dict, h: int, lvl: str, parts: list[dict], single: bool) -> PredictionPoint:
     observed = f["targetMonth"]
+    from_db = all(x.get("storage") == "database" for x in parts)
+    gen = max((x.get("generatedAt") or "" for x in parts), default="") or None
     return PredictionPoint(
         horizon=h, issuedMonth=f["issuedMonth"], targetMonth=f["targetMonth"],
         value=mv(f["value"], "mm", "prediction", "aquaguard_ml", lvl, observed_at=observed, low=f["low"],
@@ -568,49 +580,84 @@ def _prediction_point(f: dict, h: int, lvl: str) -> PredictionPoint:
         normal=mv(f["climMean"], "mm", "derived", "openmeteo_archive", lvl, digits=1,
                   note="training-period mean for the target month"),
         z=mv(f["z"], "z-score", "prediction", "aquaguard_ml", lvl, observed_at=observed, digits=2),
-        drynessClass=f.get("drynessClass"))
+        drynessClass=f.get("drynessClass"), storage="database" if from_db else "artifact", generatedAt=gen,
+        predictionIds=[x["predictionId"] for x in parts if x.get("predictionId")] if from_db else [],
+        inputSnapshot=parts[0].get("inputs") if single and from_db else None)
+
+
+def _model_card(horizon: int) -> dict:
+    meta_ = mla.model_meta() or {}
+    hm = meta_.get("horizons", {}).get(str(horizon), {})
+    sel = hm.get("selected")
+    mh = ((mla.metrics() or {}).get("horizons") or {}).get(str(horizon), {})
+    reg = mh.get("regression") or {}
+    cls = mh.get("classification") or {}
+    counts = cls.get("actualClassCounts") or {}
+    dry_actual = sum(v for k, v in counts.items() if k != "Near normal or wet")
+    matrix = cls.get("confusionMatrix") or []
+    dry_pred = sum(sum(row[:-1]) for row in matrix) if matrix else None
+    return {
+        "name": {"random_forest": "Random Forest", "xgboost": "XGBoost"}.get(sel, sel),
+        "algorithm": sel, "version": meta_.get("trainedAt"), "trainedAt": meta_.get("trainedAt"),
+        "target": "Climatic water balance D = P - ET0 (mm/month), division level",
+        "trainingData": "ERA5 reanalysis via the Open-Meteo archive (real data, eight divisional points)",
+        "dataPeriod": (mla.predictions() or {}).get("dataPeriod"),
+        "split": (mla.split_info() or {}).get("rule"),
+        "trainSamples": hm.get("trainSamples"), "validationSamples": hm.get("validationSamples"),
+        "testSamples": hm.get("testSamples"),
+        "validationRmse": (hm.get("validationRmse") or {}).get(sel),
+        "testPeriod": mh.get("testPeriod"),
+        "testRmse": (reg.get(sel) or {}).get("rmse"), "testMae": (reg.get(sel) or {}).get("mae"),
+        "testR2": (reg.get(sel) or {}).get("r2"),
+        "climatologyRmse": (reg.get("climatology") or {}).get("rmse"),
+        "persistenceRmse": (reg.get("persistence") or {}).get("rmse"),
+        "intervalMethod": hm.get("intervalMethod"),
+        "intervalCoverage": (mh.get("interval") or {}).get("testCoverage"),
+        "macroF1": cls.get("macroF1"), "macroF1Climatology": cls.get("macroF1Climatology"),
+        "dryMonthsInTest": dry_actual if counts else None, "dryMonthsPredicted": dry_pred,
+        "experimental": "no",  # "yes" only for a model trained on synthetic data
+        "retraining": "manual and separate (ml/train_scarcity.py -> evaluate.py -> predict.py); inference runs "
+                      "automatically after each weather-archive sync",
+    }
 
 
 @router.get("/predictions", response_model=Envelope[Predictions])
 def predictions(region: str = "bd", category: str = "water_balance", horizon: int = Query(1),
                 conn=Depends(db)) -> Envelope[Predictions]:
-    if category != "water_balance":
+    cat = next((c for c in PREDICTION_CATEGORIES if c.id == category), None)
+    if cat is None or not cat.available:
         raise ApiError(422, "unsupported_category",
                        "Only category 'water_balance' (climatic water balance P - ET0) has a working model.")
     if horizon not in mla.HORIZONS:
         raise ApiError(422, "invalid_parameter", "horizon must be 1, 3 or 6 (months).")
     reg = resolve(conn, region)
     lvl = level(reg)
-    preds = mla.predictions()
     run = regional.run(reg["id"])
+    single = len(run.divisions) == 1
     all_h = []
     for h in mla.HORIZONS:
         f = regional.region_forecast(run, h)
-        if f:
-            all_h.append(_prediction_point(f, h, lvl))
+        parts = [mla.baseline_forecast(d, h) for d in run.divisions]
+        if f and all(parts):
+            all_h.append(_prediction_point(f, h, lvl, parts, single))
     fc = next((p for p in all_h if p.horizon == horizon), None)
     end = conn.execute("SELECT MAX(printf('%04d-%02d', year, month)) FROM weather_monthly").fetchone()[0] or "2000-01"
     y, m = int(end[:4]), int(end[5:7])
     hist = store.history(conn, reg, f"{y - 3 + (m == 12):04d}-{m % 12 + 1:02d}", end, "monthly")
     pts = hist["wide"].get("d_mm", {})
-    meta_ = mla.model_meta() or {}
-    hm = meta_.get("horizons", {}).get(str(horizon), {})
-    model = {"name": {"random_forest": "Random Forest", "xgboost": "XGBoost"}.get(hm.get("selected"), hm.get("selected")),
-             "version": meta_.get("trainedAt"), "trainedAt": meta_.get("trainedAt"),
-             "dataPeriod": (preds or {}).get("dataPeriod"), "trainSamples": hm.get("trainSamples"),
-             "validationRmse": (hm.get("validationRmse") or {}).get(hm.get("selected")),
-             "interval": hm.get("intervalMethod"), "trainingData": "ERA5 reanalysis (Open-Meteo archive), real data",
-             "experimental": "no"}
+    storage = "database" if all_h and all(p.storage == "database" for p in all_h) else "artifact"
     note = ("Prediction of the climatic water balance (P - ET0), not measured water availability."
             + (" " + NATIONAL_WEATHER_NOTE if reg["level"] == "country" else ""))
     return Envelope(data=Predictions(
-        region=ref(reg), category=category, target=(preds or {}).get("target", "D = P - ET0 (mm/month)"),
+        region=ref(reg), category=category, categories=PREDICTION_CATEGORIES,
+        target=(mla.predictions() or {}).get("target", "D = P - ET0 (mm/month)"),
         horizon=horizon, history=SeriesValues(variable="d_mm", label="Climatic water balance P - ET0 (ERA5)", unit="mm",
                                               t=list(pts), v=[None if v is None else round(v, 1) for v in pts.values()]),
-        forecast=fc, allHorizons=all_h, model=model, storage="artifact"),  # predictions_v2 is filled in M5
+        forecast=fc, allHorizons=all_h, model=_model_card(horizon), storage=storage,
+        aggregation=None if single else "Area-weighted mean of the eight division predictions"),
         meta=catalog.meta(["aquaguard_ml", "openmeteo_archive"], ["prediction", "reanalysis"], lvl,
                           observed_at=fc.targetMonth if fc else None, note=note,
-                          retrieved_at=(preds or {}).get("generatedAt"),
+                          retrieved_at=fc.generatedAt if fc else None,
                           status=None if fc else "unavailable"))
 
 

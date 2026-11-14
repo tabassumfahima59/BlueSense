@@ -218,11 +218,23 @@ class PredictionPoint(Model):
     normal: Measure
     z: Measure
     drynessClass: str | None
+    storage: Literal["database", "artifact"]
+    generatedAt: str | None
+    predictionIds: list[int]  # predictions_v2 rows behind this value (one per division)
+    inputSnapshot: dict | None = None  # exact model inputs (single-division regions, stored predictions only)
+
+
+class PredictionCategory(Model):
+    id: str
+    label: str
+    available: bool
+    reason: str | None = None
 
 
 class Predictions(Model):
     region: RegionRef
     category: str
+    categories: list[PredictionCategory]
     target: str
     horizon: int
     history: SeriesValues
@@ -230,6 +242,7 @@ class Predictions(Model):
     allHorizons: list[PredictionPoint]
     model: dict[str, str | int | float | None]
     storage: Literal["database", "artifact"]
+    aggregation: str | None
 
 
 # ---------------------------------------------------------------- water budget (national AQUASTAT mode)
