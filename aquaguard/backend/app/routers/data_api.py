@@ -50,6 +50,7 @@ from ..schemas.v2 import (
     WeatherCurrent,
     WeatherSeries,
     WhatIf,
+    WhatIfBody,
 )
 from ..services import catalog, indicators, insights, regional, store
 from ..services import ml_artifacts as mla
@@ -680,17 +681,51 @@ def water_budget(region: str = "bd", mode: Literal["national", "derived"] = "nat
 
 # ---------------------------------------------------------------- what-if (national model)
 
+WHATIF_METHOD = [
+    "Monthly national water balance (backend/app/engine/water_balance.py): supply = transboundary inflow (AQUASTAT, "
+    "GloFAS monthly shape) + local runoff (rainfall x runoff coefficient) + renewable groundwater; demand = "
+    "agriculture (FAO-56 gross irrigation requirement on AQUASTAT irrigated areas) + domestic + industry; an "
+    "environmental reserve is kept; supply is allocated by sector and unmet demand is reported.",
+    "Levers: rainfall % (runoff and effective rainfall), temperature °C (ET0 via the Hargreaves temperature term), "
+    "domestic/industrial demand %, agricultural consumption % (gross irrigation demand), groundwater availability %, "
+    "irrigation efficiency, pipeline loss %.",
+    "Baseline 'latest': the latest 12 consecutive complete months of ERA5 reanalysis weather per division; "
+    "'normal': the 1991-2020 normal year. Statistics (AQUASTAT) are the latest genuine reference years.",
+    "Results are computed for the eight divisions and reported for Bangladesh only (decision 1): the model "
+    "distributes national statistics, so division results are not shown.",
+]
+
+
 @router.post("/whatif", response_model=Envelope[WhatIf])
-def whatif(req: ScenarioRequest, conn=Depends(db)) -> Envelope[WhatIf]:
+def whatif(req: WhatIfBody, conn=Depends(db)) -> Envelope[WhatIf]:
     reg = resolve(conn, req.region)
+    from ..services.inputs import latest_climates
     from .what_if import run_scenario
 
-    result = run_scenario(ScenarioRequest(region="bd", params=req.params))
-    note = ("Deterministic national water-balance model; all outputs are scenario results."
+    period = latest_climates()[1] if req.basis == "latest" else "1991-2020 normal year"
+    basis = req.basis if period else "normal"
+    if basis == "normal" and req.basis == "latest":
+        period = "1991-2020 normal year (12 consecutive recent months are not stored)"
+    result = run_scenario(ScenarioRequest(region="bd", params=req.params), basis=basis)
+    for group in (result.comparisons, result.sectorDemand, result.allocation):
+        for c in group:
+            c.baseline = _relabel(c.baseline, "derived", period)
+            c.simulated = _relabel(c.simulated, "scenario", period)
+            c.change = _relabel(c.change, "scenario", period)
+    for pts, kind in ((result.monthlyBaseline, "derived"), (result.monthlySimulated, "scenario")):
+        for p in pts:
+            for f in ("supply", "usableSupply", "consumptiveDemand", "environment", "unmet"):
+                setattr(p, f, _relabel(getattr(p, f), kind, period))
+    note = ("Deterministic national water-balance model; every output is a scenario result."
             + ("" if reg["level"] == "country" else " " + NATIONAL_DATA_NOTE))
-    return Envelope(data=WhatIf(region=ref(reg), result=result),
-                    meta=catalog.meta(["aquaguard_engine", "fao_aquastat", "openmeteo_archive"], ["scenario"],
+    return Envelope(data=WhatIf(region=ref(reg), result=result, basis=basis, basisPeriod=period, method=WHATIF_METHOD),
+                    meta=catalog.meta(["aquaguard_engine", "fao_aquastat", "openmeteo_archive"], ["scenario", "derived"],
                                       "national", note=note))
+
+
+def _relabel(m: Measure, kind: str, period: str | None) -> Measure:
+    return m.model_copy(update={"dataKind": kind, "status": "fresh", "spatialLevel": "national",
+                                "observedAt": period, "provenance": "simulated" if kind == "scenario" else "estimated"})
 
 
 # ---------------------------------------------------------------- irrigation recommendations (GET wrapper)

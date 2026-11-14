@@ -89,6 +89,7 @@ def _invalidate_if_synced_elsewhere() -> None:
         _cached.cache_clear()
         _region_index.cache_clear()
         catalog.clear()
+        _clear_derived()
 
 
 def table(name: str) -> Table:
@@ -96,9 +97,18 @@ def table(name: str) -> Table:
     return _cached(name)
 
 
+def _clear_derived() -> None:
+    """Engine inputs built from tables (latest-12-month climate, balances) follow the table cache."""
+    from . import inputs, regional
+
+    inputs.clear()
+    regional._division_balance.cache_clear()
+
+
 def clear_cache() -> None:
     from . import catalog
 
+    _clear_derived()
     _cached.cache_clear()
     _region_index.cache_clear()
     catalog.clear()

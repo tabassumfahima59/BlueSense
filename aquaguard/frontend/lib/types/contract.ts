@@ -76,12 +76,14 @@ export type StatSeries = S["StatSeries"];
 export type WeatherSeries = S["WeatherSeries"];
 export type SeriesValues = S["SeriesValues"];
 export type GroundwaterTrends = S["GroundwaterTrends"];
+export type WhatIf = S["WhatIf"];
 
 /** Scenario with every field explicit; `null` efficiency/loss = use the baseline from config. */
 export interface Scenario {
   rainfallChangePct: number;
   temperatureChangeC: number;
   demandChangePct: number;
+  agriculturalDemandChangePct: number;
   groundwaterAvailabilityPct: number;
   irrigationEfficiency: number | null;
   pipelineLossPct: number | null;
@@ -91,6 +93,7 @@ export const BASELINE: Scenario = {
   rainfallChangePct: 0,
   temperatureChangeC: 0,
   demandChangePct: 0,
+  agriculturalDemandChangePct: 0,
   groundwaterAvailabilityPct: 0,
   irrigationEfficiency: null,
   pipelineLossPct: null,

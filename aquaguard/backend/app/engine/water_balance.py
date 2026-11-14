@@ -50,6 +50,7 @@ class BalanceConfig:
     loss_rate: float
     irrigation_efficiency: float
     demand_multiplier: float = 1.0    # domestic + industry (scenario)
+    agri_multiplier: float = 1.0      # agricultural consumption (scenario)
     groundwater_multiplier: float = 1.0
 
 
@@ -143,8 +144,9 @@ def division_balance(clim: DivisionClimate, cfg: BalanceConfig) -> Balance:
     for m in range(12):
         dom = domestic_mcm(clim.population, cfg.domestic_lpcd, DAYS[m]) * cfg.demand_multiplier
         ind = cfg.industrial_mcm_yr * clim.pop_share * DAYS[m] / 365.0 * cfg.demand_multiplier
-        demand_m.append({"agriculture": agri["gross_mcm"][m], "domestic": dom, "industry": ind})
-        need_tot.append(agri["gross_mcm"][m] + (dom + ind) / (1 - cfg.loss_rate))
+        ag = agri["gross_mcm"][m] * cfg.agri_multiplier
+        demand_m.append({"agriculture": ag, "domestic": dom, "industry": ind})
+        need_tot.append(ag + (dom + ind) / (1 - cfg.loss_rate))
     gw_year = cfg.groundwater_mcm_yr * clim.area_share * cfg.groundwater_multiplier
     total_need = sum(need_tot)
     out = Balance(division=clim.division, agri_detail=agri)

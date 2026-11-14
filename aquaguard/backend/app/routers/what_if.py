@@ -46,6 +46,8 @@ def _summary(name: str, p: ScenarioParams, base: dict, sim: dict, rb: dict, rs: 
         parts.append(f"temperature {p.temperatureChangeC:+.1f} °C")
     if p.demandChangePct:
         parts.append(f"domestic/industrial demand {p.demandChangePct:+.0f}%")
+    if p.agriculturalDemandChangePct:
+        parts.append(f"agricultural consumption {p.agriculturalDemandChangePct:+.0f}%")
     if p.groundwaterAvailabilityPct:
         parts.append(f"groundwater availability {p.groundwaterAvailabilityPct:+.0f}%")
     if p.irrigationEfficiency is not None:
@@ -62,10 +64,10 @@ def _summary(name: str, p: ScenarioParams, base: dict, sim: dict, rb: dict, rs: 
 
 
 @router.post("/scenario/run", response_model=ScenarioResponse)
-def run_scenario(req: ScenarioRequest) -> ScenarioResponse:
+def run_scenario(req: ScenarioRequest, basis: str = "normal") -> ScenarioResponse:
     region_or_404(req.region)
-    base_run = regional.run(req.region, ScenarioParams())
-    sim_run = regional.run(req.region, req.params)
+    base_run = regional.run(req.region, ScenarioParams(), basis=basis)
+    sim_run = regional.run(req.region, req.params, basis=basis)
     smp = sim_run.is_sample
     ba, sa = base_run.totals("annual"), sim_run.totals("annual")
     bd, sd = base_run.totals("dry"), sim_run.totals("dry")

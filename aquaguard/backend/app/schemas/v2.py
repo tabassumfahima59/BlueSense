@@ -10,7 +10,7 @@ from typing import Generic, Literal, TypeVar
 
 from pydantic import Field
 
-from .common import DataKind, DataStatus, Measure, Model, SpatialLevel
+from .common import DataKind, DataStatus, Measure, Model, ScenarioParams, SpatialLevel
 from .modules import AlertsResponse, ScenarioResponse
 
 T = TypeVar("T")
@@ -262,9 +262,18 @@ class WaterBudget(Model):
     derived: dict | None = None
 
 
+class WhatIfBody(Model):
+    region: str = "bd"
+    params: ScenarioParams = Field(default_factory=ScenarioParams)
+    basis: Literal["latest", "normal"] = "latest"
+
+
 class WhatIf(Model):
     region: RegionRef
     result: ScenarioResponse
+    basis: Literal["latest", "normal"] = "normal"
+    basisPeriod: str | None = None
+    method: list[str] = Field(default_factory=list)
 
 
 # ---------------------------------------------------------------- alerts, search, data, refresh

@@ -13,10 +13,12 @@ describe("scenario URL round trip", () => {
     expect(isBaseline(scenarioFromParams(new URLSearchParams("")))).toBe(true);
   });
 
-  it("round-trips all six levers", () => {
-    const s = { rainfallChangePct: -20, temperatureChangeC: 1.5, demandChangePct: 10, groundwaterAvailabilityPct: -30, irrigationEfficiency: 0.75, pipelineLossPct: 30 };
+  it("round-trips all seven levers", () => {
+    const s = { rainfallChangePct: -20, temperatureChangeC: 1.5, demandChangePct: 10, agriculturalDemandChangePct: 15, groundwaterAvailabilityPct: -30, irrigationEfficiency: 0.75, pipelineLossPct: 30 };
     const p = scenarioToParams(s);
     expect(p.get("rain")).toBe("-20");
+    expect(p.get("agri")).toBe("15");
+    expect(describeScenario(s)).toContain("Agriculture +15%");
     expect(scenarioFromParams(p)).toEqual(s);
     expect(scenarioQuery(s)).toContain("rainfallChangePct=-20");
     expect(describeScenario(s)).toContain("Rain -20%");

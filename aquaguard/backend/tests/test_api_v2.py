@@ -155,7 +155,7 @@ def test_national_budget_keeps_reference_years(client):
 def test_whatif_is_national_scenario(client):
     r = client.post("/api/whatif", json={"region": "sylhet", "params": {"rainfallChangePct": -20}})
     body = r.json()
-    assert r.status_code == 200 and body["meta"]["data_kind"] == ["scenario"]
+    assert r.status_code == 200 and "scenario" in body["meta"]["data_kind"]
     assert body["meta"]["spatial_level"] == "national" and "National data" in body["meta"]["note"]
     assert body["data"]["result"]["context"]["region"]["id"] == "bd"
 

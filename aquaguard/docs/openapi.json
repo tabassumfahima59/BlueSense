@@ -124,6 +124,18 @@
       "description": "-30..+50 %"
      },
      {
+      "name": "agriculturalDemandChangePct",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "number",
+       "description": "-50..+50 % (agricultural consumption)",
+       "default": 0.0,
+       "title": "Agriculturaldemandchangepct"
+      },
+      "description": "-50..+50 % (agricultural consumption)"
+     },
+     {
       "name": "groundwaterAvailabilityPct",
       "in": "query",
       "required": false,
@@ -302,6 +314,18 @@
       "description": "-30..+50 %"
      },
      {
+      "name": "agriculturalDemandChangePct",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "number",
+       "description": "-50..+50 % (agricultural consumption)",
+       "default": 0.0,
+       "title": "Agriculturaldemandchangepct"
+      },
+      "description": "-50..+50 % (agricultural consumption)"
+     },
+     {
       "name": "groundwaterAvailabilityPct",
       "in": "query",
       "required": false,
@@ -427,6 +451,18 @@
        "title": "Demandchangepct"
       },
       "description": "-30..+50 %"
+     },
+     {
+      "name": "agriculturalDemandChangePct",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "number",
+       "description": "-50..+50 % (agricultural consumption)",
+       "default": 0.0,
+       "title": "Agriculturaldemandchangepct"
+      },
+      "description": "-50..+50 % (agricultural consumption)"
      },
      {
       "name": "groundwaterAvailabilityPct",
@@ -655,6 +691,18 @@
       "description": "-30..+50 %"
      },
      {
+      "name": "agriculturalDemandChangePct",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "number",
+       "description": "-50..+50 % (agricultural consumption)",
+       "default": 0.0,
+       "title": "Agriculturaldemandchangepct"
+      },
+      "description": "-50..+50 % (agricultural consumption)"
+     },
+     {
       "name": "groundwaterAvailabilityPct",
       "in": "query",
       "required": false,
@@ -798,6 +846,18 @@
        "title": "Demandchangepct"
       },
       "description": "-30..+50 %"
+     },
+     {
+      "name": "agriculturalDemandChangePct",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "number",
+       "description": "-50..+50 % (agricultural consumption)",
+       "default": 0.0,
+       "title": "Agriculturaldemandchangepct"
+      },
+      "description": "-50..+50 % (agricultural consumption)"
      },
      {
       "name": "groundwaterAvailabilityPct",
@@ -1095,6 +1155,18 @@
       "description": "-30..+50 %"
      },
      {
+      "name": "agriculturalDemandChangePct",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "number",
+       "description": "-50..+50 % (agricultural consumption)",
+       "default": 0.0,
+       "title": "Agriculturaldemandchangepct"
+      },
+      "description": "-50..+50 % (agricultural consumption)"
+     },
+     {
       "name": "groundwaterAvailabilityPct",
       "in": "query",
       "required": false,
@@ -1215,15 +1287,27 @@
     ],
     "summary": "Run Scenario",
     "operationId": "run_scenario_api_scenario_run_post",
+    "parameters": [
+     {
+      "name": "basis",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "default": "normal",
+       "title": "Basis"
+      }
+     }
+    ],
     "requestBody": {
+     "required": true,
      "content": {
       "application/json": {
        "schema": {
         "$ref": "#/components/schemas/ScenarioRequest"
        }
       }
-     },
-     "required": true
+     }
     },
     "responses": {
      "200": {
@@ -2033,7 +2117,7 @@
      "content": {
       "application/json": {
        "schema": {
-        "$ref": "#/components/schemas/ScenarioRequest"
+        "$ref": "#/components/schemas/WhatIfBody"
        }
       }
      },
@@ -6253,6 +6337,13 @@
       "title": "Demandchangepct",
       "default": 0.0
      },
+     "agriculturalDemandChangePct": {
+      "type": "number",
+      "maximum": 50.0,
+      "minimum": -50.0,
+      "title": "Agriculturaldemandchangepct",
+      "default": 0.0
+     },
      "groundwaterAvailabilityPct": {
       "type": "number",
       "maximum": 20.0,
@@ -7677,6 +7768,33 @@
      },
      "result": {
       "$ref": "#/components/schemas/ScenarioResponse"
+     },
+     "basis": {
+      "type": "string",
+      "enum": [
+       "latest",
+       "normal"
+      ],
+      "title": "Basis",
+      "default": "normal"
+     },
+     "basisPeriod": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Basisperiod"
+     },
+     "method": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Method"
      }
     },
     "additionalProperties": false,
@@ -7686,6 +7804,30 @@
      "result"
     ],
     "title": "WhatIf"
+   },
+   "WhatIfBody": {
+    "properties": {
+     "region": {
+      "type": "string",
+      "title": "Region",
+      "default": "bd"
+     },
+     "params": {
+      "$ref": "#/components/schemas/ScenarioParams"
+     },
+     "basis": {
+      "type": "string",
+      "enum": [
+       "latest",
+       "normal"
+      ],
+      "title": "Basis",
+      "default": "latest"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "title": "WhatIfBody"
    },
    "WhyItem": {
     "properties": {

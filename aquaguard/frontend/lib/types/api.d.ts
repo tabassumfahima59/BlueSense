@@ -1815,6 +1815,11 @@ export interface components {
              */
             demandChangePct: number;
             /**
+             * Agriculturaldemandchangepct
+             * @default 0
+             */
+            agriculturalDemandChangePct: number;
+            /**
              * Groundwateravailabilitypct
              * @default 0
              */
@@ -2251,6 +2256,31 @@ export interface components {
         WhatIf: {
             region: components["schemas"]["RegionRef"];
             result: components["schemas"]["ScenarioResponse"];
+            /**
+             * Basis
+             * @default normal
+             * @enum {string}
+             */
+            basis: "latest" | "normal";
+            /** Basisperiod */
+            basisPeriod?: string | null;
+            /** Method */
+            method?: string[];
+        };
+        /** WhatIfBody */
+        WhatIfBody: {
+            /**
+             * Region
+             * @default bd
+             */
+            region: string;
+            params?: components["schemas"]["ScenarioParams"];
+            /**
+             * Basis
+             * @default latest
+             * @enum {string}
+             */
+            basis: "latest" | "normal";
         };
         /** WhyItem */
         WhyItem: {
@@ -2353,6 +2383,8 @@ export interface operations {
                 temperatureChangeC?: number;
                 /** @description -30..+50 % */
                 demandChangePct?: number;
+                /** @description -50..+50 % (agricultural consumption) */
+                agriculturalDemandChangePct?: number;
                 /** @description -50..+20 % */
                 groundwaterAvailabilityPct?: number;
                 /** @description 0.30..0.90; absent = baseline */
@@ -2400,6 +2432,8 @@ export interface operations {
                 temperatureChangeC?: number;
                 /** @description -30..+50 % */
                 demandChangePct?: number;
+                /** @description -50..+50 % (agricultural consumption) */
+                agriculturalDemandChangePct?: number;
                 /** @description -50..+20 % */
                 groundwaterAvailabilityPct?: number;
                 /** @description 0.30..0.90; absent = baseline */
@@ -2443,6 +2477,8 @@ export interface operations {
                 temperatureChangeC?: number;
                 /** @description -30..+50 % */
                 demandChangePct?: number;
+                /** @description -50..+50 % (agricultural consumption) */
+                agriculturalDemandChangePct?: number;
                 /** @description -50..+20 % */
                 groundwaterAvailabilityPct?: number;
                 /** @description 0.30..0.90; absent = baseline */
@@ -2521,6 +2557,8 @@ export interface operations {
                 temperatureChangeC?: number;
                 /** @description -30..+50 % */
                 demandChangePct?: number;
+                /** @description -50..+50 % (agricultural consumption) */
+                agriculturalDemandChangePct?: number;
                 /** @description -50..+20 % */
                 groundwaterAvailabilityPct?: number;
                 /** @description 0.30..0.90; absent = baseline */
@@ -2566,6 +2604,8 @@ export interface operations {
                 temperatureChangeC?: number;
                 /** @description -30..+50 % */
                 demandChangePct?: number;
+                /** @description -50..+50 % (agricultural consumption) */
+                agriculturalDemandChangePct?: number;
                 /** @description -50..+20 % */
                 groundwaterAvailabilityPct?: number;
                 /** @description 0.30..0.90; absent = baseline */
@@ -2726,6 +2766,8 @@ export interface operations {
                 temperatureChangeC?: number;
                 /** @description -30..+50 % */
                 demandChangePct?: number;
+                /** @description -50..+50 % (agricultural consumption) */
+                agriculturalDemandChangePct?: number;
                 /** @description -50..+20 % */
                 groundwaterAvailabilityPct?: number;
                 /** @description 0.30..0.90; absent = baseline */
@@ -2794,7 +2836,9 @@ export interface operations {
     };
     run_scenario_api_scenario_run_post: {
         parameters: {
-            query?: never;
+            query?: {
+                basis?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3276,7 +3320,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ScenarioRequest"];
+                "application/json": components["schemas"]["WhatIfBody"];
             };
         };
         responses: {

@@ -5,6 +5,7 @@ export const SCENARIO_URL_KEYS: Record<keyof Scenario, string> = {
   rainfallChangePct: "rain",
   temperatureChangeC: "temp",
   demandChangePct: "demand",
+  agriculturalDemandChangePct: "agri",
   groundwaterAvailabilityPct: "gw",
   irrigationEfficiency: "eff",
   pipelineLossPct: "loss",
@@ -15,6 +16,7 @@ export const RANGES: Record<keyof Scenario, [number, number, number]> = {
   rainfallChangePct: [-50, 50, 1],
   temperatureChangeC: [-2, 4, 0.1],
   demandChangePct: [-30, 50, 1],
+  agriculturalDemandChangePct: [-50, 50, 1],
   groundwaterAvailabilityPct: [-50, 20, 1],
   irrigationEfficiency: [0.3, 0.9, 0.01],
   pipelineLossPct: [0, 50, 1],
@@ -69,6 +71,8 @@ export function describeScenario(s: Scenario): string {
   if (s.rainfallChangePct) parts.push(`Rain ${s.rainfallChangePct > 0 ? "+" : ""}${s.rainfallChangePct}%`);
   if (s.temperatureChangeC) parts.push(`Temp ${s.temperatureChangeC > 0 ? "+" : ""}${s.temperatureChangeC} °C`);
   if (s.demandChangePct) parts.push(`Demand ${s.demandChangePct > 0 ? "+" : ""}${s.demandChangePct}%`);
+  if (s.agriculturalDemandChangePct)
+    parts.push(`Agriculture ${s.agriculturalDemandChangePct > 0 ? "+" : ""}${s.agriculturalDemandChangePct}%`);
   if (s.groundwaterAvailabilityPct)
     parts.push(`Groundwater ${s.groundwaterAvailabilityPct > 0 ? "+" : ""}${s.groundwaterAvailabilityPct}%`);
   if (s.irrigationEfficiency !== null) parts.push(`Irrigation eff. ${s.irrigationEfficiency}`);

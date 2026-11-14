@@ -4,7 +4,7 @@
  */
 import { scenarioQuery } from "../store/scenario";
 import type {
-  AlertsResponse, BudgetResponse, DashboardSummary, DivisionIndicators, GroundwaterTrends, StatHistory, WeatherSeries, CopilotRequest, CopilotResponse, DemandResponse, Envelope, FlowRequest, FlowResponse,
+  AlertsResponse, BudgetResponse, DashboardSummary, WhatIf, DivisionIndicators, GroundwaterTrends, StatHistory, WeatherSeries, CopilotRequest, CopilotResponse, DemandResponse, Envelope, FlowRequest, FlowResponse,
   GroundwaterResponse, IrrigationRequest, IrrigationResponse, LastUpdated, MapLayersResponse, MetricsResponse,
   OptimizeRequest, OptimizeResponse, OverviewResponse, ReadResult, RefreshResult, RegionsResponse, Scenario,
   ScarcityResponse, ScenarioRequest, ScenarioResponse, SearchResults, ShapResponse, SourceStatus, SourcesResponse,
@@ -76,6 +76,7 @@ export const api = {
   budget: (region: string, period: string, s: Scenario) => request<BudgetResponse>(`/budget${q(region, s, { period })}`),
   optimize: (body: OptimizeRequest) => post<OptimizeResponse>("/budget/optimize", body),
   scenario: (body: ScenarioRequest) => post<ScenarioResponse>("/scenario/run", body),
+  whatif: (body: ScenarioRequest & { basis: "latest" | "normal" }) => post<Envelope<WhatIf>>("/whatif", body),
   irrigation: (body: IrrigationRequest) => post<IrrigationResponse>("/irrigation/estimate", body),
   copilot: (body: CopilotRequest) => post<CopilotResponse>("/copilot/chat", body),
   // P3 platform endpoints used by the shell

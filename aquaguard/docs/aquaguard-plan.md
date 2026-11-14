@@ -353,7 +353,8 @@ The legacy engine KPIs, engine-based division stress, risk map and sector chart 
 | P4 Design + shell | Blue & White glass tokens, shared components, TopBar, Settings, mock mode removal | implemented and verified |
 | M1 Command Center | KPIs + drawers, insights, stored alerts, weather choropleth + regional table, reference-year trend, weather anomalies with date filter | implemented and verified |
 | M2 Smart Irrigation | stored 7-day forecast of the nearest divisional point, no zero-filled days, "why" list with ages, conditions context, data kinds | implemented and verified |
-| M3–M8 | What-if → Water Budget → Prediction Lab → Explorer → Water Flow → Copilot | in progress |
+| M3 What-if | national deterministic model, latest-12-month baseline (or 1991-2020 normal), agricultural consumption lever, every output labelled, URL state, documented method | implemented and verified |
+| M4–M8 | Water Budget → Prediction Lab → Explorer → Water Flow → Copilot | in progress |
 | P5 Verification | §7 checks of the master prompt, final report | not started |
 
 ## 10. Known limitations

@@ -2,6 +2,16 @@
 
 Updated after every verified phase or module. A task is **done** only when a check was run and passed.
 
+## M3 What-if — verified
+
+| Phase | Task | Status | Evidence (2026-11-14) |
+|---|---|---|---|
+| M3 | Baseline = latest real data | done | `inputs.latest_climates()`: latest 12 consecutive complete months of ERA5 per division (falls back to the normal year and says so); `POST /api/whatif` `basis` = `latest` (default) / `normal`; basis period returned and shown |
+| M3 | Levers | done | new agricultural-consumption lever (gross irrigation demand; test: +10% → agriculture ×1.10, domestic unchanged); ranges validated (422 tests); temperature and pipeline loss kept (D6) |
+| M3 | National only + labels | done | division request → national result with "National data" note (decision 1); every baseline value `derived`, every result `scenario` (test); documented method list |
+| M3 | Page | done | /api/whatif, baseline selector (URL `basis`), levers mirrored in the URL (`agri=`, `rain=`…), reset, presets, before/after charts, Scenario badges, method card |
+| M3 | Tests | done | backend `test_whatif_m3.py` 7 (full **316 passed**); vitest 24 (URL round trip with the new lever); e2e `what-if.spec.ts` 4; full Playwright 37 passed |
+
 ## M2 Smart Irrigation — verified
 
 | Phase | Task | Status | Evidence (2026-11-14) |

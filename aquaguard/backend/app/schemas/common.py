@@ -54,6 +54,7 @@ class ScenarioParams(Model):
     rainfallChangePct: float = Field(0.0, ge=-50, le=50)
     temperatureChangeC: float = Field(0.0, ge=-2, le=4)
     demandChangePct: float = Field(0.0, ge=-30, le=50)
+    agriculturalDemandChangePct: float = Field(0.0, ge=-50, le=50)
     groundwaterAvailabilityPct: float = Field(0.0, ge=-50, le=20)
     irrigationEfficiency: float | None = Field(None, ge=0.30, le=0.90)
     pipelineLossPct: float | None = Field(None, ge=0, le=50)
@@ -61,7 +62,8 @@ class ScenarioParams(Model):
     def is_baseline(self) -> bool:
         return (
             self.rainfallChangePct == 0 and self.temperatureChangeC == 0 and self.demandChangePct == 0
-            and self.groundwaterAvailabilityPct == 0 and self.irrigationEfficiency is None
+            and self.agriculturalDemandChangePct == 0 and self.groundwaterAvailabilityPct == 0
+            and self.irrigationEfficiency is None
             and self.pipelineLossPct is None
         )
 
