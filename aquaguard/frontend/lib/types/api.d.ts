@@ -1041,6 +1041,15 @@ export interface components {
             minServicePressure: components["schemas"]["Measure"];
             /** Serviceok */
             serviceOk: boolean;
+            demandDaily: components["schemas"]["Measure"];
+            allocatedDaily: components["schemas"]["Measure"];
+            share: components["schemas"]["Measure"];
+            supply: components["schemas"]["Measure"];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "served" | "under_supplied" | "low_pressure" | "no_supply" | "closed";
         };
         /** DivisionIndicators */
         DivisionIndicators: {
@@ -1188,6 +1197,34 @@ export interface components {
              * @default false
              */
             optimize: boolean;
+            /**
+             * Pumpon
+             * @default true
+             */
+            pumpOn: boolean;
+            /** Pumpcapacitym3S */
+            pumpCapacityM3s?: number | null;
+            /**
+             * Sourcelimitm3S
+             * @description water available at the source (shortage)
+             */
+            sourceLimitM3s?: number | null;
+            /**
+             * Allocationpct
+             * @description destination -> % of the junction flow (sum 100)
+             */
+            allocationPct?: {
+                [key: string]: number;
+            } | null;
+            /** Closedpipes */
+            closedPipes?: string[];
+            /**
+             * Demandfactors
+             * @description destination -> demand multiplier (0-3)
+             */
+            demandFactors?: {
+                [key: string]: number;
+            } | null;
         };
         /** FlowResponse */
         FlowResponse: {
@@ -1202,6 +1239,11 @@ export interface components {
             backgroundLossRate: components["schemas"]["Measure"];
             /** Disclaimer */
             disclaimer: string;
+            reservoirCapacity?: components["schemas"]["Measure"] | null;
+            /** Defaultallocationpct */
+            defaultAllocationPct?: {
+                [key: string]: number;
+            };
             /**
              * Label
              * @default Conceptual illustration
@@ -1227,6 +1269,28 @@ export interface components {
             deliveredTotal: components["schemas"]["Measure"];
             lossPct: components["schemas"]["Measure"];
             massBalanceError: components["schemas"]["Measure"];
+            requestedPumpFlow: components["schemas"]["Measure"];
+            /** Pumpon */
+            pumpOn: boolean;
+            pumpCapacity: components["schemas"]["Measure"];
+            pumpUtilization: components["schemas"]["Measure"];
+            sourceLimit: components["schemas"]["Measure"] | null;
+            /** Limitingfactor */
+            limitingFactor: ("pump_off" | "valve_closed" | "pump_capacity" | "source_limit") | null;
+            inflowDaily: components["schemas"]["Measure"];
+            deliveredDaily: components["schemas"]["Measure"];
+            leakDaily: components["schemas"]["Measure"];
+            demandDaily: components["schemas"]["Measure"];
+            supplyBalanceDaily: components["schemas"]["Measure"];
+            accountingResidualDaily: components["schemas"]["Measure"];
+            efficiency: components["schemas"]["Measure"];
+            /**
+             * Balancestatus
+             * @enum {string}
+             */
+            balanceStatus: "balanced" | "surplus" | "deficit";
+            /** Closedpipes */
+            closedPipes: string[];
         };
         /** ForecastPoint */
         ForecastPoint: {
@@ -1752,6 +1816,22 @@ export interface components {
             leak: components["schemas"]["Measure"];
             /** Burstseverity */
             burstSeverity: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "main" | "branch";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "open" | "closed" | "leaking";
+            /** Lengthm */
+            lengthM: number;
+            /** Diameterm */
+            diameterM: number;
+            flowDaily: components["schemas"]["Measure"];
+            leakDaily: components["schemas"]["Measure"];
         };
         /** PredictionCategory */
         PredictionCategory: {

@@ -247,14 +247,20 @@ flow_sim:
   default_pump_flow_m3s: {value: 0.50, unit: "m3/s", source: "Hypothetical", assumption: true}
   default_setpoint_m: {value: 45.0, unit: "m of head", source: "Hypothetical", assumption: true}
   reservoir_level_m: {value: 10.0, unit: "m", source: "Hypothetical", assumption: true}
-  elevations_m: {pump: 0.0, junction: 2.0, residential: 4.0, agricultural: 1.0, industrial: 3.0}
+  elevations_m: {pump: 0.0, junction: 2.0, residential: 4.0, agricultural: 1.0, industrial: 3.0, other: 2.5}
   pipes:
     - {id: trunk,  from: pump,     to: junction,     length_m: 3000, diameter_m: 0.70}
     - {id: res,    from: junction, to: residential,  length_m: 2000, diameter_m: 0.50}
     - {id: agr,    from: junction, to: agricultural, length_m: 2500, diameter_m: 0.45}
     - {id: ind,    from: junction, to: industrial,   length_m: 1500, diameter_m: 0.40}
-  demand_split: {residential: 0.5, agricultural: 0.3, industrial: 0.2}
-  min_service_pressure_m: {residential: 15.0, agricultural: 10.0, industrial: 20.0}
+    - {id: oth,    from: junction, to: other,        length_m: 1200, diameter_m: 0.35}
+  # default allocation of the junction flow (fractions, sum 1); the What-if style controls override it per request
+  demand_split: {residential: 0.45, agricultural: 0.30, industrial: 0.15, other: 0.10}
+  min_service_pressure_m: {residential: 15.0, agricultural: 10.0, industrial: 20.0, other: 12.0}
+  pump_capacity_m3s: {value: 0.80, unit: "m3/s", source: "Hypothetical", assumption: true}
+  # hypothetical demands per destination (m3/s), set to what normal operation delivers (so the baseline is balanced)
+  destination_demand_m3s: {residential: 0.19, agricultural: 0.115, industrial: 0.055, other: 0.035}
+  reservoir_capacity_m3: {value: 20000, unit: "m3", source: "Hypothetical (illustrative storage; level not modelled)", assumption: true}
   leak_k_per_severity:
     value: 0.00025
     unit: "m3/s per m^N1 at severity 1"

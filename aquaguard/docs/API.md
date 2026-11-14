@@ -20,7 +20,7 @@ Every numeric field is a `Measure`: `{value, unit, provenance, isSample, sourceI
 | GET | `/api/predictions/groundwater?region` | GRACE series, deseasonalised, trend ± 95% CI, projection | Prediction Lab |
 | GET | `/api/models/metrics` | contents of `ml/artifacts/metrics.json` or `evaluated: false` | Prediction Lab |
 | GET | `/api/models/shap?region&horizon` | global importance + local explanation | Prediction Lab |
-| POST | `/api/flow/simulate` | `{pumpFlowM3s, setpointM, leaks{pipe: severity}, lossPct?, leakageExponent?, optimize}` → state (+ optimized, savings) | Water Flow |
+| POST | `/api/flow/simulate` | `{pumpFlowM3s, setpointM, leaks{pipe: severity}, lossPct?, leakageExponent?, optimize, pumpOn?, pumpCapacityM3s?, sourceLimitM3s?, allocationPct?{zone: %}, closedPipes?[], demandFactors?{zone: ×}}` → state (pipes, zones, daily volumes, balance and efficiency; + optimized, savings), reservoirCapacity, defaultAllocationPct. Conceptual only | Water Flow |
 | GET | `/api/budget?region&period=annual\|dry\|1..12` | Sankey nodes/links, sector table, balance check | Water Budget |
 | POST | `/api/budget/optimize` | `{region, period, scenario, mode: optimized\|shares, shares?}` → current vs proposed + savings | Water Budget |
 | POST | `/api/scenario/run` | `{region, params}` → baseline vs simulated comparisons, risk, monthly series, summary | What-if |

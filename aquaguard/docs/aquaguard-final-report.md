@@ -16,7 +16,7 @@ master prompt's §7 verification checklist. Evidence for every phase is in `aqua
 | M4 Water Budget | One engine Sankey | National AQUASTAT Sankey (default) with reference years, mixed-year warning, "No data" parts, genuine-year comparison and node details; monthly model as a separate derived tab; source colours fixed |
 | M5 Prediction Lab | Training-time file only | Inference with the stored models after every archive sync into `predictions_v2` with the exact inputs; DB-first serving; full model card (incl. that the model has not yet flagged a dry month correctly); input viewer |
 | M6 Water Explorer | One national GRACE colour | GRACE grid cells (~300 km), the eight weather points, backend info panel, 2D fallback without WebGL / on small screens, lazy layers |
-| M7 Water Flow | "Simulated" network | Labelled conceptual illustration (data kind `conceptual`), real AQUASTAT magnitudes marked and kept separate, play / pause, speed and layer controls |
+| M7 Water Flow | "Simulated" network | Labelled conceptual illustration (data kind `conceptual`), real AQUASTAT magnitudes marked and kept separate, play / pause, speed and layer controls. **Transformed (addendum below)** into an interactive 3D conceptual simulation |
 | M8 Copilot | Rule-based fallback answers | Claude (`claude-opus-5-5`) with 11 read-only tools over the backend, streamed answers, validated inputs, logged tool calls, per-client rate limit, unmatched numbers flagged; **no answers without a server-side key** |
 
 ## 2. Data sources
@@ -57,7 +57,7 @@ Status: **working** (with the test that shows it), **disabled with the reason sh
 | Water Explorer | "Show 3D map" without WebGL; 3D-only layers in the 2D map | disabled with the reason shown | `explorer.spec` |
 | Prediction Lab | sections (forecast / demand / GRACE, URL), horizon (URL), category, "View model inputs" | working | `prediction-lab.spec` (4), `controls.spec` |
 | Prediction Lab | categories without a model (rainfall, groundwater storage) | disabled with the reason shown | `prediction-lab.spec` |
-| Water Flow | pump and set-point sliders, leak switches and severity, play / pause, speed, layer switches, optimise, current / optimised view, reset, lite mode | working | `water-flow.spec` (3), `controls.spec` |
+| Water Flow | pump on/off, flow, capacity, set-point, source limit, leaks per segment, allocation, demand, valves, optimise, current / optimised view, eight scenarios, 3D / schematic / table views, object picker, 3D click selection and details, camera buttons, layers (15) and pipe colour, play / pause, speed, reset, lite mode | working | `water-flow.spec` (10), `controls.spec` (see addendum) |
 | Water Budget | view tabs (URL), node hover / click, legend chips, comparison year, period and month, optimiser, custom shares, PNG | working | `water-budget.spec` (4), `controls.spec` |
 | What-if | levers (URL), presets, reset, baseline basis | working | `what-if.spec` (4) |
 | What-if | "Apply across platform" | not re-tested in P5 | disabled at baseline; enabled after a lever change (M3) |
@@ -126,3 +126,26 @@ Status: **working** (with the test that shows it), **disabled with the reason sh
 | `LLM_PROVIDER` / `LLM_MODEL` / `GEMINI_THINKING_LEVEL` / `LLM_CALL_TIMEOUT_S` | `gemini` / `gemini-3.6-flash` / `low` / 30 | Copilot provider (gemini or anthropic, never switched automatically), model, thinking level, per-call timeout |
 | `COPILOT_RATE_PER_MIN`, `COPILOT_DAILY_PER_CLIENT`, `COPILOT_DAILY_MODEL_CALLS`, `COPILOT_MAX_CONCURRENT`, `COPILOT_MAX_MODEL_CALLS`, `COPILOT_MAX_OUTPUT_TOKENS`, `COPILOT_DEADLINE_S` | 5, 30, 200, 2, 4, 4096, 90 | Copilot usage limits that protect the free AI quota |
 | `NEXT_PUBLIC_API_URL` | `http://localhost:8001` | the only frontend variable: the API address (no secrets) |
+
+## Addendum — 3D Water Flow transformation (2026-11-14)
+
+The Water Flow module is now an interactive **conceptual simulation** of a hypothetical distribution network, labelled
+"Conceptual Simulation — Not Live Infrastructure Measurements". Design and architecture: `aquaguard-plan.md` §7.4;
+verification: `aquaguard-progress.md`.
+
+| Area | Result |
+|---|---|
+| Engine / API | operating controls (pump on/off, capacity, source limit, allocation, valves, demand factors) and per-zone results; backward compatible; 22 new backend tests |
+| 3D | recognisable reservoir, treatment plant, pump station, junction and four consumer zones; particles follow the computed velocity and stop at zero flow; leaks, closed valves, selection, hover, camera controls |
+| Views | 3D, schematic and data table share one selection and one engine answer |
+| Panels | Controls, Results (balance identity, zone delivery, chart, current vs optimised), Scenarios (8 presets vs normal operation); KPI bar and legend |
+| Accessibility / responsive | keyboard path through the schematic, table and object picker; axe clean; phone bottom sheet; Lite mode; WebGL fallback |
+| Tests | backend 364 passed; vitest 51 passed; Water Flow e2e 10 / 10; full Playwright run see progress log (timeouts under load, re-run of affected files passed except one cold-start What-if timing flake) |
+
+Not modelled (shown as such): reservoir inflow and level, treatment losses, pump speed, storage change.
+
+![3D Water Flow](screenshots/water-flow.png)
+![Leakage scenario](screenshots/water-flow_leakage.png)
+![Schematic](screenshots/water-flow_schematic.png)
+![Data table](screenshots/water-flow_table.png)
+![Phone bottom sheet](screenshots/water-flow_mobile-sheet.png)

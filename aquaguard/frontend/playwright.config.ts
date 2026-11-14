@@ -16,7 +16,9 @@ export default defineConfig({
   retries: 0,
   reporter: [["list"]],
   use: { baseURL: "http://127.0.0.1:3100", trace: "retain-on-failure" },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } }],
+  // software WebGL (SwiftShader) so the 3D Water Flow scene renders in headless Chromium
+  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 },
+    launchOptions: { args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] } } }],
   webServer: [
     { command: `${PY} ../backend/scripts/e2e_server.py --port 8013`, url: "http://127.0.0.1:8013/api/health",
       timeout: 120_000, reuseExistingServer: false },

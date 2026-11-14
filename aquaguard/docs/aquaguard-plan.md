@@ -323,6 +323,55 @@ vs AQUASTAT) load only when expanded. With a division selected, national statist
 The legacy engine KPIs, engine-based division stress, risk map and sector chart were removed from this page
 (decision 1); the national engine stays in Water Budget and What-if.
 
+### 7.4 3D Water Flow simulation module (transformation, implemented 2026-11-14)
+
+The M7 conceptual illustration became an interactive simulation of the same **hypothetical** network. It stays
+labelled "Conceptual Simulation — Not Live Infrastructure Measurements"; every value has data kind `conceptual`.
+
+**Engine** (`engine/flow_sim.py`, parameters in `parameters.yaml flow_sim`): the four-branch network (residential,
+agricultural, industrial, commercial & public) is solved at steady state (Hazen–Williams head loss, FAVAD leakage,
+background leakage calibrated to the platform loss rate). New operating inputs, all optional so old requests behave as
+before: pump on/off, pump capacity, water available at the source, allocation shares (renormalised over open
+branches), closed valves, demand factors. New outputs: per-zone demand / allocated / delivered / share / supply % and a
+status (served, under-supplied, low pressure, no supply, valve closed); pump utilization and the limiting factor;
+efficiency (delivered ÷ inflow, none at zero flow); supply-vs-demand balance status. **Accounting boundary:** pump
+outlet → delivery points; inflow = delivered + leakage; storage change is not modelled (steady state); the identity is
+checked on every run and the frontend reports "Invalid" if it ever fails to close.
+
+**API:** `POST /api/flow/simulate` keeps its contract and adds the optional request fields `pumpOn`,
+`pumpCapacityM3s` (0–3], `sourceLimitM3s` [0–3], `allocationPct` (each 0–100, sum 100 ± 0.5), `closedPipes`,
+`demandFactors` (0–3); invalid input → 422 with a plain message. The state adds daily volumes, pipe kind/status/length/
+diameter, zone demand/allocation/share/supply/status, pump capacity/utilization/limit, efficiency and balance status; the
+response adds `reservoirCapacity` (illustrative) and `defaultAllocationPct`.
+
+**Frontend** (`app/water-flow`, `components/flow/*`, `components/three/FlowScene.tsx` + `components/three/flow/*`,
+`lib/flow/*`):
+
+* One zustand store (`lib/flow/store.ts`) holds inputs, scenario, selection, hover, view, layers, playback and camera
+  commands; one engine answer feeds every view, so the 3D view, the schematic, the data table, the KPIs and the panels
+  always show the same numbers (`lib/flow/derive.ts` builds every label, row and detail from that answer).
+* 3D scene: reservoir with animated water, treatment plant with clarifiers, pump station (motor, volute, fan turning
+  with the flow, status light), junction valve chamber, residential blocks (instanced, roof tanks), fields with crop
+  rows and irrigation channels, factory with sawtooth roof / banded chimneys / tanks, hospital-school-market zone,
+  terrain, lake, roads and instanced trees. Pipes are tubes along smooth paths; instanced particles move at a speed
+  that follows the computed velocity and stop when a pipe carries no water; cones show direction; leaks show a pulsing
+  ring, spray and a value label; closed valves are grey with a valve block. Selection (amber) and hover (sky) rings,
+  invisible enlarged hit volumes, hover tooltip, click-away / Escape to deselect. Camera: drei CameraControls (rotate,
+  pan, zoom, touch) plus buttons for reset, zoom, rotate and focus on the selection (smooth unless reduced motion).
+* Views: 3D, Schematic (SVG; keyboard-focusable nodes and pipes; width ∝ flow, dashes for closed valves, leak badges,
+  moving dashes while playing) and Data table (sort, filter, row selection). The 3D scene stays mounted while another
+  view is shown and stops rendering.
+* Right panel tabs: Controls (pump on/off, flow, capacity; set-point; source limit; leak severity per segment;
+  allocation with automatic rebalancing to 100 %; demand factors; valves; optimise), Results (balance identity, zone
+  allocation and delivery, demand-vs-delivered chart, current vs optimised), Scenarios (eight presets with the change,
+  the reason, and a comparison with normal operation). Bottom: KPIs (inflow, delivered, leakage, balance status,
+  efficiency, pump utilization) and a legend where every colour also has a label or icon.
+* Playback: play/pause, reset, speed 0.25–3×; layers (15 switches incl. buildings, each zone, main/branch pipes,
+  particles, arrows, labels, leaks, terrain, roads & vegetation) and pipe colour by type or by pressure.
+* Responsive: on phones the details open in a bottom sheet, Lite mode is on (no shadows, fewer particles and trees,
+  DPR 1). Without WebGL the schematic replaces the 3D view with a note. Labels are portalled into a fixed overlay
+  (avoids a drei Html re-mount race that left labels empty).
+
 ## 8. Dependency strategy
 
 * Pin exact versions; prefer releases at least two weeks old; check OSV (Python) and `npm audit` (Node) before and
@@ -358,6 +407,7 @@ The legacy engine KPIs, engine-based division stress, risk map and sector chart 
 | M5 Prediction Lab | event-driven inference after the archive sync into predictions_v2 with input snapshots, DB-first serving, model card, region/category/horizon, history + band, input viewer | implemented and verified |
 | M6 Water Explorer | GRACE grid cells (~300 km), weather points, districts as reference layer, backend info panel, 2D fallback (no WebGL / small screen), lazy layers | implemented and verified |
 | M7 Water Flow | conceptual illustration (data kind `conceptual`), real AQUASTAT magnitudes marked and kept separate, play/pause, speed, layer switches | implemented and verified |
+| Water Flow 3D transformation | interactive conceptual simulation: operating controls in the engine, detailed 3D facilities and zones, selection, camera, three synchronised views, scenarios with baseline comparison, water balance identity (§7.4) | implemented and verified |
 | M8 Copilot | Claude with 11 read-only backend tools, streamed answers, validated inputs, logged tool calls, per-client rate limit, unmatched numbers flagged, `not_configured` without a key (no canned answers) | implemented and verified |
 | P5 Verification | §7 checks of the master prompt, final report | done (`aquaguard-final-report.md`) |
 

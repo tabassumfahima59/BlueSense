@@ -3692,6 +3692,29 @@
      "serviceOk": {
       "type": "boolean",
       "title": "Serviceok"
+     },
+     "demandDaily": {
+      "$ref": "#/components/schemas/Measure"
+     },
+     "allocatedDaily": {
+      "$ref": "#/components/schemas/Measure"
+     },
+     "share": {
+      "$ref": "#/components/schemas/Measure"
+     },
+     "supply": {
+      "$ref": "#/components/schemas/Measure"
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "served",
+       "under_supplied",
+       "low_pressure",
+       "no_supply",
+       "closed"
+      ],
+      "title": "Status"
      }
     },
     "additionalProperties": false,
@@ -3702,7 +3725,12 @@
      "deliveredDaily",
      "pressure",
      "minServicePressure",
-     "serviceOk"
+     "serviceOk",
+     "demandDaily",
+     "allocatedDaily",
+     "share",
+     "supply",
+     "status"
     ],
     "title": "DestinationState"
    },
@@ -4162,6 +4190,76 @@
       "type": "boolean",
       "title": "Optimize",
       "default": false
+     },
+     "pumpOn": {
+      "type": "boolean",
+      "title": "Pumpon",
+      "default": true
+     },
+     "pumpCapacityM3s": {
+      "anyOf": [
+       {
+        "type": "number",
+        "maximum": 3.0,
+        "exclusiveMinimum": 0.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Pumpcapacitym3S"
+     },
+     "sourceLimitM3s": {
+      "anyOf": [
+       {
+        "type": "number",
+        "maximum": 3.0,
+        "minimum": 0.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Sourcelimitm3S",
+      "description": "water available at the source (shortage)"
+     },
+     "allocationPct": {
+      "anyOf": [
+       {
+        "additionalProperties": {
+         "type": "number"
+        },
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Allocationpct",
+      "description": "destination -> % of the junction flow (sum 100)"
+     },
+     "closedPipes": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "maxItems": 10,
+      "title": "Closedpipes"
+     },
+     "demandFactors": {
+      "anyOf": [
+       {
+        "additionalProperties": {
+         "type": "number"
+        },
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Demandfactors",
+      "description": "destination -> demand multiplier (0-3)"
      }
     },
     "additionalProperties": false,
@@ -4214,6 +4312,23 @@
      "disclaimer": {
       "type": "string",
       "title": "Disclaimer"
+     },
+     "reservoirCapacity": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/Measure"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "defaultAllocationPct": {
+      "additionalProperties": {
+       "type": "number"
+      },
+      "type": "object",
+      "title": "Defaultallocationpct"
      },
      "label": {
       "type": "string",
@@ -4281,6 +4396,83 @@
      },
      "massBalanceError": {
       "$ref": "#/components/schemas/Measure"
+     },
+     "requestedPumpFlow": {
+      "$ref": "#/components/schemas/Measure"
+     },
+     "pumpOn": {
+      "type": "boolean",
+      "title": "Pumpon"
+     },
+     "pumpCapacity": {
+      "$ref": "#/components/schemas/Measure"
+     },
+     "pumpUtilization": {
+      "$ref": "#/components/schemas/Measure"
+     },
+     "sourceLimit": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/Measure"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "limitingFactor": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "pump_off",
+         "valve_closed",
+         "pump_capacity",
+         "source_limit"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Limitingfactor"
+     },
+     "inflowDaily": {
+      "$ref": "#/components/schemas/Measure"
+     },
+     "deliveredDaily": {
+      "$ref": "#/components/schemas/Measure"
+     },
+     "leakDaily": {
+      "$ref": "#/components/schemas/Measure"
+     },
+     "demandDaily": {
+      "$ref": "#/components/schemas/Measure"
+     },
+     "supplyBalanceDaily": {
+      "$ref": "#/components/schemas/Measure"
+     },
+     "accountingResidualDaily": {
+      "$ref": "#/components/schemas/Measure"
+     },
+     "efficiency": {
+      "$ref": "#/components/schemas/Measure"
+     },
+     "balanceStatus": {
+      "type": "string",
+      "enum": [
+       "balanced",
+       "surplus",
+       "deficit"
+      ],
+      "title": "Balancestatus"
+     },
+     "closedPipes": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Closedpipes"
      }
     },
     "additionalProperties": false,
@@ -4293,7 +4485,22 @@
      "leakTotal",
      "deliveredTotal",
      "lossPct",
-     "massBalanceError"
+     "massBalanceError",
+     "requestedPumpFlow",
+     "pumpOn",
+     "pumpCapacity",
+     "pumpUtilization",
+     "sourceLimit",
+     "limitingFactor",
+     "inflowDaily",
+     "deliveredDaily",
+     "leakDaily",
+     "demandDaily",
+     "supplyBalanceDaily",
+     "accountingResidualDaily",
+     "efficiency",
+     "balanceStatus",
+     "closedPipes"
     ],
     "title": "FlowState"
    },
@@ -6171,6 +6378,37 @@
      "burstSeverity": {
       "type": "number",
       "title": "Burstseverity"
+     },
+     "kind": {
+      "type": "string",
+      "enum": [
+       "main",
+       "branch"
+      ],
+      "title": "Kind"
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "open",
+       "closed",
+       "leaking"
+      ],
+      "title": "Status"
+     },
+     "lengthM": {
+      "type": "number",
+      "title": "Lengthm"
+     },
+     "diameterM": {
+      "type": "number",
+      "title": "Diameterm"
+     },
+     "flowDaily": {
+      "$ref": "#/components/schemas/Measure"
+     },
+     "leakDaily": {
+      "$ref": "#/components/schemas/Measure"
      }
     },
     "additionalProperties": false,
@@ -6186,7 +6424,13 @@
      "pressureEnd",
      "pressureEndKpa",
      "leak",
-     "burstSeverity"
+     "burstSeverity",
+     "kind",
+     "status",
+     "lengthM",
+     "diameterM",
+     "flowDaily",
+     "leakDaily"
     ],
     "title": "PipeState"
    },

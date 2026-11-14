@@ -74,6 +74,8 @@ Loss %               = Σ Q_leak / Q_pump × 100
 
 Steady state solved by fixed-point iteration on pipe-mean pressures. Background k (per metre of pipe) is calibrated by bisection so that loss % equals the platform loss rate at the default set-point and pump flow. Burst leaks add k = 2.5×10⁻⁴ × severity. **Optimisation** = pressure management: burst leaks isolated for repair, then the minimum set-point meeting each destination's minimum service pressure is found by bisection (+0.05 m margin). Everything is Simulated.
 
+**Operating controls (3D Water Flow).** Pump flow = min(requested, capacity, water available at the source), 0 when the pump is off or no path is open. The junction flow is split by the allocation shares, renormalised over open branches (a closed valve takes its branch out). Demand per zone = hypothetical demand × demand factor. Zone status: no supply (0 delivered), valve closed, low pressure (below its minimum service pressure), under-supplied (< 98 % of demand) or served. Efficiency = delivered ÷ pumped. Balance status compares delivered with demand (±2 % = balanced, otherwise surplus or deficit). Accounting boundary pump outlet → delivery points: pumped = delivered + leakage (storage change not modelled, steady state); the residual is reported and must be ~0.
+
 ## 5. Risk and alerts (`engine/risk.py`, `services/alerts.py`)
 
 ```

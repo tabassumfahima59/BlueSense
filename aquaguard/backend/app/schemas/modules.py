@@ -237,6 +237,13 @@ class FlowRequest(Model):
     lossPct: float | None = Field(None, ge=0, le=50)
     leakageExponent: float | None = Field(None, ge=0.5, le=1.5)
     optimize: bool = False
+    # operating controls (all optional; omitted = the normal operating point)
+    pumpOn: bool = True
+    pumpCapacityM3s: float | None = Field(None, gt=0, le=3.0)
+    sourceLimitM3s: float | None = Field(None, ge=0, le=3.0, description="water available at the source (shortage)")
+    allocationPct: dict[str, float] | None = Field(None, description="destination -> % of the junction flow (sum 100)")
+    closedPipes: list[str] = Field(default_factory=list, max_length=10)
+    demandFactors: dict[str, float] | None = Field(None, description="destination -> demand multiplier (0-3)")
 
 
 class PipeState(Model):
@@ -251,6 +258,12 @@ class PipeState(Model):
     pressureEndKpa: Measure
     leak: Measure
     burstSeverity: float
+    kind: Literal["main", "branch"]
+    status: Literal["open", "closed", "leaking"]
+    lengthM: float
+    diameterM: float
+    flowDaily: Measure
+    leakDaily: Measure
 
 
 class DestinationState(Model):
@@ -260,6 +273,11 @@ class DestinationState(Model):
     pressure: Measure
     minServicePressure: Measure
     serviceOk: bool
+    demandDaily: Measure
+    allocatedDaily: Measure
+    share: Measure                 # % of the junction flow allocated to this destination
+    supply: Measure                # delivered / demand, % (value null when demand is 0)
+    status: Literal["served", "under_supplied", "low_pressure", "no_supply", "closed"]
 
 
 class FlowState(Model):
@@ -271,6 +289,21 @@ class FlowState(Model):
     deliveredTotal: Measure
     lossPct: Measure
     massBalanceError: Measure
+    requestedPumpFlow: Measure
+    pumpOn: bool
+    pumpCapacity: Measure
+    pumpUtilization: Measure
+    sourceLimit: Measure | None
+    limitingFactor: Literal["pump_off", "valve_closed", "pump_capacity", "source_limit"] | None
+    inflowDaily: Measure
+    deliveredDaily: Measure
+    leakDaily: Measure
+    demandDaily: Measure
+    supplyBalanceDaily: Measure    # delivered - demand
+    accountingResidualDaily: Measure  # inflow - delivered - leakage (storage change not modelled)
+    efficiency: Measure            # delivered / inflow, %
+    balanceStatus: Literal["balanced", "surplus", "deficit"]
+    closedPipes: list[str]
 
 
 class ScaleItem(Model):
@@ -287,6 +320,8 @@ class FlowResponse(Model):
     savings: dict[str, Measure] | None
     backgroundLossRate: Measure
     disclaimer: str
+    reservoirCapacity: Measure | None = None
+    defaultAllocationPct: dict[str, float] = Field(default_factory=dict)
     label: str = "Conceptual illustration"
     realPartsUsed: list[str] = Field(default_factory=list, description="real data used by the network (none today)")
     scaleContext: list[ScaleItem] = Field(default_factory=list)

@@ -2,6 +2,22 @@
 
 Updated after every verified phase or module. A task is **done** only when a check was run and passed.
 
+## 3D Water Flow transformation — verified (2026-11-14)
+
+| Task | Status | Evidence |
+|---|---|---|
+| Engine and API | done | `flow_sim.simulate` gains pump on/off, capacity, source limit, allocation (renormalised over open branches), closed valves and demand factors; per-zone demand / allocated / delivered / share / supply / status, pump utilization and limiting factor, efficiency, balance status; old requests unchanged. `POST /api/flow/simulate` adds the optional fields with 422 validation; response adds `reservoirCapacity`, `defaultAllocationPct`. OpenAPI and TS types regenerated |
+| Water balance | done | boundary pump outlet → delivery points: inflow = delivered + leakage (+ storage change, not modelled); residual reported; the frontend shows "Invalid configuration" if it ever fails to close (unit test) |
+| 3D scene | done | reservoir (animated water), treatment plant, pump station (fan ∝ flow, status light), junction, residential / agricultural / industrial / commercial & public zones with their own buildings, terrain, lake, roads, instanced trees; tube pipes with particles (speed ∝ velocity, stop at zero flow), direction cones, leak rings / spray / labels, closed-valve blocks; selection and hover rings, tooltips, click-away / Escape; camera controls and buttons (reset, zoom, rotate, focus) |
+| Views and panels | done | 3D / Schematic (SVG, keyboard) / Data table (sort, filter) share one store; Controls / Results / Scenarios tabs; KPI bar and legend (icon + label for every colour); info panel (desktop overlay, phone bottom sheet); object picker; 15 layers and pipe colour; play / pause / reset / speed; Lite mode; WebGL fallback to the schematic |
+| Scenarios | done | eight presets (normal, high demand, pump capacity reduction, pipeline leakage, agricultural / industrial demand increase, pump failure, water shortage) with the change, the reason and a comparison with normal operation |
+| Fixes found by checking | done | labels portalled into a fixed overlay (drei Html re-mount race left the first label empty and threw "removeChild"); the 3D scene stays mounted across view switches; toolbar stacking context so the Layers menu is not covered; aria-controls only on the selected tab (axe) |
+| Tests | done | backend `test_flow_network.py` 22, full **364 passed**; vitest `flow-module.test.ts` 12 on real engine fixtures, total **51 passed**; `tsc` clean, `eslint .` clean; e2e `water-flow.spec.ts` rewritten, **10 / 10 passed** (labelling and no console errors, 3D click selection and deselection, view sync, controls and balance identity, scenarios, layers + axe, table sort / filter, phone bottom sheet, no-WebGL fallback); `controls.spec` water-flow test unchanged and passing. Playwright now runs Chromium with software WebGL (SwiftShader) so the 3D scene renders headless |
+| Regression | partly | full Playwright run under heavy machine load: 68 / 74 passed in 42.5 min, the 6 failures were timeouts; re-run of the affected files: command-center 7 / 7, water-flow 10 / 10, what-if 4 / 5 — "reset restores the baseline" waits 15 s for the first cold `/api/whatif` on the e2e backend and fails on a cold start, passes on repeat (timing flake in a module this task did not change; recorded under open items) |
+
+Screenshots: `docs/screenshots/water-flow*.png` (3D overview, pump selected, leakage scenario, schematic, data table,
+phone bottom sheet). Remaining warning in the console: `THREE.Clock` deprecation from React Three Fiber itself.
+
 ## Copilot on Gemini (free tier) — verified (2026-11-14, approved after the proposal)
 
 | Task | Status | Evidence |
@@ -272,6 +288,8 @@ source scan; no frontend source file contains a secret name.
   `scripts/vitest.mjs`, which upper-cases the drive letter (no effect on other platforms).
 
 ## Remaining issues / open items
+
+* What-if e2e "reset restores the baseline" can time out on a cold e2e backend (first `/api/whatif` for a lever > 15 s on a loaded machine); passes on repeat. Not changed by the Water Flow work.
 
 * P3 notes: `/api/predictions` reads `predictions_v2` first since M5 (artifact fallback); KPI insights,
   DetailDrawer and UI wiring are M1; what-if baseline semantics are M3; the national AQUASTAT Sankey UI is M4 (done).

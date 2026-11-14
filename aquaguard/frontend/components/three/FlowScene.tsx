@@ -1,167 +1,169 @@
 "use client";
 /**
- * Low-poly R3F scene of the conceptual (hypothetical) network. Particle speed follows the computed velocity times
- * the user's speed setting, pipes are coloured by end pressure (sequential teal ramp), red markers show burst leaks.
- * Layers (pipes, particles, leaks, labels) can be switched off. Rendering stops when the tab is hidden; device pixel
- * ratio is capped.
+ * The 3D view of the conceptual (hypothetical) water-distribution network: a reservoir, a treatment plant, a pump
+ * station, a junction and four consumer zones joined by pipelines. Every value comes from the engine's answer
+ * (`state`); selection, hover, layers, playback and camera commands come from the module store, so the 3D view, the
+ * schematic and the data table always agree.
+ *
+ * Performance: repeated pieces are instanced, the device pixel ratio is capped, shadows are off in Lite mode, the
+ * render loop runs only while the animation plays (on demand otherwise) and stops when the tab is hidden.
  */
-import { Html, OrbitControls } from "@react-three/drei";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { CameraControls } from "@react-three/drei";
+import { Canvas, useThree } from "@react-three/fiber";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
+import { DEST_STATUS, num } from "@/lib/flow/derive";
+import { type NodeId, nodeById, pipeById } from "@/lib/flow/network";
+import { type Selection, useFlowStore } from "@/lib/flow/store";
 import type { FlowState } from "@/lib/types/contract";
-import { ALL_FLOW_LAYERS, type FlowLayers, particleStep } from "./flow";
+import { Environment } from "./flow/Environment";
+import { Junction, PumpStation, Reservoir, TreatmentPlant } from "./flow/Facilities";
+import { HoverTip, LabelPortal, Labels } from "./flow/Labels";
+import { PIPE_Y, Pipes, pipeCurve } from "./flow/Pipes";
+import { Agricultural, Industrial, OtherZone, Residential } from "./flow/Zones";
 
-const NODES: Record<string, [number, number, number]> = {
-  reservoir: [-10, 0, 0],
-  pump: [-6, 0, 0],
-  junction: [0, 0, 0],
-  residential: [6, 0, -5],
-  agricultural: [7, 0, 0.5],
-  industrial: [5.5, 0, 5.5],
-};
-const PIPE_ENDS: Record<string, [string, string]> = { trunk: ["pump", "junction"], res: ["junction", "residential"], agr: ["junction", "agricultural"], ind: ["junction", "industrial"] };
-const LABEL: Record<string, string> = { residential: "Residential", agricultural: "Agricultural", industrial: "Industrial" };
+const HOME_POS: [number, number, number] = [2, 50, 52];
+const HOME_TARGET: [number, number, number] = [-2, 0, 1.5];
 
-/** Sequential teal ramp (light = low pressure, dark = high). */
-export function pressureColor(p: number, min = 0, max = 50): string {
-  const t = Math.max(0, Math.min(1, (p - min) / (max - min)));
-  return new THREE.Color("#CCEFEA").lerp(new THREE.Color("#0B5F58"), t).getStyle();
+/** World point of a selectable object (used to focus the camera and by the end-to-end tests). */
+export function objectPoint(sel: NonNullable<Selection>): THREE.Vector3 | null {
+  if (sel.kind === "node") {
+    const n = nodeById(sel.id);
+    return n ? new THREE.Vector3(n.pos[0], 1, n.pos[1]) : null;
+  }
+  const def = pipeById(sel.id);
+  return def ? pipeCurve(def).getPointAt(0.5).setY(PIPE_Y) : null;
 }
 
-function Pipe({ id, state, running, lowPower, speed, layers }: { id: string; state: FlowState; running: boolean; lowPower: boolean; speed: number; layers: FlowLayers }) {
-  const p = state.pipes.find((x) => x.id === id)!;
-  const [a, b] = PIPE_ENDS[id];
-  const start = useMemo(() => new THREE.Vector3(...NODES[a]).setY(0.4), [a]);
-  const end = useMemo(() => new THREE.Vector3(...NODES[b]).setY(0.4), [b]);
-  const dir = useMemo(() => end.clone().sub(start), [start, end]);
-  const len = dir.length();
-  const mid = useMemo(() => start.clone().add(end).multiplyScalar(0.5), [start, end]);
-  const quat = useMemo(() => new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize()), [dir]);
-  const radius = (p.toNode === "junction" ? 0.22 : 0.16);
-  const count = lowPower ? 10 : 24;
-  const inst = useRef<THREE.InstancedMesh>(null);
-  const offsets = useMemo(() => Array.from({ length: count }, (_, i) => i / count), [count]);
-  const velocity = p.velocity.value ?? 0;
-  const tmp = useMemo(() => new THREE.Object3D(), []);
-
-  useFrame((_, dt) => {
-    if (!inst.current) return;
-    for (let i = 0; i < count; i++) {
-      offsets[i] = particleStep(offsets[i], velocity, speed, dt, len, running);
-      tmp.position.copy(start).addScaledVector(dir, offsets[i]);
-      tmp.updateMatrix();
-      inst.current.setMatrixAt(i, tmp.matrix);
+function CameraRig({ reduced }: { reduced: boolean }) {
+  const ref = useRef<CameraControls>(null);
+  const cmd = useFlowStore((s) => s.camera);
+  useEffect(() => {
+    ref.current?.setLookAt(...HOME_POS, ...HOME_TARGET, false);
+  }, []);
+  useEffect(() => {
+    const c = ref.current;
+    if (!c || !cmd) return;
+    const smooth = !reduced;
+    if (cmd.type === "reset") void c.setLookAt(...HOME_POS, ...HOME_TARGET, smooth);
+    else if (cmd.type === "zoomIn") void c.dolly(8, smooth);
+    else if (cmd.type === "zoomOut") void c.dolly(-8, smooth);
+    else if (cmd.type === "left") void c.rotate(-Math.PI / 8, 0, smooth);
+    else if (cmd.type === "right") void c.rotate(Math.PI / 8, 0, smooth);
+    else if (cmd.type === "focus") {
+      const sel = useFlowStore.getState().selection;
+      const p = sel ? objectPoint(sel) : null;
+      if (p) void c.setLookAt(p.x + 8, 20, p.z + 20, p.x, 0.5, p.z, smooth);
     }
-    inst.current.instanceMatrix.needsUpdate = true;
-  });
-
-  const color = pressureColor(p.pressureEnd.value ?? 0);
-  const leak = p.burstSeverity > 0;
+  }, [cmd, reduced]);
   return (
-    <group>
-      <mesh position={mid} quaternion={quat} visible={layers.pipes}>
-        <cylinderGeometry args={[radius, radius, len, 10, 1, true]} />
-        <meshStandardMaterial color={color} transparent opacity={0.55} side={THREE.DoubleSide} />
-      </mesh>
-      <instancedMesh ref={inst} args={[undefined, undefined, count]} visible={layers.particles}>
-        <sphereGeometry args={[0.09, 6, 6]} />
-        <meshBasicMaterial color="#2A78D6" />
-      </instancedMesh>
-      {leak && layers.leaks && (
-        <group position={mid.clone().setY(0.9)}>
-          <mesh>
-            <sphereGeometry args={[0.18 + 0.08 * p.burstSeverity, 10, 10]} />
-            <meshBasicMaterial color="#F06464" />
-          </mesh>
-          <Html center distanceFactor={14} zIndexRange={[10, 0]}>
-            <div className="whitespace-nowrap rounded bg-white/95 px-1.5 py-0.5 text-[11px] font-medium text-[#b42318] shadow">
-              Leak {(p.leak.value ?? 0).toFixed(3)} m³/s
-            </div>
-          </Html>
-        </group>
-      )}
-    </group>
+    <CameraControls ref={ref} makeDefault minDistance={9} maxDistance={85} maxPolarAngle={Math.PI / 2.25}
+                    smoothTime={0.4} dollySpeed={0.6} />
   );
 }
 
-function Destination({ id, state, labels }: { id: string; state: FlowState; labels: boolean }) {
-  const d = state.destinations.find((x) => x.id === id)!;
-  const [x, , z] = NODES[id];
+declare global {
+  interface Window {
+    /** Screen position of a 3D object (end-to-end tests click objects through this). */
+    __flowProject?: (kind: "node" | "pipe", id: string) => { x: number; y: number } | null;
+  }
+}
+
+function ProjectHook() {
+  const camera = useThree((s) => s.camera);
+  const gl = useThree((s) => s.gl);
+  useEffect(() => {
+    window.__flowProject = (kind, id) => {
+      const p = objectPoint({ kind, id } as NonNullable<Selection>);
+      if (!p) return null;
+      const v = p.project(camera);
+      const r = gl.domElement.getBoundingClientRect();
+      return { x: r.left + ((v.x + 1) / 2) * r.width, y: r.top + ((1 - v.y) / 2) * r.height };
+    };
+    return () => { delete window.__flowProject; };
+  }, [camera, gl]);
+  return null;
+}
+
+type Tone = "good" | "warn" | "bad" | "off";
+function zoneTone(state: FlowState, id: NodeId): Tone {
+  const d = state.destinations.find((x) => x.id === id);
+  return d ? DEST_STATUS[d.status]?.tone ?? "off" : "off";
+}
+
+function World({ state }: { state: FlowState }) {
+  const layers = useFlowStore((s) => s.layers);
+  const running = useFlowStore((s) => s.running);
+  const lowPower = useFlowStore((s) => s.lowPower);
+  const cap = num(state.pumpCapacity) ?? 1;
+  const flowShare = cap > 0 ? Math.min(1, (num(state.pumpFlow) ?? 0) / cap) : 0;
+  const limited = state.limitingFactor === "pump_capacity" || state.limitingFactor === "source_limit";
+  const n = (id: NodeId) => nodeById(id)!.pos;
   return (
-    <group position={[x, 0, z]}>
-      {id === "residential" &&
-        [[-0.7, -0.5], [0.6, -0.4], [0, 0.6], [-0.9, 0.7], [0.9, 0.8]].map(([dx, dz], i) => (
-          <mesh key={i} position={[dx, 0.4, dz]}>
-            <boxGeometry args={[0.6, 0.8, 0.6]} />
-            <meshStandardMaterial color="#D3E4F5" />
-          </mesh>
-        ))}
-      {id === "agricultural" && (
-        <mesh position={[1, 0.03, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[3.2, 2.6]} />
-          <meshStandardMaterial color="#B7E4C7" />
-        </mesh>
-      )}
-      {id === "industrial" && (
+    <>
+      <Environment terrain={layers.terrain} roads={layers.roads} running={running} lowPower={lowPower} />
+      {layers.reservoirs && (
         <>
-          <mesh position={[0, 0.6, 0]}><boxGeometry args={[1.8, 1.2, 1.2]} /><meshStandardMaterial color="#CBD5E1" /></mesh>
-          <mesh position={[0.6, 1.5, 0.2]}><cylinderGeometry args={[0.15, 0.15, 1.2, 8]} /><meshStandardMaterial color="#94A3B8" /></mesh>
+          <Reservoir pos={n("reservoir")} running={running} />
+          <TreatmentPlant pos={n("treatment")} running={running} />
         </>
       )}
-      {labels && <Html position={[0, 2.2, 0]} center distanceFactor={14} zIndexRange={[10, 0]}>
-        <div className={`whitespace-nowrap rounded border bg-white/95 px-1.5 py-0.5 text-[11px] shadow ${d.serviceOk ? "border-[#E2E8F0]" : "border-[#F06464]"}`}>
-          <b>{LABEL[id]}</b> · {(d.deliveredDaily.value ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 })} m³/day · {(d.pressure.value ?? 0).toFixed(1)} m
-          {!d.serviceOk && <span className="text-[#b42318]"> · below min</span>}
-        </div>
-      </Html>}
-    </group>
+      {layers.pumps && <PumpStation pos={n("pump")} flowShare={flowShare} on={state.pumpOn} limited={limited} running={running} />}
+      {layers.mainPipes && <Junction pos={n("junction")} />}
+      {layers.residential && <Residential pos={n("residential")} tone={zoneTone(state, "residential")} buildings={layers.buildings} />}
+      {layers.agricultural && <Agricultural pos={n("agricultural")} tone={zoneTone(state, "agricultural")} />}
+      {layers.industrial && <Industrial pos={n("industrial")} tone={zoneTone(state, "industrial")} buildings={layers.buildings} />}
+      {layers.other && <OtherZone pos={n("other")} tone={zoneTone(state, "other")} buildings={layers.buildings} />}
+      <Pipes state={state} />
+      <Labels state={state} />
+      <HoverTip state={state} />
+    </>
   );
 }
 
-export function FlowScene({ state, running, lowPower, speed = 1, layers = ALL_FLOW_LAYERS }: { state: FlowState; running: boolean; lowPower: boolean; speed?: number; layers?: FlowLayers }) {
+export function FlowScene({ state, active = true }: { state: FlowState; active?: boolean }) {
+  const running = useFlowStore((s) => s.running);
+  const lowPower = useFlowStore((s) => s.lowPower);
+  const select = useFlowStore((s) => s.select);
   const [visible, setVisible] = useState(true);
+  const [reduced, setReduced] = useState(false);
+  const overlay = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const on = () => setVisible(!document.hidden);
     document.addEventListener("visibilitychange", on);
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(mq.matches);
     return () => document.removeEventListener("visibilitychange", on);
   }, []);
   return (
+    <LabelPortal.Provider value={overlay}>
+    <div className="relative h-full w-full">
     <Canvas
-      camera={{ position: [-1, 18, 23], fov: 46 }}
-      dpr={[1, lowPower ? 1 : 1.5]}
-      frameloop={visible ? "always" : "never"}
-      gl={{ antialias: !lowPower, powerPreference: "low-power" }}
+      shadows={lowPower ? false : "percentage"}
+      camera={{ position: HOME_POS, fov: 40, near: 0.5, far: 400 }}
+      dpr={[1, lowPower ? 1 : 1.6]}
+      frameloop={!visible || !active ? "never" : running ? "always" : "demand"}
+      gl={{ antialias: !lowPower, powerPreference: lowPower ? "low-power" : "default" }}
+      onPointerMissed={() => select(null)}
+      onCreated={({ gl }) => gl.domElement.setAttribute("data-flow-canvas", "true")}
       role="img"
-      aria-label="Conceptual 3D water distribution network (hypothetical); the values are listed in the Results table"
+      aria-label="Conceptual 3D water distribution network (hypothetical). Use the Schematic or Data table view, or the object list, to explore it with a keyboard or screen reader."
     >
-      <color attach="background" args={["#F5F9FC"]} />
-      <ambientLight intensity={1.1} />
-      <directionalLight position={[8, 12, 6]} intensity={0.9} />
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
-        <planeGeometry args={[80, 60]} />
-        <meshBasicMaterial color="#E8EEF3" />
-      </mesh>
-      {/* reservoir */}
-      <group position={NODES.reservoir}>
-        <mesh position={[0, 0.7, 0]}><cylinderGeometry args={[1.6, 1.6, 1.4, 20]} /><meshStandardMaterial color="#CBD5E1" /></mesh>
-        <mesh position={[0, 1.25, 0]}><cylinderGeometry args={[1.5, 1.5, 0.12, 20]} /><meshStandardMaterial color="#38BDF8" /></mesh>
-        {layers.labels && <Html position={[0, 2.4, 0]} center distanceFactor={14} zIndexRange={[10, 0]}><div className="whitespace-nowrap rounded bg-white/95 px-1.5 py-0.5 text-[11px] shadow"><b>Reservoir</b></div></Html>}
-      </group>
-      {/* pump station */}
-      <group position={NODES.pump}>
-        <mesh position={[0, 0.5, 0]}><boxGeometry args={[1.4, 1, 1.2]} /><meshStandardMaterial color="#0868CC" /></mesh>
-        {layers.labels && <Html position={[0, 1.8, 0]} center distanceFactor={14} zIndexRange={[10, 0]}>
-          <div className="whitespace-nowrap rounded bg-white/95 px-1.5 py-0.5 text-[11px] shadow"><b>Pump</b> · {(state.pumpFlow.value ?? 0).toFixed(2)} m³/s · {(state.setpoint.value ?? 0).toFixed(1)} m</div>
-        </Html>}
-      </group>
-      <mesh position={[(NODES.reservoir[0] + NODES.pump[0]) / 2, 0.4, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.22, 0.22, 4, 10]} /><meshStandardMaterial color="#94A3B8" />
-      </mesh>
-      <mesh position={[0, 0.4, 0]}><sphereGeometry args={[0.35, 12, 12]} /><meshStandardMaterial color="#64748B" /></mesh>
-      {Object.keys(PIPE_ENDS).map((id) => <Pipe key={id} id={id} state={state} running={running} lowPower={lowPower} speed={speed} layers={layers} />)}
-      {["residential", "agricultural", "industrial"].map((id) => <Destination key={id} id={id} state={state} labels={layers.labels} />)}
-      <OrbitControls target={[-1, 0, 0]} enablePan={false} minDistance={8} maxDistance={40} maxPolarAngle={Math.PI / 2.15} />
+      <color attach="background" args={["#EAF2F8"]} />
+      <fog attach="fog" args={["#EAF2F8", 70, 140]} />
+      <hemisphereLight args={["#F4F9FF", "#B9C9A8", 0.85]} />
+      <directionalLight
+        position={[18, 32, 14]} intensity={1.5} castShadow={!lowPower}
+        shadow-mapSize-width={1536} shadow-mapSize-height={1536} shadow-camera-left={-40} shadow-camera-right={40}
+        shadow-camera-top={32} shadow-camera-bottom={-32} shadow-camera-far={120} shadow-bias={-0.0005}
+      />
+      <World state={state} />
+      <CameraRig reduced={reduced} />
+      <ProjectHook />
     </Canvas>
+    {/* labels are portalled here (see LabelPortal) */}
+    <div ref={overlay} className="pointer-events-none absolute inset-0 overflow-hidden" />
+    </div>
+    </LabelPortal.Provider>
   );
 }

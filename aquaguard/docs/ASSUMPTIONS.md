@@ -27,6 +27,7 @@ Every modelling assumption, with its ID. Parameter values and sources are in `ba
 | A-21 | Irrigation advisor: if the configured season is over, sowing/transplanting today is assumed (stated in the output) | Gives a usable estimate any day of the year | Enter the real date |
 | A-22 | Starting soil-water depletion = RAW/2 when soil moisture is unavailable; flooded field for rice | Neutral starting point | Field measurement |
 | A-23 | Flow network geometry, demand split, minimum service pressures and leak coefficients are hypothetical | No real network data (and no sensors) by design | — (Simulated demonstration) |
+| A-23b | Water Flow zone demands (0.19 / 0.115 / 0.055 / 0.035 m³/s), default allocation 45/30/15/10 %, pump capacity 0.8 m³/s and an illustrative 20,000 m³ reservoir are hypothetical; served = at least 98 % of demand at or above the minimum service pressure; the balance counts as balanced within ±2 % of demand | Demonstration values chosen so normal operation is served and balanced | — (conceptual simulation) |
 | A-24 | Mode A architecture (Next.js + FastAPI + Python ML) | Python runtime available | — |
 | A-25 | Development backend runs on port 8001 locally (a Windows socket on 8000 was held by a dead process); configurable via `NEXT_PUBLIC_API_URL` | Environment quirk | Any port |
 | A-26 | Vitest pinned to 3.2.4 (Vitest 5 crashed on load in this Node 24 environment) | Tooling compatibility | Upgrade when fixed |
