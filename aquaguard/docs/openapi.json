@@ -3187,6 +3187,50 @@
     ],
     "title": "Context"
    },
+   "CopilotLimits": {
+    "properties": {
+     "perMinute": {
+      "type": "integer",
+      "title": "Perminute"
+     },
+     "perDay": {
+      "type": "integer",
+      "title": "Perday"
+     },
+     "siteModelCallsPerDay": {
+      "type": "integer",
+      "title": "Sitemodelcallsperday"
+     },
+     "siteModelCallsUsedToday": {
+      "type": "integer",
+      "title": "Sitemodelcallsusedtoday"
+     },
+     "maxConcurrent": {
+      "type": "integer",
+      "title": "Maxconcurrent"
+     },
+     "maxModelCallsPerQuestion": {
+      "type": "integer",
+      "title": "Maxmodelcallsperquestion"
+     },
+     "resetsAt": {
+      "type": "string",
+      "title": "Resetsat"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "perMinute",
+     "perDay",
+     "siteModelCallsPerDay",
+     "siteModelCallsUsedToday",
+     "maxConcurrent",
+     "maxModelCallsPerQuestion",
+     "resetsAt"
+    ],
+    "title": "CopilotLimits"
+   },
    "CopilotReference": {
     "properties": {
      "module": {
@@ -3325,6 +3369,10 @@
       "type": "string",
       "title": "Provider"
      },
+     "providerLabel": {
+      "type": "string",
+      "title": "Providerlabel"
+     },
      "model": {
       "type": "string",
       "title": "Model"
@@ -3339,6 +3387,28 @@
        }
       ],
       "title": "Reason"
+     },
+     "disclosure": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Disclosure"
+     },
+     "policyUrl": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Policyurl"
      },
      "readOnly": {
       "type": "boolean",
@@ -3356,6 +3426,9 @@
       "type": "integer",
       "title": "Ratelimitpermin"
      },
+     "limits": {
+      "$ref": "#/components/schemas/CopilotLimits"
+     },
      "streaming": {
       "type": "boolean",
       "title": "Streaming",
@@ -3367,10 +3440,12 @@
     "required": [
      "status",
      "provider",
+     "providerLabel",
      "model",
      "reason",
      "tools",
-     "rateLimitPerMin"
+     "rateLimitPerMin",
+     "limits"
     ],
     "title": "CopilotStatus"
    },

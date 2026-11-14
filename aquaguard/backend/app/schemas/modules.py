@@ -508,12 +508,26 @@ class CopilotToolInfo(Model):
     module: str
 
 
+class CopilotLimits(Model):
+    perMinute: int
+    perDay: int
+    siteModelCallsPerDay: int
+    siteModelCallsUsedToday: int
+    maxConcurrent: int
+    maxModelCallsPerQuestion: int
+    resetsAt: str
+
+
 class CopilotStatus(Model):
     status: Literal["ready", "not_configured"]
     provider: str
+    providerLabel: str
     model: str
     reason: str | None
+    disclosure: str | None = None   # how the external provider processes questions (shown before use)
+    policyUrl: str | None = None
     readOnly: bool = True
     tools: list[CopilotToolInfo]
     rateLimitPerMin: int
+    limits: CopilotLimits
     streaming: bool = True

@@ -63,9 +63,19 @@ class Settings(BaseModel):
 
     # copilot
     llm_api_key: SecretStr | None = None            # ANTHROPIC_API_KEY (or legacy LLM_API_KEY)
-    llm_model: str | None = None
-    llm_provider: str = "anthropic"
-    copilot_rate_per_min: int = 20
+    gemini_api_key: SecretStr | None = None         # GEMINI_API_KEY (server-side only)
+    llm_model: str | None = None                    # default depends on the provider
+    llm_provider: str = "gemini"                    # gemini | anthropic (no automatic switching between them)
+    gemini_thinking_level: str = "low"
+    llm_call_timeout_s: float = 30.0                # one model call (connect / between streamed chunks)
+    # Copilot usage limits (protect the provider's free quota; all counters are in memory, single worker)
+    copilot_rate_per_min: int = 5                   # questions per minute per IP and per browser client
+    copilot_daily_per_client: int = 30              # questions per day per IP and per browser client
+    copilot_daily_model_calls: int = 200            # model calls per day for the whole site (provider day)
+    copilot_max_concurrent: int = 2                 # questions answered at the same time
+    copilot_max_model_calls: int = 4                # model calls per question (tool rounds + answer)
+    copilot_max_output_tokens: int = 4096
+    copilot_deadline_s: float = 90.0                # whole question
     forecast_ttl_s: int = 3 * 3600
 
 
@@ -120,9 +130,18 @@ def get_settings() -> Settings:
         http_retry_after_max_s=_num("HTTP_RETRY_AFTER_MAX_S", 300.0),
         admin_token=_secret("ADMIN_TOKEN"),
         llm_api_key=_secret("ANTHROPIC_API_KEY", "LLM_API_KEY"),
+        gemini_api_key=_secret("GEMINI_API_KEY"),
         llm_model=os.getenv("LLM_MODEL") or None,
-        llm_provider=os.getenv("LLM_PROVIDER", "anthropic"),
-        copilot_rate_per_min=_num("COPILOT_RATE_PER_MIN", 20, int),
+        llm_provider=(os.getenv("LLM_PROVIDER") or "gemini").strip().lower(),
+        gemini_thinking_level=(os.getenv("GEMINI_THINKING_LEVEL") or "low").strip().lower(),
+        llm_call_timeout_s=_num("LLM_CALL_TIMEOUT_S", 30.0),
+        copilot_rate_per_min=_num("COPILOT_RATE_PER_MIN", 5, int),
+        copilot_daily_per_client=_num("COPILOT_DAILY_PER_CLIENT", 30, int),
+        copilot_daily_model_calls=_num("COPILOT_DAILY_MODEL_CALLS", 200, int),
+        copilot_max_concurrent=_num("COPILOT_MAX_CONCURRENT", 2, int),
+        copilot_max_model_calls=_num("COPILOT_MAX_MODEL_CALLS", 4, int),
+        copilot_max_output_tokens=_num("COPILOT_MAX_OUTPUT_TOKENS", 4096, int),
+        copilot_deadline_s=_num("COPILOT_DEADLINE_S", 90.0),
     )
     for env, attr in (("OPENMETEO_FORECAST_URL", "openmeteo_forecast_url"),
                       ("OPENMETEO_ARCHIVE_URL", "openmeteo_archive_url"),

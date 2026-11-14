@@ -35,7 +35,8 @@ def main() -> None:
         "AQUAGUARD_DB_PATH": str(db), "AQUAGUARD_BACKUP_DIR": str(tmp / "backups"), "AQUAGUARD_OFFLINE": "1",
         "AQUAGUARD_SCHEDULER_ENABLED": "0", "AQUAGUARD_MIGRATE_ON_STARTUP": "1", "CORS_ORIGINS": args.origin,
     })
-    for secret in ("ADMIN_TOKEN", "ANTHROPIC_API_KEY", "LLM_API_KEY", "EARTHDATA_TOKEN", "OPENMETEO_API_KEY"):
+    for secret in ("ADMIN_TOKEN", "ANTHROPIC_API_KEY", "LLM_API_KEY", "GEMINI_API_KEY", "EARTHDATA_TOKEN",
+                   "OPENMETEO_API_KEY"):
         os.environ.pop(secret, None)
     sys.path.insert(0, str(ROOT / "backend"))
     os.chdir(ROOT / "backend")

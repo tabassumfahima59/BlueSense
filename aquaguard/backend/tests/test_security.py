@@ -91,7 +91,8 @@ def test_cors_does_not_allow_authorization_header(client):
 
 
 def test_frontend_never_references_server_secrets():
-    names = ["ADMIN_TOKEN", "ANTHROPIC_API_KEY", "LLM_API_KEY", "EARTHDATA_TOKEN", "OPENMETEO_API_KEY"]
+    names = ["ADMIN_TOKEN", "ANTHROPIC_API_KEY", "LLM_API_KEY", "GEMINI_API_KEY", "EARTHDATA_TOKEN",
+             "OPENMETEO_API_KEY"]
     frontend = ROOT / "frontend"
     offenders = []
     for path in frontend.rglob("*"):
@@ -109,7 +110,8 @@ def test_frontend_never_references_server_secrets():
 
 def test_env_example_contains_no_secret_values():
     text = (ROOT / ".env.example").read_text(encoding="utf-8")
-    for name in ["ADMIN_TOKEN", "ANTHROPIC_API_KEY", "EARTHDATA_TOKEN", "OPENMETEO_API_KEY", "LLM_API_KEY"]:
+    for name in ["ADMIN_TOKEN", "ANTHROPIC_API_KEY", "EARTHDATA_TOKEN", "OPENMETEO_API_KEY", "LLM_API_KEY",
+                 "GEMINI_API_KEY"]:
         lines = [ln for ln in text.splitlines() if ln.startswith(name + "=")]
         assert lines, f"{name} must be documented"
         assert all(ln.split("=", 1)[1].split("#", 1)[0].strip() == "" for ln in lines), f"{name} must be empty"

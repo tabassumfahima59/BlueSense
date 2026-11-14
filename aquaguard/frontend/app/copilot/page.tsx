@@ -21,10 +21,12 @@ export default function CopilotPage() {
             <dl className="space-y-1.5 text-[13px]">
               <div className="flex justify-between gap-2"><dt className="text-muted">Copilot</dt>
                 <dd className="font-medium" data-testid="copilot-status">{s ? (s.status === "ready" ? "Ready" : "Not configured") : st.error ? "Unavailable" : "…"}</dd></div>
+              <div className="flex justify-between gap-2"><dt className="text-muted">Provider</dt><dd className="font-medium">{s ? s.providerLabel : "—"}</dd></div>
               <div className="flex justify-between gap-2"><dt className="text-muted">Model</dt><dd className="font-medium">{s?.status === "ready" ? s.model : "—"}</dd></div>
               <div className="flex justify-between gap-2"><dt className="text-muted">Selected region</dt><dd className="font-medium">{region}</dd></div>
-              <div className="flex justify-between gap-2"><dt className="text-muted">Rate limit</dt><dd className="font-medium">{s ? `${s.rateLimitPerMin} questions / min` : "—"}</dd></div>
+              <div className="flex justify-between gap-2"><dt className="text-muted">Your limit</dt><dd className="text-right font-medium">{s ? `${s.limits.perMinute} / min · ${s.limits.perDay} / day` : "—"}</dd></div>
             </dl>
+            {s && <p className="pt-2 text-[11.5px] text-muted">Daily limits reset at {s.limits.resetsAt}.</p>}
           </Card>
           {s && (
             <Card title="Read-only tools" subtitle="What the Copilot can look up">
@@ -37,8 +39,9 @@ export default function CopilotPage() {
           )}
           <Note>
             The Copilot can only read data: it has no SQL access and no tool that changes anything. Your questions and the looked-up data are treated
-            as data, not instructions. Numbers in an answer that cannot be matched to the looked-up data are flagged. Without a server-side LLM key
-            it gives no answers at all. AquaGuard has no real-time sensors, well depths or water-quality data.
+            as data, not instructions, and are sent to the external AI provider named above to generate the answer. Numbers in an answer that cannot
+            be matched to the looked-up data are flagged. Without a server-side key it gives no answers at all, and it never switches to another
+            provider or to prepared answers. AquaGuard has no real-time sensors, well depths or water-quality data.
           </Note>
         </div>
       </div>

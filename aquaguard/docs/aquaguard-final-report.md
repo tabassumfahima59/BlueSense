@@ -86,7 +86,7 @@ Status: **working** (with the test that shows it), **disabled with the reason sh
 
 ## 5. Remaining limitations and what is needed from you
 
-* **LLM key (Copilot).** Set `ANTHROPIC_API_KEY` on the server (never in the frontend). Without it the Copilot says
+* **LLM key (Copilot).** Since the Gemini update: set `GEMINI_API_KEY` on the server (never in the frontend); `ANTHROPIC_API_KEY` remains supported with `LLM_PROVIDER=anthropic`. Without a key the Copilot says
   "not configured" and answers nothing. The configured path is verified with a fake client and recorded streams; no
   real Claude request has been made yet.
 * **Earthdata credentials** (`EARTHDATA_TOKEN`) only if you want the JPL GRACE adapter (Deviation D1); CSR works
@@ -122,7 +122,7 @@ Status: **working** (with the test that shows it), **disabled with the reason sh
 | `OPENMETEO_FORECAST_URL`, `OPENMETEO_ARCHIVE_URL`, `AQUASTAT_API_URL`, `GRACE_CSR_URL` | public endpoints | source endpoints (testing or mirrors) |
 | `EARTHDATA_TOKEN` | — | future JPL GRACE adapter; empty = `not_configured` |
 | `ADMIN_TOKEN` | — | protects `POST /api/sync/{source}`; empty = admin disabled. Server-side only |
-| `ANTHROPIC_API_KEY` (legacy `LLM_API_KEY`) | — | Copilot; empty = `not_configured`. Server-side only |
-| `LLM_PROVIDER` / `LLM_MODEL` | `anthropic` / `claude-opus-5-5` | Copilot provider (only Anthropic) and model |
-| `COPILOT_RATE_PER_MIN` | 20 | Copilot questions per minute per IP and per client |
+| `GEMINI_API_KEY` / `ANTHROPIC_API_KEY` (legacy `LLM_API_KEY`) | — | Copilot key for the configured provider; empty = `not_configured`. Server-side only |
+| `LLM_PROVIDER` / `LLM_MODEL` / `GEMINI_THINKING_LEVEL` / `LLM_CALL_TIMEOUT_S` | `gemini` / `gemini-3.6-flash` / `low` / 30 | Copilot provider (gemini or anthropic, never switched automatically), model, thinking level, per-call timeout |
+| `COPILOT_RATE_PER_MIN`, `COPILOT_DAILY_PER_CLIENT`, `COPILOT_DAILY_MODEL_CALLS`, `COPILOT_MAX_CONCURRENT`, `COPILOT_MAX_MODEL_CALLS`, `COPILOT_MAX_OUTPUT_TOKENS`, `COPILOT_DEADLINE_S` | 5, 30, 200, 2, 4, 4096, 90 | Copilot usage limits that protect the free AI quota |
 | `NEXT_PUBLIC_API_URL` | `http://localhost:8001` | the only frontend variable: the API address (no secrets) |

@@ -11,5 +11,5 @@
 9. **No observed groundwater levels.** The BWDB importer is ready but no station data are bundled.
 10. **Demand projection** is not an ML forecast and holds irrigated area, climate and industry constant.
 11. **Irrigation advice** uses forecast weather, FAO-56 table values and model soil moisture: estimate only — validate locally.
-12. **Copilot** needs a server-side Anthropic API key; without one it gives no answers. It answers from what its read-only tools return; the number check flags unmatched numbers but cannot prove an answer correct.
+12. **Copilot** needs a server-side key for the configured provider (`GEMINI_API_KEY` by default); without one it gives no answers. On Gemini's free tier, Google may use questions and looked-up data to improve its products and human reviewers may read them (shown to users before they ask); the free tier is for users aged 18+ and may not be offered in the EEA, the UK or Switzerland. Usage counters are in memory and reset when free hosting restarts; Google's own quota is the hard limit and is reported as an error when used up. The number check flags unmatched numbers but cannot prove an answer correct.
 13. **Licences.** AQUASTAT data are CC BY-NC-SA 4.0 (non-commercial); CARTO basemaps are free for non-commercial use. Commercial use would need other sources.

@@ -2,6 +2,22 @@
 
 Updated after every verified phase or module. A task is **done** only when a check was run and passed.
 
+## Copilot on Gemini (free tier) — verified (2026-11-14, approved after the proposal)
+
+| Task | Status | Evidence |
+|---|---|---|
+| Provider layer | done | `services/llm`: `base` (interface, `LLMError` codes), `gemini` (REST `streamGenerateContent?alt=sse` over httpx, no new package; key only in `x-goog-api-key`; model turns sent back exactly as received, incl. `thoughtSignature`), `anthropic` (the M8 code, unchanged behaviour). `LLM_PROVIDER=gemini` default; no automatic switch to another provider or to prepared answers (test) |
+| Configuration | done | `GEMINI_API_KEY` (server only), `LLM_MODEL` default `gemini-3.6-flash` (listed as free on Google's pricing page, 2026-11-14), `GEMINI_THINKING_LEVEL=low`, `LLM_CALL_TIMEOUT_S=30`; `render.yaml` and `.env.example` updated; the key name is in the frontend secret scan |
+| Quota protection | done | per visitor (IP and browser id): 5 / min, 30 / day; site-wide 200 model calls / provider day (midnight Pacific); 2 concurrent questions (slots expire after 5 min if a visitor disconnects); 4 model calls, 4,096 output tokens and 90 s per question; in memory (documented limitation on free hosting) |
+| Real visitor addresses | done | Docker CMD runs uvicorn with `--proxy-headers --forwarded-allow-ips='*'` (before: every visitor behind Render's proxy shared one limit) |
+| Errors | done | quota used up (429 / RESOURCE_EXHAUSTED, no retry, reset time shown), unavailable (one retry), timeout, key rejected, unknown model, blocked by provider filters, malformed tool call, site / visitor limits, busy — each a clear message (tests) |
+| Disclosure | done | `/copilot/status` returns the provider's data-use disclosure and terms link; shown above the chat (page and panel): Google may use free-tier questions to improve its products, human reviewers may read them, no personal or sensitive data, 18+, not for the EEA / UK / Switzerland on the free tier |
+| Tests | done | backend `test_copilot_gemini.py` 15 (httpx MockTransport, no Google call) + `test_copilot.py` 17 on the Anthropic adapter; full **342 passed**; vitest 38; e2e `copilot.spec.ts` 4 (keyless server + axe; recorded Gemini stream; quota error); full Playwright **66 passed** |
+| Layout fix | done | `responsive.spec` caught Data Sources scrolling sideways at 768 px once a source turned stale (the longer "Stale · updated …" badge in a ~230 px column next to the sidebar); two columns now start at 1024 px |
+
+Not verified: a real Gemini request (no `GEMINI_API_KEY` on this machine). Google's per-account free limits are shown in
+AI Studio; set `COPILOT_DAILY_MODEL_CALLS` below them.
+
 ## P5 Final verification — done (report: `aquaguard-final-report.md`)
 
 | # | §7 check | Result (2026-11-14) |

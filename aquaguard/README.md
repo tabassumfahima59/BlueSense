@@ -113,7 +113,7 @@ First e2e run only: `cd frontend && npx playwright install chromium`.
 
 ## Deploy
 
-- **Backend**: Docker (`backend/Dockerfile`, build context `aquaguard/`) on Render (Blueprint `render.yaml` at the repository root), Railway or Fly.io. Set `CORS_ORIGINS` to the frontend URL; optionally `LLM_API_KEY`, `LLM_MODEL`. Health check `/api/health`.
+- **Backend**: Docker (`backend/Dockerfile`, build context `aquaguard/`) on Render (Blueprint `render.yaml` at the repository root), Railway or Fly.io. Set `CORS_ORIGINS` to the frontend URL. Copilot: `GEMINI_API_KEY` as a secret in the host's dashboard (never in the repository or the frontend); `LLM_PROVIDER=gemini`, `LLM_MODEL`, and the `COPILOT_*` limits are in `render.yaml`. The container runs uvicorn with `--proxy-headers`, so per-visitor limits see the real client address. Health check `/api/health`.
 - **Frontend**: Vercel, root directory `aquaguard/frontend`, env `NEXT_PUBLIC_API_URL=https://<backend>`.
 - **Keep warm** for the demo: `deploy/keep-warm.yml` (GitHub Actions cron pinging `/api/health`).
 

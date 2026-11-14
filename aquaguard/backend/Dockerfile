@@ -15,4 +15,6 @@ COPY data/geo data/geo
 RUN python ml/build_db.py
 WORKDIR /app/backend
 EXPOSE 8000
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# --proxy-headers: behind the host's proxy (Render) the visitor address comes from X-Forwarded-For, so per-client
+# limits (Copilot, refresh) count each visitor separately instead of the proxy as one client.
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips='*'"]

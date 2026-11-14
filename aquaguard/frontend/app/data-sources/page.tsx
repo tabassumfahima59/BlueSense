@@ -29,7 +29,7 @@ export default function DataSources() {
       <Async state={s} rows={3} label="Loading sources">
         {(d) => (
           <>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               {d.sources.map((x) => (
                 <Card key={x.id} id={x.id} title={x.name} subtitle={<code className="text-[11.5px]">{x.id}</code>}
                       actions={status.get(x.id) && (() => { const v = status.get(x.id)!; return (

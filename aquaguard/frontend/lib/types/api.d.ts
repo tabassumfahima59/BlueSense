@@ -875,6 +875,23 @@ export interface components {
             /** Sampledata */
             sampleData: boolean;
         };
+        /** CopilotLimits */
+        CopilotLimits: {
+            /** Perminute */
+            perMinute: number;
+            /** Perday */
+            perDay: number;
+            /** Sitemodelcallsperday */
+            siteModelCallsPerDay: number;
+            /** Sitemodelcallsusedtoday */
+            siteModelCallsUsedToday: number;
+            /** Maxconcurrent */
+            maxConcurrent: number;
+            /** Maxmodelcallsperquestion */
+            maxModelCallsPerQuestion: number;
+            /** Resetsat */
+            resetsAt: string;
+        };
         /** CopilotReference */
         CopilotReference: {
             /** Module */
@@ -925,10 +942,16 @@ export interface components {
             status: "ready" | "not_configured";
             /** Provider */
             provider: string;
+            /** Providerlabel */
+            providerLabel: string;
             /** Model */
             model: string;
             /** Reason */
             reason: string | null;
+            /** Disclosure */
+            disclosure?: string | null;
+            /** Policyurl */
+            policyUrl?: string | null;
             /**
              * Readonly
              * @default true
@@ -938,6 +961,7 @@ export interface components {
             tools: components["schemas"]["CopilotToolInfo"][];
             /** Ratelimitpermin */
             rateLimitPerMin: number;
+            limits: components["schemas"]["CopilotLimits"];
             /**
              * Streaming
              * @default true

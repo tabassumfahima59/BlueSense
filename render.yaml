@@ -11,7 +11,18 @@ services:
     envVars:
       - key: CORS_ORIGINS
         value: https://YOUR-FRONTEND.vercel.app
-      - key: LLM_API_KEY
+      # Copilot: Gemini free tier, key set in the Render dashboard (never committed, never sent to the browser)
+      - key: LLM_PROVIDER
+        value: gemini
+      - key: GEMINI_API_KEY
         sync: false
       - key: LLM_MODEL
-        value: claude-opus-5-5
+        value: gemini-3.6-flash
+      - key: COPILOT_RATE_PER_MIN
+        value: "5"
+      - key: COPILOT_DAILY_PER_CLIENT
+        value: "30"
+      - key: COPILOT_DAILY_MODEL_CALLS
+        value: "200"
+      - key: COPILOT_MAX_CONCURRENT
+        value: "2"

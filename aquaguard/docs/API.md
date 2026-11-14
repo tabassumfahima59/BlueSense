@@ -25,9 +25,9 @@ Every numeric field is a `Measure`: `{value, unit, provenance, isSample, sourceI
 | POST | `/api/budget/optimize` | `{region, period, scenario, mode: optimized\|shares, shares?}` → current vs proposed + savings | Water Budget |
 | POST | `/api/scenario/run` | `{region, params}` → baseline vs simulated comparisons, risk, monthly series, summary | What-if |
 | POST | `/api/irrigation/estimate` | `{crop, region\|lat+lon, soil, plantingDate\|stage, areaHa, efficiency?, overrides}` → requirement, timing, quantity, assumptions | Irrigation |
-| GET | `/api/copilot/status` | `ready` / `not_configured` (reason), provider, model, read-only tool list, rate limit; never the key | Copilot |
-| POST | `/api/copilot/stream` | `{message, region, history, clientId}` → server-sent events `tool`, `delta`, `done` (tools used, unverified numbers) or `error`; 503 `not_configured` without a key; 429 per IP and client id | Copilot |
-| POST | `/api/copilot/chat` | same as `/copilot/stream` as one JSON response (answer, tools, references, unverifiedNumbers); 503 `not_configured` without a key | Copilot |
+| GET | `/api/copilot/status` | `ready` / `not_configured` (reason), provider and label, model, data-use disclosure and terms link, read-only tool list, usage limits and today's site-wide model calls; never a key | Copilot |
+| POST | `/api/copilot/stream` | `{message, region, history, clientId}` → server-sent events `tool`, `delta`, `done` (provider, model, tools used, unverified numbers) or `error` (`quota_exhausted`, `llm_unavailable`, `llm_timeout`, `llm_auth`, `llm_config`, `refusal`, `site_daily_limit`, ...); 503 `not_configured` without a key, 429 `rate_limited` / `daily_limit` / `site_daily_limit`, 503 `busy` | Copilot |
+| POST | `/api/copilot/chat` | same as `/copilot/stream` as one JSON response; errors as HTTP status (429 quota and limits, 503 unavailable / not configured, 504 timeout, 502 other model errors) | Copilot |
 
 Example:
 

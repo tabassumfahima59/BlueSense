@@ -136,6 +136,15 @@ export function ChatUI({ compact = false }: { compact?: boolean }) {
           </div>
         )}
         {status.error && <p id={noteId} role="status" className="text-[13px] text-[#b42318]">Copilot status unavailable: {status.error.message}</p>}
+        {ready && status.data?.disclosure && (
+          <div role="note" aria-label="How your question is processed" data-testid="copilot-disclosure"
+               className="rounded-lg border border-border bg-bg/60 px-3 py-2 text-[12px] leading-relaxed text-muted">
+            <span className="font-semibold text-ink">AI provider: {status.data.providerLabel}.</span> {status.data.disclosure}
+            {status.data.policyUrl && (
+              <> <a href={status.data.policyUrl} target="_blank" rel="noreferrer" className="text-primary underline underline-offset-2">Provider terms</a></>
+            )}
+          </div>
+        )}
         {ready && msgs.length === 0 && (
           <div className="space-y-3">
             <p className="text-[13px] text-muted">

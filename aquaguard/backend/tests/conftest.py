@@ -12,7 +12,8 @@ REAL_DB = ROOT / "data" / "aquaguard.db"
 
 # Tests never touch the network or an LLM.
 os.environ.setdefault("AQUAGUARD_OFFLINE", "1")
-for _secret in ("LLM_API_KEY", "ANTHROPIC_API_KEY", "ADMIN_TOKEN", "EARTHDATA_TOKEN", "OPENMETEO_API_KEY"):
+for _secret in ("LLM_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY", "ADMIN_TOKEN", "EARTHDATA_TOKEN",
+                "OPENMETEO_API_KEY"):
     os.environ.pop(_secret, None)
 os.environ.setdefault("AQUAGUARD_MIGRATE_ON_STARTUP", "0")
 

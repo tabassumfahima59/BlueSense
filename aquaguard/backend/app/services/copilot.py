@@ -1,8 +1,9 @@
-"""M8 AquaGuard Copilot: Claude with read-only tools over AquaGuard's own backend functions.
+"""AquaGuard Copilot: a language model with read-only tools over AquaGuard's own backend functions.
 
-* Configuration: LLM_PROVIDER (only "anthropic"), ANTHROPIC_API_KEY (or legacy LLM_API_KEY), LLM_MODEL (default
-  claude-opus-5-5). Without a key the Copilot is ``not_configured``: it gives no answers at all, never canned or
-  rule-based ones (decision 3).
+* Provider-independent: ``LLM_PROVIDER`` = ``gemini`` (default; ``GEMINI_API_KEY``) or ``anthropic``
+  (``ANTHROPIC_API_KEY``), ``LLM_MODEL`` optional. Adapters live in ``services/llm``. There is never an automatic
+  switch to another provider or to canned / rule-based text; without a key the Copilot is ``not_configured`` and
+  gives no answers (decision 3).
 * Tools: each one calls an existing backend function (weather, KPIs, GRACE, AQUASTAT, alerts, predictions,
   irrigation, what-if) on a read-only database connection. There is no SQL tool and no tool that writes anything.
   Every tool input is validated (pydantic, extra fields forbidden) before it runs; invalid input, unknown tools and
@@ -10,9 +11,10 @@
 * User text, conversation history and tool results are untrusted data, never instructions (system prompt + no
   write capability).
 * Every tool call is logged (tool, validated arguments, outcome, duration, hashed client id); the user's message
-  text and the API key are never logged.
-* Answers stream (server-sent events). At the end, numbers in the answer that cannot be matched to the data the
-  tools returned are reported as "unverified" so the UI can flag them.
+  text and the API keys are never logged.
+* Answers stream (server-sent events). Numbers in the answer that cannot be matched to the data the tools returned
+  are reported as "unverified" so the UI can flag them. Usage limits (services/copilot_limits.py) protect the
+  provider's free quota; provider errors (quota used up, unavailable, timeout) are shown as errors.
 """
 from __future__ import annotations
 
@@ -31,14 +33,8 @@ from ..settings import get_settings
 
 log = logging.getLogger("aquaguard.copilot")
 
-DEFAULT_MODEL = "claude-opus-5-5"
-# Models that accept the server-side refusal fallback (opt in by default, routed by refusal category).
-FALLBACK_MODELS = {"claude-opus-5-5", "claude-opus-5", "claude-fable-5-2", "claude-fable-5-1", "claude-sonnet-5-5"}
-FALLBACK_BETA = "server-side-fallback-2026-07-01"
-MAX_MODEL_TURNS = 6          # model calls per question (tool rounds + the final answer)
 MAX_TOOL_RESULT_CHARS = 24000
-MAX_TOKENS = 16000
-EFFORT = "medium"
+HISTORY_TURNS = 6
 
 SYSTEM_PROMPT = """You are the AquaGuard Copilot, the assistant of a water decision-support prototype for Bangladesh.
 
@@ -74,26 +70,50 @@ class CopilotConfig:
     provider: str
     model: str
     reason: str | None
+    label: str = ""
+    policy_url: str | None = None
+    disclosure: str | None = None
 
 
 def config() -> CopilotConfig:
+    from .llm import anthropic as anth
+    from .llm import gemini as gem
+
     s = get_settings()
-    model = s.llm_model or DEFAULT_MODEL
-    if (s.llm_provider or "anthropic").lower() != "anthropic":
-        return CopilotConfig("not_configured", s.llm_provider, model,
-                             f"LLM_PROVIDER '{s.llm_provider}' is not supported; only 'anthropic' is implemented.")
-    if not s.llm_api_key or not s.llm_api_key.get_secret_value().strip():
-        return CopilotConfig("not_configured", "anthropic", model,
-                             "No LLM API key is configured on the server (ANTHROPIC_API_KEY).")
-    return CopilotConfig("ready", "anthropic", model, None)
+    provider = (s.llm_provider or "gemini").lower()
+    if provider == "gemini":
+        model = s.llm_model or gem.DEFAULT_MODEL
+        key = s.gemini_api_key
+        common = {"label": gem.GeminiProvider.label, "policy_url": gem.POLICY_URL, "disclosure": gem.DISCLOSURE}
+        env = "GEMINI_API_KEY"
+    elif provider == "anthropic":
+        model = s.llm_model or anth.DEFAULT_MODEL
+        key = s.llm_api_key
+        common = {"label": anth.AnthropicProvider.label, "policy_url": anth.POLICY_URL, "disclosure": anth.DISCLOSURE}
+        env = "ANTHROPIC_API_KEY"
+    else:
+        return CopilotConfig("not_configured", provider, s.llm_model or "", f"LLM_PROVIDER '{provider}' is not "
+                             "supported; use 'gemini' or 'anthropic'.")
+    if not key or not key.get_secret_value().strip():
+        return CopilotConfig("not_configured", provider, model,
+                             f"No LLM API key is configured on the server ({env}).", **common)
+    return CopilotConfig("ready", provider, model, None, **common)
 
 
-def make_client():  # replaced in tests; never called without a key
+def make_provider(cfg: CopilotConfig):  # replaced in tests; never called without a key
+    s = get_settings()
+    if cfg.provider == "gemini":
+        from .llm.gemini import GeminiProvider
+
+        return GeminiProvider(s.gemini_api_key.get_secret_value(), cfg.model, s.gemini_thinking_level,
+                              s.llm_call_timeout_s)
     import anthropic
 
-    key = get_settings().llm_api_key
-    assert key is not None
-    return anthropic.Anthropic(api_key=key.get_secret_value(), timeout=120.0, max_retries=2)
+    from .llm.anthropic import AnthropicProvider
+
+    client = anthropic.Anthropic(api_key=s.llm_api_key.get_secret_value(), timeout=s.llm_call_timeout_s * 4,
+                                 max_retries=1)
+    return AnthropicProvider(client, cfg.model)
 
 
 # ---------------------------------------------------------------- read-only tools
@@ -286,17 +306,19 @@ TOOLS: list[Tool] = [
 TOOL_BY_NAME = {t.name: t for t in TOOLS}
 
 
-def tool_definitions() -> list[dict]:
+def tool_specs() -> list:
+    """Provider-neutral tool descriptions (name, description, JSON schema with extra fields forbidden)."""
+    from .llm import ToolSpec
+
     out = []
     for t in TOOLS:
         schema = t.args.model_json_schema()
         schema.pop("title", None)
-        for p in schema.get("properties", {}).values():
-            p.pop("title", None)
+        for prop in schema.get("properties", {}).values():
+            prop.pop("title", None)
         schema.setdefault("properties", {})
         schema["additionalProperties"] = False
-        out.append({"name": t.name, "description": t.description, "input_schema": schema,
-                    "eager_input_streaming": True})
+        out.append(ToolSpec(t.name, t.description, schema))
     return out
 
 
@@ -381,100 +403,93 @@ class NotConfigured(Exception):
     pass
 
 
-def _messages(question: str, history: list[dict], region: str) -> list[dict]:
-    msgs = [{"role": t["role"], "content": str(t["content"])[:4000]} for t in history[-8:]
-            if t.get("role") in ("user", "assistant") and str(t.get("content", "")).strip()]
-    while msgs and msgs[0]["role"] != "user":
-        msgs.pop(0)
-    # the region id is validated by the router; it is app context, separate from the user's own words
-    msgs.append({"role": "user", "content": [
-        {"type": "text", "text": f"App context (set by AquaGuard, not by the user): selected region = {region}"},
-        {"type": "text", "text": question}]})
-    return msgs
+def _valid_history(history: list[dict]) -> list[tuple[str, str]]:
+    turns = [(t["role"], str(t["content"])[:4000]) for t in history[-HISTORY_TURNS:]
+             if t.get("role") in ("user", "assistant") and str(t.get("content", "")).strip()]
+    while turns and turns[0][0] != "user":
+        turns.pop(0)
+    return turns
 
 
-def stream_answer(question: str, history: list[dict], conn, client_key: str = "-", region: str = "bd") -> Iterator[dict]:
+def stream_answer(question: str, history: list[dict], conn, client_key: str = "-", region: str = "bd",
+                  take_model_call: Callable[[], bool] | None = None) -> Iterator[dict]:
     """Yield events: {"type": "tool", ...}, {"type": "delta", "text"}, {"type": "done", ...} or
-    {"type": "error", "code", "detail"}. Raises NotConfigured before anything is yielded when there is no key."""
+    {"type": "error", "code", "detail"}. Raises NotConfigured before anything is yielded when there is no key.
+    ``take_model_call`` books one model call against the site-wide daily budget (False = budget used up)."""
+    from .llm import LLMError, ToolResult, Turn
+
     cfg = config()
     if cfg.status != "ready":
         raise NotConfigured(cfg.reason)
+    s = get_settings()
     tag = client_tag(client_key)
-    client = make_client()
-    messages = _messages(question, history, region)
-    tools = tool_definitions()
-    kwargs: dict = {"model": cfg.model, "max_tokens": MAX_TOKENS, "system": SYSTEM_PROMPT, "tools": tools,
-                    "output_config": {"effort": EFFORT}, "cache_control": {"type": "ephemeral"}}
-    if cfg.model in FALLBACK_MODELS:
-        kwargs.update(betas=[FALLBACK_BETA], fallbacks="default")
-    log.info("copilot question received: %d chars, %d history turns, client=%s", len(question), len(history), tag)
+    provider = make_provider(cfg)
+    # the region id is validated by the router; it is app context, separate from the user's own words
+    context = f"App context (set by AquaGuard, not by the user): selected region = {region}"
+    messages = [provider.history_message(role, text) for role, text in _valid_history(history)]
+    messages.append(provider.user_message(context, question))
+    tools = tool_specs()
+    deadline = time.monotonic() + s.copilot_deadline_s
+    log.info("copilot question received: %d chars, %d history turns, provider=%s model=%s client=%s",
+             len(question), len(history), cfg.provider, cfg.model, tag)
     answer_parts: list[str] = []
     evidence: list[str] = []
     used: list[dict] = []
-    json_retries = 0
-    turn = 0
-    import anthropic
-
-    while turn < MAX_MODEL_TURNS:
-        turn += 1
-        try:
-            with client.beta.messages.stream(messages=messages, **kwargs) as stream:
-                for text in stream.text_stream:
-                    answer_parts.append(text)
-                    yield {"type": "delta", "text": text}
-                response = stream.get_final_message()
-            json_retries = 0
-        except ValueError:
-            # tool-input JSON the SDK could not parse at all (eager input streaming): re-issue the turn, bounded
-            json_retries += 1
-            if json_retries > 2:
-                yield {"type": "error", "code": "model_error", "detail": "The model returned unreadable tool input."}
+    calls = 0
+    try:
+        while calls < s.copilot_max_model_calls:
+            if time.monotonic() > deadline:
+                yield {"type": "error", "code": "llm_timeout", "detail": "The answer took too long. Ask a narrower "
+                                                                           "question."}
                 return
-            turn -= 1
-            continue
-        except anthropic.RateLimitError:
-            yield {"type": "error", "code": "llm_rate_limited", "detail": "The LLM service is busy. Try again shortly."}
-            return
-        except anthropic.AuthenticationError:
-            log.error("copilot: the LLM API rejected the configured key")
-            yield {"type": "error", "code": "llm_auth", "detail": "The server's LLM API key was rejected."}
-            return
-        except anthropic.APIConnectionError:
-            yield {"type": "error", "code": "llm_unavailable", "detail": "The LLM service could not be reached."}
-            return
-        except anthropic.APIStatusError as e:
-            log.error("copilot: LLM API error %s", e.status_code)
-            yield {"type": "error", "code": "llm_error", "detail": f"The LLM service returned an error ({e.status_code})."}
-            return
-
-        if response.stop_reason == "refusal":
-            yield {"type": "error", "code": "refusal", "detail": "The model declined to answer this request."}
-            return
-        tool_uses = [b for b in response.content if b.type == "tool_use"]
-        if response.stop_reason == "pause_turn":
-            messages.append({"role": "assistant", "content": response.content})
-            continue
-        if not tool_uses:
-            answer = "".join(answer_parts)
-            yield {"type": "done", "model": getattr(response, "model", cfg.model), "stopReason": response.stop_reason,
-                   "tools": used, "unverifiedNumbers": unverified_numbers(answer, " ".join(evidence))}
-            return
-        if response.stop_reason == "max_tokens":
-            yield {"type": "error", "code": "truncated", "detail": "The answer was cut off. Ask a narrower question."}
-            return
-        results = []
-        for block in tool_uses:
-            yield {"type": "tool", "status": "running", "name": block.name}
-            text, is_error, summary = run_tool(conn, block.name, block.input, tag)
-            if not is_error:
-                evidence.append(text)
-            used.append(summary)
-            yield {"type": "tool", **summary}
-            results.append({"type": "tool_result", "tool_use_id": block.id, "content": text, "is_error": is_error})
-        messages.append({"role": "assistant", "content": response.content})
-        messages.append({"role": "user", "content": results})
-        if answer_parts:
-            answer_parts.append("\n\n")
-            yield {"type": "delta", "text": "\n\n"}
-    yield {"type": "error", "code": "too_many_steps", "detail": "The question needed too many lookups. Ask a narrower "
-                                                                  "question."}
+            if take_model_call is not None and not take_model_call():
+                yield {"type": "error", "code": "site_daily_limit", "detail": "The Copilot has reached today's "
+                       "site-wide limit, which protects the free AI quota. It resets at midnight Pacific time "
+                       "(about 1-2 pm in Bangladesh)."}
+                return
+            calls += 1
+            turn = None
+            try:
+                for item in provider.stream_turn(SYSTEM_PROMPT, messages, tools, s.copilot_max_output_tokens):
+                    if isinstance(item, Turn):
+                        turn = item
+                    else:
+                        answer_parts.append(item)
+                        yield {"type": "delta", "text": item}
+            except LLMError as e:
+                log.warning("copilot model call failed: %s client=%s", e.code, tag)
+                yield {"type": "error", "code": e.code, "detail": e.detail}
+                return
+            if turn is None:
+                yield {"type": "error", "code": "llm_error", "detail": "The AI service ended without an answer."}
+                return
+            if turn.stop == "pause":
+                messages.append(turn.assistant)
+                continue
+            if turn.stop == "end" or not turn.tool_calls:
+                answer = "".join(answer_parts)
+                log.info("copilot answer done: %d model calls, %d tools, client=%s", calls, len(used), tag)
+                yield {"type": "done", "model": turn.model or cfg.model, "provider": cfg.provider,
+                       "stopReason": turn.finish or "end", "tools": used,
+                       "unverifiedNumbers": unverified_numbers(answer, " ".join(evidence))}
+                return
+            results = []
+            for call in turn.tool_calls:
+                yield {"type": "tool", "status": "running", "name": call.name}
+                text, is_error, summary = run_tool(conn, call.name, call.args, tag)
+                if not is_error:
+                    evidence.append(text)
+                used.append(summary)
+                yield {"type": "tool", **summary}
+                results.append(ToolResult(call, text, is_error))
+            messages.append(turn.assistant)
+            messages.append(provider.tool_results_message(results))
+            if answer_parts:
+                answer_parts.append("\n\n")
+                yield {"type": "delta", "text": "\n\n"}
+        yield {"type": "error", "code": "too_many_steps", "detail": "The question needed too many lookups. Ask a "
+                                                                      "narrower question."}
+    finally:
+        close = getattr(provider, "close", None)
+        if callable(close):
+            close()
