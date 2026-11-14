@@ -719,6 +719,22 @@ export interface components {
             /** Assumption */
             assumption: boolean;
         };
+        /**
+         * BudgetHistory
+         * @description Genuine AQUASTAT reference years of one budget part (imputed values excluded, never interpolated).
+         */
+        BudgetHistory: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Code */
+            code: string;
+            /** Unit */
+            unit: string;
+            /** Points */
+            points: components["schemas"]["Measure"][];
+        };
         /** BudgetLink */
         BudgetLink: {
             /** Source */
@@ -734,6 +750,16 @@ export interface components {
             /** Label */
             label: string;
             value: components["schemas"]["Measure"];
+            /**
+             * Kind
+             * @default use
+             * @enum {string}
+             */
+            kind: "source" | "total" | "use" | "remainder";
+            /** Code */
+            code?: string | null;
+            /** Indicator */
+            indicator?: string | null;
         };
         /** BudgetResponse */
         BudgetResponse: {
@@ -1456,6 +1482,10 @@ export interface components {
             missing: string[];
             /** Notes */
             notes: string[];
+            /** History */
+            history: components["schemas"]["BudgetHistory"][];
+            /** Comparisonyears */
+            comparisonYears: number[];
         };
         /** OptimizeRequest */
         OptimizeRequest: {
@@ -2181,10 +2211,7 @@ export interface components {
             mode: "national" | "derived";
             region: components["schemas"]["RegionRef"];
             national?: components["schemas"]["NationalBudget"] | null;
-            /** Derived */
-            derived?: {
-                [key: string]: unknown;
-            } | null;
+            derived?: components["schemas"]["BudgetResponse"] | null;
         };
         /** WaterScarcity */
         WaterScarcity: {
@@ -3284,6 +3311,20 @@ export interface operations {
                 region?: string;
                 mode?: "national" | "derived";
                 period?: string;
+                /** @description -50..+50 % */
+                rainfallChangePct?: number;
+                /** @description -2..+4 °C */
+                temperatureChangeC?: number;
+                /** @description -30..+50 % */
+                demandChangePct?: number;
+                /** @description -50..+50 % (agricultural consumption) */
+                agriculturalDemandChangePct?: number;
+                /** @description -50..+20 % */
+                groundwaterAvailabilityPct?: number;
+                /** @description 0.30..0.90; absent = baseline */
+                irrigationEfficiency?: number | null;
+                /** @description 0..50 %; absent = baseline */
+                pipelineLossPct?: number | null;
             };
             header?: never;
             path?: never;

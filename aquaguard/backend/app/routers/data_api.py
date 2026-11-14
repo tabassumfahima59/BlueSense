@@ -19,9 +19,10 @@ from fastapi.responses import Response
 from ..config.params import pval
 from ..db import connection
 from ..errors import ApiError
-from ..schemas.common import Measure
+from ..schemas.common import Measure, ScenarioParams
 from ..schemas.modules import IrrigationRequest, IrrigationResponse, ScenarioRequest
 from ..schemas.v2 import (
+    BudgetHistory,
     BudgetLink,
     BudgetNode,
     DashboardSummary,
@@ -56,6 +57,7 @@ from ..services import catalog, indicators, insights, regional, store
 from ..services import ml_artifacts as mla
 from ..services.catalog import NATIONAL_DATA_NOTE, NATIONAL_WEATHER_NOTE, mv
 from ..settings import get_settings
+from .deps import scenario_query
 
 router = APIRouter(tags=["Data API (P3)"])
 DAY_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -614,50 +616,98 @@ def predictions(region: str = "bd", category: str = "water_balance", horizon: in
 
 # ---------------------------------------------------------------- water budget
 
+BUDGET_SOURCES = [(4185, "surface", "Renewable surface water"), (4187, "groundwater", "Renewable groundwater")]
 BUDGET_PARTS = [(4250, "agriculture", "Agricultural withdrawal"), (4251, "municipal", "Municipal withdrawal"),
                 (4252, "industrial", "Industrial withdrawal"), (4549, "environment", "Environmental flow requirement")]
+SOURCE_SPLIT_TOLERANCE = 0.05  # km3/yr: surface + groundwater must reproduce the total (no overlap) to be drawn
+
+
+def _genuine_years(conn, code: int) -> list[tuple[int, float, str | None]]:
+    return conn.execute(
+        "SELECT reference_year, value, symbol FROM water_statistics WHERE source_id = 'fao_aquastat' AND "
+        "indicator_code = ? AND superseded_at IS NULL AND imputed = 0 ORDER BY reference_year", (str(code),)).fetchall()
 
 
 def national_budget(conn) -> NationalBudget:
-    nodes, links, missing, years = [], [], [], []
-    trwr = store.stat(conn, 4188)
+    """National AQUASTAT budget: renewable surface + groundwater -> total renewable resources -> withdrawals by
+    sector, environmental flow requirement and the derived remainder. Each part keeps its own reference year;
+    missing parts are reported as 'no data' and never filled."""
+    nodes, links, missing, years, history = [], [], [], [], []
     notes = ["National AQUASTAT statistics; each value keeps its own reference year.",
-             "Remainder = renewable resources minus all shown uses (derived), only when every part has data."]
+             "Remainder = renewable resources minus all shown uses (derived), only when every use has data."]
+    trwr = store.stat(conn, 4188)
     if trwr is None:
         return NationalBudget(nodes=[], links=[], referenceYears=[], mixedReferenceYears=False,
-                              missing=["trwr"] + [k for _, k, _ in BUDGET_PARTS], notes=notes)
+                              missing=["trwr"] + [k for _, k, _ in BUDGET_SOURCES + BUDGET_PARTS], notes=notes,
+                              history=[], comparisonYears=[])
     unit = store.AQUASTAT_UNIT.get(trwr["unit"], trwr["unit"])
-    nodes.append(BudgetNode(id="trwr", label="Total renewable water resources",
-                            value=mv(trwr["value"], unit, "statistic", "fao_aquastat", "national",
-                                     observed_at=str(trwr["year"]), reference_year=trwr["year"], digits=2)))
+
+    def stat_mv(s: dict) -> Measure:
+        return mv(s["value"], unit, "statistic", "fao_aquastat", "national", observed_at=str(s["year"]),
+                  reference_year=s["year"], digits=2)
+
+    def no_data() -> Measure:
+        return mv(None, unit, "statistic", "fao_aquastat", "national", status="unavailable",
+                  note="No genuine AQUASTAT value is stored for this part.")
+
+    def track(code: int, key: str, label: str) -> None:
+        rows = _genuine_years(conn, code)
+        if rows:
+            history.append(BudgetHistory(id=key, label=label, code=str(code), unit=unit, points=[
+                mv(v, unit, "statistic", "fao_aquastat", "national", observed_at=str(y), reference_year=y, digits=3,
+                   note=f"AQUASTAT symbol {sym}" if sym else None) for y, v, sym in rows]))
+
+    srcs = [(code, key, label, store.stat(conn, code)) for code, key, label in BUDGET_SOURCES]
+    have = [s for *_, s in srcs if s is not None]
+    split_ok = len(have) == len(srcs) and abs(sum(s["value"] for s in have) - trwr["value"]) <= SOURCE_SPLIT_TOLERANCE
+    for code, key, label, s in srcs:
+        if s is None:
+            missing.append(key)
+            nodes.append(BudgetNode(id=key, label=label, value=no_data(), kind="source", code=str(code)))
+            continue
+        track(code, key, label)
+        if split_ok:
+            v = stat_mv(s)
+            nodes.append(BudgetNode(id=key, label=label, value=v, kind="source", code=str(code), indicator=s["name"]))
+            links.append(BudgetLink(source=key, target="trwr", value=v))
+            years.append(s["year"])
+    if have and not split_ok:
+        notes.append("The surface / groundwater split is not drawn: the stored parts do not add up to the total "
+                     "renewable resources (overlap or a missing part).")
+
+    nodes.append(BudgetNode(id="trwr", label="Total renewable water resources", value=stat_mv(trwr), kind="total",
+                            code="4188", indicator=trwr["name"]))
+    track(4188, "trwr", "Total renewable water resources")
     years.append(trwr["year"])
-    used = 0.0
+    used, uses_missing = 0.0, False
     for code, key, label in BUDGET_PARTS:
         s = store.stat(conn, code)
         if s is None:
             missing.append(key)
-            nodes.append(BudgetNode(id=key, label=f"{label} (no data)",
-                                    value=mv(None, unit, "statistic", "fao_aquastat", "national")))
+            uses_missing = True
+            nodes.append(BudgetNode(id=key, label=label, value=no_data(), kind="use", code=str(code)))
             continue
-        v = mv(s["value"], unit, "statistic", "fao_aquastat", "national", observed_at=str(s["year"]),
-               reference_year=s["year"], digits=2)
-        nodes.append(BudgetNode(id=key, label=label, value=v))
+        v = stat_mv(s)
+        nodes.append(BudgetNode(id=key, label=label, value=v, kind="use", code=str(code), indicator=s["name"]))
         links.append(BudgetLink(source="trwr", target=key, value=v))
+        track(code, key, label)
         used += s["value"]
         years.append(s["year"])
-    if not missing:
+    if not uses_missing:
         rem = mv(trwr["value"] - used, unit, "derived", "fao_aquastat", "national", digits=2,
-                 note="Renewable resources minus withdrawals and environmental flow (mixed reference years)")
-        nodes.append(BudgetNode(id="remainder", label="Remainder", value=rem))
+                 note="Total renewable water resources minus sector withdrawals and the environmental flow "
+                      "requirement (values from their own reference years).")
+        nodes.append(BudgetNode(id="remainder", label="Remainder", value=rem, kind="remainder"))
         links.append(BudgetLink(source="trwr", target="remainder", value=rem))
     ys = sorted(set(years))
+    comparison = sorted({p.referenceYear for h in history for p in h.points if p.referenceYear is not None})
     return NationalBudget(nodes=nodes, links=links, referenceYears=ys, mixedReferenceYears=len(ys) > 1,
-                          missing=missing, notes=notes)
+                          missing=missing, notes=notes, history=history, comparisonYears=comparison)
 
 
 @router.get("/water-budget", response_model=Envelope[WaterBudget])
 def water_budget(region: str = "bd", mode: Literal["national", "derived"] = "national", period: str = "annual",
-                 conn=Depends(db)) -> Envelope[WaterBudget]:
+                 scenario: ScenarioParams = Depends(scenario_query), conn=Depends(db)) -> Envelope[WaterBudget]:
     reg = resolve(conn, region)
     note = None if reg["level"] == "country" else NATIONAL_DATA_NOTE
     if mode == "national":
@@ -672,10 +722,13 @@ def water_budget(region: str = "bd", mode: Literal["national", "derived"] = "nat
         period = regional.validate_period(period)
     except ValueError:
         raise ApiError(422, "invalid_parameter", "period must be 'annual', 'dry' or a month number 1-12.") from None
-    legacy = budget(region="bd", period=period, scenario=ScenarioRequest().params)
-    derived_note = "Monthly water-balance model (derived), national only (decision 8)."
-    return Envelope(data=WaterBudget(mode=mode, region=ref(reg), derived=legacy.model_dump()),
-                    meta=catalog.meta(["aquaguard_engine", "fao_aquastat", "openmeteo_archive"], ["derived"],
+    legacy = budget(region="bd", period=period, scenario=scenario)
+    is_scenario = not scenario.is_baseline()
+    derived_note = ("Monthly water-balance model on the 1991-2020 normal climate year (derived), national only."
+                    + (" Scenario levers applied." if is_scenario else ""))
+    return Envelope(data=WaterBudget(mode=mode, region=ref(reg), derived=legacy),
+                    meta=catalog.meta(["aquaguard_engine", "fao_aquastat", "openmeteo_archive"],
+                                      ["scenario"] if is_scenario else ["derived"],
                                       "national", note=derived_note + (" " + note if note else "")))
 
 

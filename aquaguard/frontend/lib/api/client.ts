@@ -4,7 +4,7 @@
  */
 import { scenarioQuery } from "../store/scenario";
 import type {
-  AlertsResponse, BudgetResponse, DashboardSummary, WhatIf, DivisionIndicators, GroundwaterTrends, StatHistory, WeatherSeries, CopilotRequest, CopilotResponse, DemandResponse, Envelope, FlowRequest, FlowResponse,
+  AlertsResponse, BudgetResponse, DashboardSummary, WhatIf, WaterBudget, DivisionIndicators, GroundwaterTrends, StatHistory, WeatherSeries, CopilotRequest, CopilotResponse, DemandResponse, Envelope, FlowRequest, FlowResponse,
   GroundwaterResponse, IrrigationRequest, IrrigationResponse, LastUpdated, MapLayersResponse, MetricsResponse,
   OptimizeRequest, OptimizeResponse, OverviewResponse, ReadResult, RefreshResult, RegionsResponse, Scenario,
   ScarcityResponse, ScenarioRequest, ScenarioResponse, SearchResults, ShapResponse, SourceStatus, SourcesResponse,
@@ -100,4 +100,7 @@ export const api = {
   groundwaterTrends: (region: string, start?: string) =>
     request<Envelope<GroundwaterTrends>>(`/groundwater/trends?${new URLSearchParams({ region, ...(start ? { start } : {}) })}`),
   geo: (level: "divisions" | "districts") => request<GeoJSON.FeatureCollection>(`/geo/${level}`),
+  // M4 Water Budget
+  waterBudget: (mode: "national" | "derived", opts: { region?: string; period?: string; scenario?: Scenario } = {}) =>
+    request<Envelope<WaterBudget>>(`/water-budget${q(opts.region ?? "bd", opts.scenario, { mode, ...(opts.period ? { period: opts.period } : {}) })}`),
 };

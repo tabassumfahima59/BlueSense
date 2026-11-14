@@ -2080,6 +2080,102 @@
        "default": "annual",
        "title": "Period"
       }
+     },
+     {
+      "name": "rainfallChangePct",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "number",
+       "description": "-50..+50 %",
+       "default": 0.0,
+       "title": "Rainfallchangepct"
+      },
+      "description": "-50..+50 %"
+     },
+     {
+      "name": "temperatureChangeC",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "number",
+       "description": "-2..+4 \u00b0C",
+       "default": 0.0,
+       "title": "Temperaturechangec"
+      },
+      "description": "-2..+4 \u00b0C"
+     },
+     {
+      "name": "demandChangePct",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "number",
+       "description": "-30..+50 %",
+       "default": 0.0,
+       "title": "Demandchangepct"
+      },
+      "description": "-30..+50 %"
+     },
+     {
+      "name": "agriculturalDemandChangePct",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "number",
+       "description": "-50..+50 % (agricultural consumption)",
+       "default": 0.0,
+       "title": "Agriculturaldemandchangepct"
+      },
+      "description": "-50..+50 % (agricultural consumption)"
+     },
+     {
+      "name": "groundwaterAvailabilityPct",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "number",
+       "description": "-50..+20 %",
+       "default": 0.0,
+       "title": "Groundwateravailabilitypct"
+      },
+      "description": "-50..+20 %"
+     },
+     {
+      "name": "irrigationEfficiency",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "number"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "0.30..0.90; absent = baseline",
+       "title": "Irrigationefficiency"
+      },
+      "description": "0.30..0.90; absent = baseline"
+     },
+     {
+      "name": "pipelineLossPct",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "number"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "0..50 %; absent = baseline",
+       "title": "Pipelinelosspct"
+      },
+      "description": "0..50 %; absent = baseline"
      }
     ],
     "responses": {
@@ -2703,6 +2799,44 @@
     ],
     "title": "AssumptionRow"
    },
+   "BudgetHistory": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "title": "Id"
+     },
+     "label": {
+      "type": "string",
+      "title": "Label"
+     },
+     "code": {
+      "type": "string",
+      "title": "Code"
+     },
+     "unit": {
+      "type": "string",
+      "title": "Unit"
+     },
+     "points": {
+      "items": {
+       "$ref": "#/components/schemas/Measure"
+      },
+      "type": "array",
+      "title": "Points"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "id",
+     "label",
+     "code",
+     "unit",
+     "points"
+    ],
+    "title": "BudgetHistory",
+    "description": "Genuine AQUASTAT reference years of one budget part (imputed values excluded, never interpolated)."
+   },
    "BudgetLink": {
     "properties": {
      "source": {
@@ -2738,6 +2872,39 @@
      },
      "value": {
       "$ref": "#/components/schemas/Measure"
+     },
+     "kind": {
+      "type": "string",
+      "enum": [
+       "source",
+       "total",
+       "use",
+       "remainder"
+      ],
+      "title": "Kind",
+      "default": "use"
+     },
+     "code": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Code"
+     },
+     "indicator": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Indicator"
      }
     },
     "additionalProperties": false,
@@ -5276,6 +5443,20 @@
       },
       "type": "array",
       "title": "Notes"
+     },
+     "history": {
+      "items": {
+       "$ref": "#/components/schemas/BudgetHistory"
+      },
+      "type": "array",
+      "title": "History"
+     },
+     "comparisonYears": {
+      "items": {
+       "type": "integer"
+      },
+      "type": "array",
+      "title": "Comparisonyears"
      }
     },
     "additionalProperties": false,
@@ -5286,7 +5467,9 @@
      "referenceYears",
      "mixedReferenceYears",
      "missing",
-     "notes"
+     "notes",
+     "history",
+     "comparisonYears"
     ],
     "title": "NationalBudget"
    },
@@ -7559,14 +7742,12 @@
      "derived": {
       "anyOf": [
        {
-        "additionalProperties": true,
-        "type": "object"
+        "$ref": "#/components/schemas/BudgetResponse"
        },
        {
         "type": "null"
        }
-      ],
-      "title": "Derived"
+      ]
      }
     },
     "additionalProperties": false,

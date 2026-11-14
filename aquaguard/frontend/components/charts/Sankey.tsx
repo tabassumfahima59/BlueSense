@@ -1,45 +1,79 @@
 "use client";
-/** D3 Sankey (d3-sankey) with hover tooltips, % shares and PNG export. Values in MCM. */
+/**
+ * D3 Sankey (d3-sankey): hover tooltips with quantities, direct labels, a legend that doubles as the keyboard path
+ * to node details, "View as table" and PNG export. Generic over units so the national AQUASTAT budget (km³/yr) and
+ * the monthly model (MCM) share one component.
+ */
 import { sankey, sankeyLinkHorizontal, type SankeyGraph } from "d3-sankey";
 import { BarChart3, Download, Table2 } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { fmtNumber } from "@/lib/format";
 import type { BudgetState } from "@/lib/types/contract";
 import { DataTable } from "./Plot";
-import { NEUTRAL, SECTOR_COLOR, SERIES } from "./theme";
+import { FLOW_COLOR, NEUTRAL, SECTOR_COLOR } from "./theme";
 
-type N = { id: string; label: string; kind: string };
+export type FlowNode = {
+  id: string;
+  label: string;
+  color: string;
+  /** Pools pass their colour to nothing: links into a pool take the source colour, links out take the target's. */
+  pool?: boolean;
+  /** Short qualifier after the value, e.g. "ref. 2008" or "derived". */
+  detail?: string;
+};
+export type FlowLink = { source: string; target: string; value: number | null };
+
+type N = FlowNode & { x0?: number; x1?: number; y0?: number; y1?: number; value?: number; depth?: number };
 type L = { source: string; target: string; value: number };
 
-const NODE_COLOR: Record<string, string> = {
-  surface: SERIES[2],
-  groundwater: SERIES[4],
-  available: NEUTRAL.reference,
-  storage: "#94A3B8",
-  ...SECTOR_COLOR,
-};
-
-export function SankeyChart({ state, height = 380, filename }: { state: BudgetState; height?: number; filename: string }) {
+export function Sankey({ nodes, links, unit, total, totalLabel, height = 380, filename, ariaLabel, caption, onNodeClick, labelSpace = 360, leftSpace = 210 }: {
+  nodes: FlowNode[];
+  links: FlowLink[];
+  unit: string;
+  /** Base for the % shares. */
+  total: number | null;
+  totalLabel: string;
+  height?: number;
+  filename: string;
+  ariaLabel: string;
+  caption: string;
+  onNodeClick?: (id: string) => void;
+  /** Room for the first column's labels (drawn left of the nodes). */
+  labelSpace?: number;
+  leftSpace?: number;
+}) {
   const width = 1040;
   const svgRef = useRef<SVGSVGElement>(null);
-  const [hover, setHover] = useState<{ x: number; y: number; text: string } | null>(null);
+  const [hover, setHover] = useState<{ x: number; y: number; text: string; key: string } | null>(null);
   const [asTable, setAsTable] = useState(false);
-  const total = state.supply.value ?? 0;
+  const byId = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
 
   const graph = useMemo(() => {
-    const links: L[] = state.links
-      .map((l) => ({ source: l.source, target: l.target, value: Math.max(0, l.value.value ?? 0) }))
+    const ls: L[] = links
+      .map((l) => ({ source: l.source, target: l.target, value: Math.max(0, l.value ?? 0) }))
       .filter((l) => l.value > 0);
-    const used = new Set(links.flatMap((l) => [l.source, l.target]));
-    const nodes: N[] = state.nodes.filter((n) => used.has(n.id)).map((n) => ({ ...n }));
+    const used = new Set(ls.flatMap((l) => [l.source, l.target]));
+    const ns: N[] = nodes.filter((n) => used.has(n.id)).map((n) => ({ ...n }));
+    // Labels: first column on the left of its nodes, last column on the right, middle columns above the node.
     const gen = sankey<N, L>()
       .nodeId((d) => d.id)
       .nodeWidth(14)
-      .nodePadding(18)
+      .nodePadding(22)
       .nodeSort(null)
-      .extent([[8, 8], [width - 340, height - 8]]);
-    return gen({ nodes: nodes.map((d) => ({ ...d })), links: links.map((d) => ({ ...d })) } as SankeyGraph<N, L>);
-  }, [state, height]);
+      .extent([[leftSpace, 40], [width - labelSpace, height - 16]]);
+    return gen({ nodes: ns, links: ls.map((d) => ({ ...d })) } as SankeyGraph<N, L>);
+  }, [nodes, links, height, labelSpace, leftSpace]);
+
+  const pct = (v: number) => (total && total > 0 ? `${((v / total) * 100).toFixed(1)}%` : "—");
+  const qty = (v: number) => `${fmtNumber(v)} ${unit}`;
+  const linkColor = (s: FlowNode, t: FlowNode) => (t.pool ? s.color : t.color);
+  const shown = graph.nodes as unknown as Required<N>[];
+  const lastDepth = Math.max(0, ...shown.map((n) => n.depth));
+
+  function place(e: React.MouseEvent, text: string, key: string) {
+    const r = svgRef.current!.getBoundingClientRect();
+    setHover({ x: e.clientX - r.left, y: e.clientY - r.top, text, key });
+  }
 
   function downloadPng() {
     const svg = svgRef.current;
@@ -64,7 +98,8 @@ export function SankeyChart({ state, height = 380, filename }: { state: BudgetSt
     img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(xml)}`;
   }
 
-  const pct = (v: number) => (total > 0 ? `${((v / total) * 100).toFixed(1)}%` : "—");
+  const hasDetail = nodes.some((n) => n.detail);
+  const lab = (id: string) => byId.get(id)?.label ?? id;
 
   return (
     <div className="relative">
@@ -75,71 +110,109 @@ export function SankeyChart({ state, height = 380, filename }: { state: BudgetSt
           {asTable ? "View as chart" : "View as table"}
         </button>
         {!asTable && (
-          <button onClick={downloadPng} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] text-muted transition hover:bg-light" aria-label="Download Sankey as PNG">
+          <button type="button" onClick={downloadPng} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[12px] text-muted transition hover:bg-light" aria-label="Download Sankey as PNG">
             <Download size={13} aria-hidden /> PNG
           </button>
         )}
       </div>
       {asTable ? (
-        <DataTable caption="Water budget flows" head={["From", "To", "MCM", "Share of supply"]}
-                   rows={state.links.map((l) => {
-                     const lab = (id: string) => state.nodes.find((n) => n.id === id)?.label ?? id;
-                     const v = l.value.value ?? null;
-                     return [lab(l.source), lab(l.target), v, v === null ? null : pct(v)];
+        <DataTable caption={caption} head={["From", "To", unit, `Share of ${totalLabel}`, ...(hasDetail ? ["Reference"] : [])]}
+                   rows={links.map((l) => {
+                     const v = l.value ?? null;
+                     return [lab(l.source), lab(l.target), v, v === null ? null : pct(v), ...(hasDetail ? [byId.get(l.target)?.detail ?? null] : [])];
                    })} />
       ) : (
-      <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Water budget Sankey (scrollable)">
-        <svg
-          ref={svgRef}
-          viewBox={`0 0 ${width} ${height}`}
-          width="100%"
-          style={{ minWidth: 560 }}
-          role="img"
-          aria-label="Water budget Sankey diagram: sources to total available to sectors, losses and storage"
-          xmlns="http://www.w3.org/2000/svg"
-          fontFamily="Inter, system-ui, sans-serif"
-        >
-          <g fill="none">
-            {graph.links.map((l, i) => {
-              const s = l.source as unknown as N;
-              const t = l.target as unknown as N;
-              const color = NODE_COLOR[t.id === "available" ? s.id : t.id] ?? NEUTRAL.reference;
+        <div className="overflow-x-auto" tabIndex={0} role="region" aria-label={`${caption} (scrollable)`}>
+          <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} width="100%" style={{ minWidth: 560 }} role="img" aria-label={ariaLabel}
+               xmlns="http://www.w3.org/2000/svg" fontFamily="Inter, system-ui, sans-serif">
+            <g fill="none">
+              {graph.links.map((l, i) => {
+                const s = l.source as unknown as FlowNode;
+                const t = l.target as unknown as FlowNode;
+                const key = `link:${s.id}>${t.id}`;
+                return (
+                  <path key={i} d={sankeyLinkHorizontal()(l as never) ?? undefined} stroke={linkColor(s, t)}
+                        strokeOpacity={hover?.key === key ? 0.6 : 0.32} strokeWidth={Math.max(1, l.width ?? 1)}
+                        onMouseMove={(e) => place(e, `${s.label} → ${t.label}: ${qty(l.value)} (${pct(l.value)} of ${totalLabel})${t.detail ? ` · ${t.detail}` : ""}`, key)}
+                        onMouseLeave={() => setHover(null)} />
+                );
+              })}
+            </g>
+            {shown.map((nd) => {
+              const key = `node:${nd.id}`;
+              const text = `${nd.label}: ${qty(nd.value)} (${pct(nd.value)} of ${totalLabel})${nd.detail ? ` · ${nd.detail}` : ""}${onNodeClick ? " · click for details" : ""}`;
               return (
-                <path
-                  key={i}
-                  d={sankeyLinkHorizontal()(l as never) ?? undefined}
-                  stroke={color}
-                  strokeOpacity={hover?.text.startsWith(`${s.label} → ${t.label}`) ? 0.55 : 0.3}
-                  strokeWidth={Math.max(1, l.width ?? 1)}
-                  onMouseMove={(e) => {
-                    const r = svgRef.current!.getBoundingClientRect();
-                    setHover({ x: e.clientX - r.left, y: e.clientY - r.top, text: `${s.label} → ${t.label}: ${fmtNumber(l.value)} MCM (${pct(l.value)} of supply)` });
-                  }}
-                  onMouseLeave={() => setHover(null)}
-                />
+                <g key={nd.id} data-node={nd.id} onClick={onNodeClick ? () => onNodeClick(nd.id) : undefined}
+                   style={onNodeClick ? { cursor: "pointer" } : undefined}
+                   onMouseMove={(e) => place(e, text, key)} onMouseLeave={() => setHover(null)}>
+                  <rect x={nd.x0} y={nd.y0} width={nd.x1 - nd.x0} height={Math.max(2, nd.y1 - nd.y0)} rx={3} fill={nd.color}
+                        stroke={hover?.key === key ? NEUTRAL.ink : "none"} strokeWidth={1.5} />
+                  <NodeLabel nd={nd} side={nd.depth === lastDepth && lastDepth > 0 ? "right" : nd.depth === 0 ? "left" : "top"}
+                             value={`${qty(nd.value)} · ${pct(nd.value)}${nd.detail ? ` · ${nd.detail}` : ""}`} />
+                </g>
               );
             })}
-          </g>
-          {graph.nodes.map((n) => {
-            const nd = n as unknown as N & { x0: number; x1: number; y0: number; y1: number; value: number };
-            return (
-              <g key={nd.id}>
-                <rect x={nd.x0} y={nd.y0} width={nd.x1 - nd.x0} height={Math.max(2, nd.y1 - nd.y0)} rx={3} fill={NODE_COLOR[nd.id] ?? NEUTRAL.reference} />
-                <text x={nd.x1 + 6} y={(nd.y0 + nd.y1) / 2} dy="0.35em" fontSize={12} fill={NEUTRAL.ink}>
-                  {nd.label}
-                  <tspan fill={NEUTRAL.muted}> {fmtNumber(nd.value)} MCM · {pct(nd.value)}</tspan>
-                </text>
-              </g>
-            );
-          })}
-        </svg>
-      </div>
+          </svg>
+        </div>
       )}
       {hover && !asTable && (
-        <div className="pointer-events-none absolute z-10 rounded-md border border-border bg-white px-2 py-1 text-[12px] shadow" style={{ left: hover.x + 12, top: hover.y + 8 }}>
+        <div role="tooltip" className="pointer-events-none absolute z-10 max-w-[360px] rounded-md border border-border bg-white px-2 py-1 text-[12px] shadow"
+             style={{ left: Math.min(hover.x + 12, width - 200), top: hover.y + 8 }}>
           {hover.text}
         </div>
       )}
+      <ul className="mt-2 flex flex-wrap gap-1.5" aria-label={onNodeClick ? "Budget parts (open details)" : "Legend"}>
+        {nodes.map((n) => {
+          const swatch = <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: n.color }} aria-hidden />;
+          return (
+            <li key={n.id}>
+              {onNodeClick ? (
+                <button type="button" onClick={() => onNodeClick(n.id)}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-2.5 py-1 text-[12px] text-ink transition hover:border-primary hover:bg-primary-soft">
+                  {swatch}{n.label}
+                </button>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-1 text-[12px] text-muted">{swatch}{n.label}</span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </div>
+  );
+}
+
+const HALO = { stroke: "#FFFFFF", strokeWidth: 3, strokeLinejoin: "round" as const, paintOrder: "stroke" };
+
+function NodeLabel({ nd, side, value }: { nd: Required<N>; side: "left" | "right" | "top"; value: string }) {
+  const cy = (nd.y0 + nd.y1) / 2;
+  if (side === "right") {
+    return (
+      <text x={nd.x1 + 6} y={cy} dy="0.35em" fontSize={12} fill={NEUTRAL.ink} {...HALO}>
+        {nd.label}<tspan fill={NEUTRAL.muted}> {value}</tspan>
+      </text>
+    );
+  }
+  const x = side === "left" ? nd.x0 - 6 : (nd.x0 + nd.x1) / 2;
+  const y = side === "left" ? cy - 7 : nd.y0 - 22;
+  return (
+    <text x={x} y={y} dy="0.35em" fontSize={12} fill={NEUTRAL.ink} textAnchor={side === "left" ? "end" : "middle"} {...HALO}>
+      <tspan x={x}>{nd.label}</tspan>
+      <tspan x={x} dy={15} fill={NEUTRAL.muted}>{value}</tspan>
+    </text>
+  );
+}
+
+/** Monthly-model budget (MCM) in the generic Sankey. */
+export function SankeyChart({ state, height = 380, filename, onNodeClick }: { state: BudgetState; height?: number; filename: string; onNodeClick?: (id: string) => void }) {
+  const nodes: FlowNode[] = state.nodes.map((n) => ({
+    id: n.id, label: n.label, pool: n.kind === "pool",
+    color: FLOW_COLOR[n.id] ?? SECTOR_COLOR[n.id] ?? NEUTRAL.reference,
+  }));
+  const links: FlowLink[] = state.links.map((l) => ({ source: l.source, target: l.target, value: l.value.value ?? null }));
+  return (
+    <Sankey nodes={nodes} links={links} unit="MCM" total={state.supply.value ?? null} totalLabel="total available" height={height}
+            filename={filename} caption="Water budget flows (monthly model)" onNodeClick={onNodeClick} labelSpace={330} leftSpace={170}
+            ariaLabel="Water budget Sankey diagram: surface water and groundwater to total available, then to sectors, distribution losses and storage" />
   );
 }

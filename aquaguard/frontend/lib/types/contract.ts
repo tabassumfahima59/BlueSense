@@ -77,6 +77,11 @@ export type WeatherSeries = S["WeatherSeries"];
 export type SeriesValues = S["SeriesValues"];
 export type GroundwaterTrends = S["GroundwaterTrends"];
 export type WhatIf = S["WhatIf"];
+// M4 Water Budget
+export type WaterBudget = S["WaterBudget"];
+export type NationalBudget = S["NationalBudget"];
+export type BudgetNode = S["BudgetNode"];
+export type BudgetHistory = S["BudgetHistory"];
 
 /** Scenario with every field explicit; `null` efficiency/loss = use the baseline from config. */
 export interface Scenario {

@@ -95,7 +95,9 @@ def test_frontend_never_references_server_secrets():
     frontend = ROOT / "frontend"
     offenders = []
     for path in frontend.rglob("*"):
-        if any(p in path.parts for p in ("node_modules", ".next", "public")) or not path.is_file():
+        # build output and Playwright artifacts (captured API responses) are not frontend source
+        if any(p in path.parts for p in ("node_modules", ".next", ".next-e2e", "public", "test-results",
+                                         "playwright-report")) or not path.is_file():
             continue
         if path.suffix not in {".ts", ".tsx", ".js", ".mjs", ".json", ".css"} and not path.name.startswith(".env"):
             continue

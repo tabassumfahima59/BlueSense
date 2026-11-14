@@ -11,7 +11,7 @@ from typing import Generic, Literal, TypeVar
 from pydantic import Field
 
 from .common import DataKind, DataStatus, Measure, Model, ScenarioParams, SpatialLevel
-from .modules import AlertsResponse, ScenarioResponse
+from .modules import AlertsResponse, BudgetResponse, ScenarioResponse
 
 T = TypeVar("T")
 
@@ -238,12 +238,24 @@ class BudgetNode(Model):
     id: str
     label: str
     value: Measure
+    kind: Literal["source", "total", "use", "remainder"] = "use"
+    code: str | None = None  # AQUASTAT variable code
+    indicator: str | None = None  # AQUASTAT indicator name
 
 
 class BudgetLink(Model):
     source: str
     target: str
     value: Measure
+
+
+class BudgetHistory(Model):
+    """Genuine AQUASTAT reference years of one budget part (imputed values excluded, never interpolated)."""
+    id: str
+    label: str
+    code: str
+    unit: str
+    points: list[Measure]
 
 
 class NationalBudget(Model):
@@ -253,13 +265,15 @@ class NationalBudget(Model):
     mixedReferenceYears: bool
     missing: list[str]
     notes: list[str]
+    history: list[BudgetHistory]
+    comparisonYears: list[int]  # years with at least one genuine budget value
 
 
 class WaterBudget(Model):
     mode: Literal["national", "derived"]
     region: RegionRef
     national: NationalBudget | None = None
-    derived: dict | None = None
+    derived: BudgetResponse | None = None
 
 
 class WhatIfBody(Model):

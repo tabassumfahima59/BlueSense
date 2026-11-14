@@ -37,8 +37,12 @@ test("a district link falls back to its division", async ({ page, request }) => 
 
 test("command palette: Ctrl+K, keyboard selection and navigation", async ({ page }) => {
   await ready(page, "/settings");
-  await page.keyboard.press("Control+k");
   const box = page.getByRole("combobox", { name: "Search" });
+  // the shortcut listener attaches on hydration, which can lag the server-rendered heading under load
+  await expect(async () => {
+    await page.keyboard.press("Control+k");
+    await expect(box).toBeVisible({ timeout: 1_000 });
+  }).toPass({ timeout: 20_000 });
   await expect(box).toBeFocused();
   await box.fill("Sylhet");
   const results = page.getByRole("listbox", { name: "Search results" });

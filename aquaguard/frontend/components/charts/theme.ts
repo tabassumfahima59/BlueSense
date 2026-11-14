@@ -56,3 +56,21 @@ export const TONE_COLOR: Record<number, string> = {
   [-3]: "#8C3209", [-2]: "#C2410C", [-1]: "#E8A27A", 0: "#D5DEE8", 1: "#9CC5EE", 2: "#3D8AD6", 3: "#0755B8",
 };
 export const NO_CLASS = "#EEF2F6";
+
+/**
+ * Sankey sources and pools (M4). They are neutral, directly labelled marks outside the categorical slots, so a
+ * source never shares a colour with a sector (groundwater used to equal "losses"). Validator, white surface:
+ * surface↔groundwater ΔE 18.1, groundwater↔pool ΔE 16.9, surface↔agriculture ΔE 17.8 (normal vision, all PASS);
+ * surface is 2.9:1 on white, relieved by the direct labels and the table view.
+ */
+export const FLOW_COLOR: Record<string, string> = {
+  surface: "#6F9CC4",
+  groundwater: "#6B5A4E",
+  available: "#1E3A5F",
+  trwr: "#1E3A5F",
+  storage: "#94A3B8",
+  remainder: "#94A3B8",
+  // AQUASTAT withdrawal names map onto the sector colours
+  municipal: SECTOR_COLOR.domestic,
+  industrial: SECTOR_COLOR.industry,
+};

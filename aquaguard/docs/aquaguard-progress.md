@@ -2,6 +2,25 @@
 
 Updated after every verified phase or module. A task is **done** only when a check was run and passed.
 
+## M4 Water Budget — verified
+
+| Phase | Task | Status | Evidence (2026-11-14) |
+|---|---|---|---|
+| M4 | Two tabs | done | `/water-budget`: "National statistics (AQUASTAT)" default, "Monthly model (derived)" second (decision 8); tab kept in the URL (`?view=model`, e2e reload test) |
+| M4 | National AQUASTAT Sankey | done | renewable surface (4185) + groundwater (4187) → total renewable (4188) → agricultural / municipal / industrial withdrawal, environmental flow requirement, derived remainder; source split drawn only when it reproduces the total (±0.05 km³/yr, test); every node shows value, unit, % and `ref. <year>` |
+| M4 | Reference years | done | each value keeps its own year; "Mixed reference years" warning lists which part is from which year (2018 vs 2008 in the real DB) |
+| M4 | No data | done | a missing part is `value: null`, status `unavailable`, listed under "No data", never drawn or estimated, and the remainder is then not computed (test) |
+| M4 | Year comparison | done | `history` = genuine AQUASTAT years per part (imputed excluded, test against the DB); `comparisonYears` only from those; default = newest earlier year with a changed value (1990); parts without a value in that year show "No data" (e2e) |
+| M4 | Hover + details | done | hover tooltips on nodes and links with quantity, share and reference year; node click or the legend chips (keyboard path) open a DetailDrawer: value, share, year, data kind, AQUASTAT variable, genuine-year table, derivation of the remainder (e2e) |
+| M4 | Monthly model tab | done | `GET /api/water-budget?mode=derived` now takes the scenario levers: `data_kind` `scenario` when levers are set, `derived` otherwise (test); always national, division selection → note; optimizer runs on `bd` |
+| M4 | Colour clash | done | sources/pools have their own neutral tokens (`FLOW_COLOR`), validated with the dataviz validator: surface↔groundwater ΔE 18.1, groundwater↔pool 16.9, surface↔agriculture 17.8; groundwater no longer equals "losses" |
+| M4 | Tests | done | backend `test_water_budget_m4.py` 6 (full **322 passed**); e2e `water-budget.spec.ts` 4 incl. axe on the model tab; full Playwright 41: 40 passed, the command-palette test failed once on a hydration race under CPU load and now retries the shortcut until the palette opens (`shell.spec.ts` re-run 12/12); vitest 24; tsc, eslint, ruff clean |
+
+Note: one full backend run showed a false positive in `test_frontend_never_references_server_secrets` because the
+e2e suite was running at the same time and Playwright's temporary `test-results/` held a captured API response that
+names `EARTHDATA_TOKEN` in a "not configured" note. Build output and Playwright artifacts are now excluded from that
+source scan; no frontend source file contains a secret name.
+
 ## M3 What-if — verified
 
 | Phase | Task | Status | Evidence (2026-11-14) |
@@ -167,7 +186,7 @@ Updated after every verified phase or module. A task is **done** only when a che
 ## Remaining issues / open items
 
 * P3 notes: `/api/predictions` reads the ML artifacts until M5 stores runs in `predictions_v2`; KPI insights,
-  DetailDrawer and UI wiring are M1; what-if baseline semantics are M3; the national AQUASTAT Sankey UI is M4.
+  DetailDrawer and UI wiring are M1; what-if baseline semantics are M3; the national AQUASTAT Sankey UI is M4 (done).
 * The test suite now takes ~3 min (was 43 s at P2): the importer/migration tests copying the real data dominate
   (~15–34 s each, unchanged code); measured under ~34 % background CPU load.
 * Docker image not built locally (no Docker on this machine); the Dockerfile no longer copies `data/sample`.
@@ -175,7 +194,7 @@ Updated after every verified phase or module. A task is **done** only when a che
   only the OpenAPI spec; the Phase-0 mock JSON is kept as frontend test fixtures.
 * M1 notes: national weather indicators are area-weighted means of the eight division values (the national rainfall
   anomaly is the weighted mean of division anomalies, not an anomaly of weighted totals). AQUASTAT values after 2008
-  for SDG 6.4.2 are FAO estimates (symbol E) and are labelled so. The Sankey colour clash (groundwater = losses) is M4.
+  for SDG 6.4.2 are FAO estimates (symbol E) and are labelled so. The Sankey colour clash (groundwater = losses) is fixed in M4.
 * P4 notes: modules keep their current content and endpoints (they were restyled through the tokens); moving each
   module to the P3 endpoints, DataStatusBadge per value, KPI DetailDrawers, insights and choropleth is M1–M8. The
   date filter is wired to the Command Center trend cards (within the 24 months the legacy endpoint returns); other
