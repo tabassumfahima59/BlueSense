@@ -15,8 +15,11 @@ Updated after every verified phase or module. A task is **done** only when a che
 | Tests | done | backend `test_copilot_gemini.py` 15 (httpx MockTransport, no Google call) + `test_copilot.py` 17 on the Anthropic adapter; full **342 passed**; vitest 38; e2e `copilot.spec.ts` 4 (keyless server + axe; recorded Gemini stream; quota error); full Playwright **66 passed** |
 | Layout fix | done | `responsive.spec` caught Data Sources scrolling sideways at 768 px once a source turned stale (the longer "Stale · updated …" badge in a ~230 px column next to the sidebar); two columns now start at 1024 px |
 
-Not verified: a real Gemini request (no `GEMINI_API_KEY` on this machine). Google's per-account free limits are shown in
-AI Studio; set `COPILOT_DAILY_MODEL_CALLS` below them.
+Real Gemini check (local API, free-tier key, 3 questions): answers in 8-34 s, real tool calls (current weather,
+division indicators), 0 unverified numbers. The first real answers led to three fixes: plain-text answers (no Markdown /
+LaTeX, the chat shows plain text), each tool result names its AquaGuard module (Gemini had cited the wrong module), and
+"live" only for fresh model_current values (stale data is now described as the last stored value with its time).
+Google's per-account free limits are shown in AI Studio; set `COPILOT_DAILY_MODEL_CALLS` below them.
 
 ## P5 Final verification — done (report: `aquaguard-final-report.md`)
 

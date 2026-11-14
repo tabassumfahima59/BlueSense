@@ -111,6 +111,8 @@ def test_tool_loop_sends_the_key_only_in_a_header_and_returns_model_parts_unchan
     assert model_turn == {"role": "model", "parts": [CALL_PART]}  # exactly as received, signature included
     fr = tool_turn["parts"][0]["functionResponse"]
     assert fr["id"] == "c1" and fr["name"] == "get_current_weather" and "result" in fr["response"]
+    assert fr["response"]["result"]["aquaguardModule"] == "Command Center"  # so the model cites the right module
+    assert "No Markdown headings" in b0["systemInstruction"]["parts"][0]["text"]
     assert KEY not in caplog.text and KEY not in r.text
 
 
