@@ -1269,6 +1269,18 @@ export interface components {
             assumptions: components["schemas"]["AssumptionRow"][];
             /** Note */
             note: string;
+            /** Why */
+            why?: components["schemas"]["WhyItem"][];
+            /** Context */
+            context?: components["schemas"]["WhyItem"][];
+            /** Forecaststatus */
+            forecastStatus?: ("fresh" | "stale" | "unavailable" | "not_configured") | null;
+            /** Pointid */
+            pointId?: string | null;
+            /** Missingdays */
+            missingDays?: string[];
+            /** Windownote */
+            windowNote?: string | null;
         };
         /** Kpi */
         Kpi: {
@@ -2239,6 +2251,28 @@ export interface components {
         WhatIf: {
             region: components["schemas"]["RegionRef"];
             result: components["schemas"]["ScenarioResponse"];
+        };
+        /** WhyItem */
+        WhyItem: {
+            /** Label */
+            label: string;
+            /** Value */
+            value: string;
+            /** Source */
+            source: string;
+            /**
+             * Datakind
+             * @enum {string}
+             */
+            dataKind: "observed" | "model_current" | "forecast" | "reanalysis" | "satellite_monthly" | "satellite_historical" | "statistic" | "derived" | "prediction" | "scenario" | "conceptual" | "reference";
+            /** Observedat */
+            observedAt?: string | null;
+            /** Retrievedat */
+            retrievedAt?: string | null;
+            /** Age */
+            age?: string | null;
+            /** Status */
+            status?: ("fresh" | "stale" | "unavailable" | "not_configured") | null;
         };
     };
     responses: never;

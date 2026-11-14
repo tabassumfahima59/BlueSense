@@ -1,6 +1,6 @@
 # AquaGuard — Implementation Plan (Main Rebuild)
 
-Status: **M1 Command Center implemented and verified — awaiting review before M2.** Evidence:
+Status: **M1–M2 implemented and verified; M3–M8 and P5 in progress (authorised together).** Evidence:
 `aquaguard-progress.md`.
 This plan implements the approved *Final Implementation Scope* and *Final Master Implementation Prompt*. It is an
 evolution of the existing repository, not a rebuild: working features, routes, tables and records are preserved.
@@ -148,9 +148,8 @@ average; each division value is the value at its representative point (divisiona
   the empirical rule; daily distribution within the period follows the period ratio Pe/P.
 * **Limitations:** empirical and monthly by design; less reliable for single heavy events, ponded rice and very short
   windows.
-* **Missing rainfall (current behaviour):** the advisor treats a missing daily value as 0 mm
-  (`backend/app/engine/fao56.py`, `advise`). This violates the "no silent fill" rule and is scheduled for M2:
-  missing rainfall must make the estimate `unavailable` (or report the missing days) instead of assuming 0.
+* **Missing rainfall (fixed in M2):** `fao56.advise` refuses a day without ET0 or rainfall; the irrigation route
+  stops the 7-day window before the first incomplete day, reports the missing dates and never assumes 0 mm.
 * **Reference crop:** with `Kc = 1`, `ETc = ET0`; results are labelled **reference-crop estimate**, not a
   crop-specific recommendation.
 
@@ -352,8 +351,9 @@ The legacy engine KPIs, engine-based division stress, risk map and sector chart 
 | P2 Sources + scheduler | Open-Meteo, AQUASTAT, GRACE CSR adapters; APScheduler + DB lease lock; status; bootstrap seed; backend sample fallback removed; approved security upgrades | implemented and verified |
 | P3 API | new endpoints, meta envelope, alerts engine, search, refresh, admin sync | implemented and verified |
 | P4 Design + shell | Blue & White glass tokens, shared components, TopBar, Settings, mock mode removal | implemented and verified |
-| M1 Command Center | KPIs + drawers, insights, stored alerts, weather choropleth + regional table, reference-year trend, weather anomalies with date filter | implemented and verified; awaiting review |
-| M2–M8 | Irrigation → What-if → Water Budget → Prediction Lab → Explorer → Water Flow → Copilot | not started |
+| M1 Command Center | KPIs + drawers, insights, stored alerts, weather choropleth + regional table, reference-year trend, weather anomalies with date filter | implemented and verified |
+| M2 Smart Irrigation | stored 7-day forecast of the nearest divisional point, no zero-filled days, "why" list with ages, conditions context, data kinds | implemented and verified |
+| M3–M8 | What-if → Water Budget → Prediction Lab → Explorer → Water Flow → Copilot | in progress |
 | P5 Verification | §7 checks of the master prompt, final report | not started |
 
 ## 10. Known limitations

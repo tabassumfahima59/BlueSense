@@ -2,7 +2,18 @@
 
 Updated after every verified phase or module. A task is **done** only when a check was run and passed.
 
-## Current phase: M1 Command Center — implemented and verified, awaiting review (M2 not started)
+## M2 Smart Irrigation — verified
+
+| Phase | Task | Status | Evidence (2026-11-14) |
+|---|---|---|---|
+| M2 | Push of M1 | done | `00edb13..ed0c540` |
+| M2 | Forecast source and window | done | stored forecast of the nearest of the eight points (D5), 7 local days; lat/lon near Rangpur → `rangpur` (test); live/cache only when nothing is stored |
+| M2 | No zero-filling | done | `fao56.advise` raises on a missing ET0/rainfall day (test); route trims the window, reports `missingDays`, adds a recommendation and a "why" item (test with a gap in a real recorded forecast) |
+| M2 | Why list, context, data kinds | done | 8 inputs with source, age and status; conditions (30-day rainfall class, 3-month dryness, national SDG 6.4.2 labelled national); ET0/rainfall `forecast`, engine outputs `derived` (or `scenario` with overrides) |
+| M2 | Page | done | divisions only (D5), map selects a division, auto re-estimate on input change, forecast status badge, why/conditions/depletion/assumptions |
+| M2 | Tests | done | backend `test_irrigation_m2.py` 6 (full suite **309 passed**); e2e `irrigation.spec.ts` 3 (crop → request + label, stage → Kc/stage, division → weather point + ages + badge); full Playwright 33 passed |
+
+## M1 Command Center — verified
 
 | Phase | Task | Status | Evidence (2026-11-14) |
 |---|---|---|---|

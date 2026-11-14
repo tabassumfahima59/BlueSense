@@ -6,7 +6,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from .common import Measure, Model, Region, RiskClass, ScenarioParams, Series
+from .common import DataKind, DataStatus, Measure, Model, Region, RiskClass, ScenarioParams, Series
 
 Sector = Literal["agriculture", "domestic", "industry", "environment"]
 
@@ -395,6 +395,17 @@ class AssumptionRow(Model):
     assumption: bool
 
 
+class WhyItem(Model):
+    label: str
+    value: str
+    source: str
+    dataKind: DataKind
+    observedAt: str | None = None
+    retrievedAt: str | None = None
+    age: str | None = None
+    status: DataStatus | None = None
+
+
 class IrrigationResponse(Model):
     crop: str
     cropLabel: str
@@ -430,6 +441,14 @@ class IrrigationResponse(Model):
     recommendations: list[str]
     assumptions: list[AssumptionRow]
     note: str
+    # M2: why the estimate is what it is (each input with its source and age), conditions and data completeness
+    why: list[WhyItem] = Field(default_factory=list)
+    context: list[WhyItem] = Field(default_factory=list)
+    forecastStatus: DataStatus | None = None
+    pointId: str | None = None
+    missingDays: list[str] = Field(default_factory=list)
+    windowNote: str | None = None
+
 
 
 # ---------------------------------------------------------------- copilot

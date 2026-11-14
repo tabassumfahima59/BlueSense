@@ -218,11 +218,14 @@ def advise(crop: Crop, soil_key: str, planting: date, today: date, days: list[di
     future = [d for d in days if d["date"] >= today.isoformat()]
     if not future:
         raise ValueError("no weather days from today onward")
+    missing = [d["date"] for d in future if d.get("et0_mm") is None or d.get("precip_mm") is None]
+    if missing:  # never assume 0 mm for a missing day (callers trim the window and report the dates)
+        raise ValueError(f"missing ET0 or rainfall for {', '.join(missing)}")
     n = len(future)
     day0 = (today - planting).days
     kcs = [kc_on_day(crop, day0 + i) for i in range(n)]
-    etcs = [k * (d["et0_mm"] or 0.0) for k, d in zip(kcs, future)]
-    p_total = sum((d["precip_mm"] or 0.0) for d in future)
+    etcs = [k * d["et0_mm"] for k, d in zip(kcs, future)]
+    p_total = sum(d["precip_mm"] for d in future)
     pe_total = effective_rainfall_period(p_total, n)
     pe_ratio = (pe_total / p_total) if p_total > 0 else 0.0
     etc_total = sum(etcs)
@@ -251,7 +254,7 @@ def advise(crop: Crop, soil_key: str, planting: date, today: date, days: list[di
     next_date = None
     trace = []
     for d, loss, k in zip(future, loss_per_day, kcs):
-        dr = max(0.0, dr + loss - (d["precip_mm"] or 0.0) * pe_ratio)
+        dr = max(0.0, dr + loss - d["precip_mm"] * pe_ratio)
         trace.append({"date": d["date"], "depletion_mm": round(dr, 2), "kc": round(k, 3)})
         if next_date is None and k > 0 and dr >= trigger:
             next_date = d["date"]
@@ -263,7 +266,7 @@ def advise(crop: Crop, soil_key: str, planting: date, today: date, days: list[di
     per_irrigation_gross = per_irrigation_net / efficiency
     return {
         "kcToday": kcs[0], "stage": stage_on_day(crop, day0), "daysSincePlanting": day0,
-        "etcMeanMmDay": mean_etc, "et0MeanMmDay": sum((d["et0_mm"] or 0.0) for d in future) / n,
+        "etcMeanMmDay": mean_etc, "et0MeanMmDay": sum(d["et0_mm"] for d in future) / n,
         "periodDays": n, "periodFrom": future[0]["date"], "periodTo": future[-1]["date"],
         "precipMm": p_total, "effectiveRainMm": pe_total, "etcTotalMm": etc_total, "riceExtraMm": extra,
         "nirMm": nir, "girMm": gir, "nirM3": mm_ha_to_m3(nir, area_ha), "girM3": mm_ha_to_m3(gir, area_ha),

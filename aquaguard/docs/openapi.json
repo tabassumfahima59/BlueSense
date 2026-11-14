@@ -4432,6 +4432,66 @@
      "note": {
       "type": "string",
       "title": "Note"
+     },
+     "why": {
+      "items": {
+       "$ref": "#/components/schemas/WhyItem"
+      },
+      "type": "array",
+      "title": "Why"
+     },
+     "context": {
+      "items": {
+       "$ref": "#/components/schemas/WhyItem"
+      },
+      "type": "array",
+      "title": "Context"
+     },
+     "forecastStatus": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "fresh",
+         "stale",
+         "unavailable",
+         "not_configured"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Forecaststatus"
+     },
+     "pointId": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Pointid"
+     },
+     "missingDays": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Missingdays"
+     },
+     "windowNote": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Windownote"
      }
     },
     "additionalProperties": false,
@@ -7626,6 +7686,99 @@
      "result"
     ],
     "title": "WhatIf"
+   },
+   "WhyItem": {
+    "properties": {
+     "label": {
+      "type": "string",
+      "title": "Label"
+     },
+     "value": {
+      "type": "string",
+      "title": "Value"
+     },
+     "source": {
+      "type": "string",
+      "title": "Source"
+     },
+     "dataKind": {
+      "type": "string",
+      "enum": [
+       "observed",
+       "model_current",
+       "forecast",
+       "reanalysis",
+       "satellite_monthly",
+       "satellite_historical",
+       "statistic",
+       "derived",
+       "prediction",
+       "scenario",
+       "conceptual",
+       "reference"
+      ],
+      "title": "Datakind"
+     },
+     "observedAt": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Observedat"
+     },
+     "retrievedAt": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Retrievedat"
+     },
+     "age": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Age"
+     },
+     "status": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "fresh",
+         "stale",
+         "unavailable",
+         "not_configured"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Status"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "label",
+     "value",
+     "source",
+     "dataKind"
+    ],
+    "title": "WhyItem"
    }
   }
  }

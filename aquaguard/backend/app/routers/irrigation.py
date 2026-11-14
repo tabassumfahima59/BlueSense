@@ -1,15 +1,28 @@
-"""M7 Smart Irrigation Advisor: /irrigation/estimate (FAO-56 engine + Open-Meteo forecast)."""
+"""M2 Smart Irrigation Advisor: /irrigation/estimate (FAO-56 engine + stored Open-Meteo forecast).
+
+Weather (Deviation D5): the forecast stored by the scheduled sync for the nearest of the eight divisional weather
+points, over the next ``WINDOW_DAYS`` local days. Days with missing ET0 or rainfall are never filled with 0: the window
+stops before the first incomplete day and the missing dates are reported. When nothing is stored yet, the live request
+(or its cache) is used. Every input is listed in ``why`` with its source and age; recent dryness of the division is
+given as context and only changes the advice text, not the FAO-56 calculation.
+"""
 from __future__ import annotations
 
-from datetime import date, timedelta
+import math
+from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, HTTPException
 
 from ..config.params import pentry, pval
+from ..db import connection
 from ..engine import fao56
-from ..schemas.modules import AssumptionRow, IrrigationRequest, IrrigationResponse
+from ..schemas.modules import AssumptionRow, IrrigationRequest, IrrigationResponse, WhyItem
+from ..services import catalog, indicators, store
 from ..services import data_access as da
-from ..services.measure import m
+from ..services.catalog import mv
+from ..settings import get_settings
+
+WINDOW_DAYS = 7
 
 router = APIRouter(tags=["Smart Irrigation Advisor"])
 NOTE = "Estimate — validate locally. This is not a field prescription; check with local extension services."
@@ -71,22 +84,38 @@ def estimate(req: IrrigationRequest) -> IrrigationResponse:
             raise HTTPException(status_code=422, detail="Provide a division/district region id or lat/lon.")
         lat, lon, name, key = float(r["lat"]), float(r["lon"]), r["name"], r["id"]
 
-    fc = da.forecast(lat, lon, key)
+    fc = da.stored_forecast(lat, lon)  # nearest divisional weather point (D5)
     if fc.daily.empty:
-        raise HTTPException(status_code=503, detail="No weather data available (live, cached or stored forecast).")
-    today = date.today()
+        fc = da.forecast(lat, lon, key)  # nothing stored yet: live request, then its cache
+    if fc.daily.empty:
+        raise HTTPException(status_code=503, detail="No weather data available (stored, live or cached forecast).")
+    today = (datetime.now(timezone.utc) + timedelta(hours=6)).date()  # Asia/Dhaka
     df = fc.daily.copy()
+    window_note = None
     if df[df["date"] >= today.isoformat()].empty:
-        # Stored forecast ends before today: evaluate its own window (weatherMode + retrieval time disclose this).
-        today = date.fromisoformat(df[df["kind"] == "forecast"]["date"].min() if (df["kind"] == "forecast").any()
-                                   else df["date"].min())
-    future = df[df["date"] >= today.isoformat()]
+        first = (df[df["kind"] == "forecast"]["date"].min() if (df["kind"] == "forecast").any() else df["date"].min())
+        today = date.fromisoformat(first)
+        window_note = (f"The stored forecast ends before today, so its own window from {first} is evaluated "
+                       f"(retrieved {_age(fc.retrieved_at)}). Refresh the weather data for a current estimate.")
+    window = df[df["date"] >= today.isoformat()].sort_values("date").head(WINDOW_DAYS)
+    complete, missing = [], []
+    for row in window.itertuples():
+        ok = _num(row.precip_mm) is not None and _num(row.et0_mm) is not None
+        if ok and not missing:
+            complete.append(row.Index)
+        else:
+            missing.append(str(row.date))
+    if not complete:
+        raise HTTPException(status_code=503, detail="The forecast has no complete day (ET0 and rainfall) to evaluate.")
+    df = df.loc[complete].copy()
+    future = df
     if req.temperatureOverrideC is not None:
         ratio = (future["tmean_c"] + req.temperatureOverrideC + 17.8) / (future["tmean_c"] + 17.8)
         df.loc[future.index, "et0_mm"] = future["et0_mm"] * ratio
     if req.rainfallOverrideMm is not None:
         df.loc[future.index, "precip_mm"] = req.rainfallOverrideMm / len(future)
-    days = df[["date", "et0_mm", "precip_mm"]].to_dict("records")
+    days = [{"date": d["date"], "et0_mm": _num(d["et0_mm"]), "precip_mm": _num(d["precip_mm"])}
+            for d in df[["date", "et0_mm", "precip_mm"]].to_dict("records")]
 
     assumed_today = False
     if req.plantingDate:
@@ -108,11 +137,14 @@ def estimate(req: IrrigationRequest) -> IrrigationResponse:
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e)) from e
 
-    smp = fc.is_sample
-    wprov = "predicted"
     overridden = req.temperatureOverrideC is not None or req.rainfallOverrideMm is not None
-    est = "simulated" if overridden else "estimated"
-    E = lambda v, u, d=2: m(v, u, est, "aquaguard_engine", sample=smp, digits=d)  # noqa: E731
+    kind = "scenario" if overridden else "derived"
+    E = lambda v, u, d=2: mv(v, u, kind, "aquaguard_engine", "point", digits=d)  # noqa: E731
+    fstatus = "fresh" if fc.mode in ("live", "cache") else catalog.status_of("openmeteo_forecast")
+    window_obs = f"{a['periodFrom']} to {a['periodTo']}"
+    F = lambda v, u, d=2, sim=False: mv(v, u, "scenario" if sim else "forecast", "openmeteo_forecast", "point",  # noqa: E731
+                                        observed_at=window_obs, digits=d, status=fstatus)
+    why, context, point = _why(req, crop, a, fc, planting, assumed_today, eff, fstatus, missing, name)
     recs = []
     if assumed_today:
         recs.append(f"The default {crop.label} season is not active today, so sowing/transplanting today "
@@ -142,25 +174,125 @@ def estimate(req: IrrigationRequest) -> IrrigationResponse:
                     f"would cut this period's gross requirement from {a['girMm']:.0f} to {better:.0f} mm.")
     if fc.soil_moisture is None:
         recs.append("Soil moisture was unavailable; the starting depletion was assumed (see assumptions).")
+    dry = [c for c in context if c.dataKind == "derived" and any(w in c.value for w in ("dry", "deficient"))]
+    if dry and a["inSeason"]:
+        recs.append(f"Recent conditions at {point} are dry ({'; '.join(c.value for c in dry)}). The model soil "
+                    "moisture may overstate field moisture: check the field before relying on the date above.")
+    if missing:
+        recs.append(f"The forecast has no complete ET0/rainfall for {', '.join(missing)}; the estimate covers "
+                    f"{a['periodFrom']} to {a['periodTo']} only (missing days are never assumed to be dry).")
     return IrrigationResponse(
         crop=req.crop, cropLabel=crop.label, location={"name": name, "lat": lat, "lon": lon},
-        weatherMode=fc.mode, weatherRetrievedAt=fc.retrieved_at, sampleData=smp,
+        weatherMode=fc.mode, weatherRetrievedAt=fc.retrieved_at, sampleData=False,
         period=f"{a['periodFrom']} to {a['periodTo']} ({a['periodDays']} days)", stage=a["stage"],
         daysSincePlanting=a["daysSincePlanting"], inSeason=a["inSeason"],
-        et0=m(a["et0MeanMmDay"], "mm/day", "simulated" if req.temperatureOverrideC is not None else wprov,
-              "openmeteo_forecast", sample=smp, as_of=fc.retrieved_at),
+        et0=F(a["et0MeanMmDay"], "mm/day", 2, req.temperatureOverrideC is not None),
         kc=E(a["kcToday"], "-", 3), etc=E(a["etcMeanMmDay"], "mm/day"),
-        rainfall=m(a["precipMm"], "mm", "simulated" if req.rainfallOverrideMm is not None else wprov,
-                   "openmeteo_forecast", sample=smp, as_of=fc.retrieved_at, digits=1),
+        rainfall=F(a["precipMm"], "mm", 1, req.rainfallOverrideMm is not None),
         effectiveRainfall=E(a["effectiveRainMm"], "mm", 1), riceExtra=E(a["riceExtraMm"], "mm", 1),
         netRequirementMm=E(a["nirMm"], "mm", 1), grossRequirementMm=E(a["girMm"], "mm", 1),
         netRequirementM3=E(a["nirM3"], "m³", 0), grossRequirementM3=E(a["girM3"], "m³", 0),
         taw=E(a["tawMm"], "mm", 1), raw=E(a["rawMm"], "mm", 1), trigger=E(a["triggerMm"], "mm", 1),
         startDepletion=E(a["startDepletionMm"], "mm", 1),
         startBasis=a["startBasis"],
-        soilMoisture=m(fc.soil_moisture, "m³/m³", "predicted", "openmeteo_forecast", sample=smp,
-                       as_of=fc.retrieved_at),
+        soilMoisture=mv(fc.soil_moisture, "m³/m³", "forecast", "openmeteo_forecast", "point", digits=3,
+                        status=fstatus, note="Open-Meteo model estimate (3-9 cm), not a field measurement"),
         nextIrrigationDate=a["nextIrrigationDate"], interval=E(a["intervalDays"], "days", 1),
         perIrrigationGrossMm=E(a["perIrrigationGrossMm"], "mm", 1),
         perIrrigationGrossM3=E(a["perIrrigationGrossM3"], "m³", 0), daily=a["trace"], recommendations=recs,
-        assumptions=_assumptions(req.crop, req.soil, eff, req.efficiency is not None), note=NOTE)
+        assumptions=_assumptions(req.crop, req.soil, eff, req.efficiency is not None), note=NOTE,
+        why=why, context=context, forecastStatus=fstatus, pointId=fc.point_id, missingDays=missing,
+        windowNote=window_note)
+
+
+def _num(v) -> float | None:
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return None
+    return None if math.isnan(f) or math.isinf(f) else f
+
+
+def _age(iso: str | None) -> str:
+    if not iso:
+        return "at an unknown time"
+    try:
+        t = datetime.fromisoformat(iso.replace("Z", "+00:00"))
+    except ValueError:
+        return iso
+    if t.tzinfo is None:
+        t = t.replace(tzinfo=timezone.utc)
+    sec = max(0.0, (datetime.now(timezone.utc) - t).total_seconds())
+    if sec < 3600:
+        return f"{int(sec // 60)} min ago"
+    if sec < 48 * 3600:
+        return f"{int(sec // 3600)} h ago"
+    return f"{int(sec // 86400)} days ago"
+
+
+def _why(req, crop, a: dict, fc, planting: date, assumed_today: bool, eff: float, fstatus: str, missing: list[str],
+         name: str) -> tuple[list[WhyItem], list[WhyItem], str]:
+    """Every input of the estimate with its source and age, and the division's recent conditions."""
+    c = pentry("fao56", "crops")[req.crop]
+    soil = pentry("fao56", "soils")
+    s = get_settings()
+    point_name = name
+    context: list[WhyItem] = []
+    if fc.point_id and s.db_path.exists():
+        conn = connection.connect(s.db_path, read_only=True)
+        try:
+            row = conn.execute("SELECT name FROM locations WHERE id = ?", (fc.point_id,)).fetchone()
+            point_name = row[0] if row else fc.point_id
+            vals = indicators.all_divisions(conn, str(s.db_path)).get(fc.point_id, {})
+            for key, label in (("rain_30d_anomaly", "Rainfall, last 30 days vs 1991-2020"),
+                               ("dryness_3m", "Seasonal dryness (3-month P - ET0)")):
+                v, observed = vals.get(key, (None, None))
+                if v is None:
+                    continue
+                cls = indicators.classify(key, v)
+                unit = "%" if key == "rain_30d_anomaly" else ""
+                text = f"{v:+.{0 if unit else 2}f}{unit} ({cls['label'] if cls else 'no class'})"
+                context.append(WhyItem(label=label, value=text,
+                                       source="ERA5 reanalysis via Open-Meteo", dataKind="derived", observedAt=observed,
+                                       status=catalog.status_of("openmeteo_archive")))
+            st = store.stat(conn, 4550)
+            if st:
+                context.append(WhyItem(label="National water stress (SDG 6.4.2)",
+                                       value=f"{st['value']:.1f}% ({store.sdg_class(st['value'])[0]}), national",
+                                       source="FAO AQUASTAT", dataKind="statistic", observedAt=str(st["year"]),
+                                       status=catalog.status_of("fao_aquastat")))
+        finally:
+            conn.close()
+    ret = fc.retrieved_at
+    why = [
+        WhyItem(label="Weather point", value=f"{point_name} representative point (one of eight divisional points)",
+                source="geoBoundaries / AquaGuard locations", dataKind="reference"),
+        WhyItem(label="Reference ET0", value=f"{a['et0MeanMmDay']:.1f} mm/day mean, {a['periodFrom']} to {a['periodTo']}",
+                source=f"Open-Meteo forecast ({fc.mode})", dataKind="forecast", observedAt=a["periodFrom"],
+                retrievedAt=ret, age=_age(ret), status=fstatus),
+        WhyItem(label="Rainfall", value=f"{a['precipMm']:.1f} mm forecast, {a['effectiveRainMm']:.1f} mm effective "
+                                        "(USDA-SCS method scaled to the period)",
+                source=f"Open-Meteo forecast ({fc.mode})", dataKind="forecast", observedAt=a["periodFrom"],
+                retrievedAt=ret, age=_age(ret), status=fstatus),
+        WhyItem(label="Soil moisture (start)",
+                value=(f"{fc.soil_moisture:.3f} m³/m³ model estimate -> starting depletion {a['startDepletionMm']:.0f} mm"
+                       if fc.soil_moisture is not None else f"unavailable -> {a['startBasis']}"),
+                source="Open-Meteo model (3-9 cm), not a field measurement", dataKind="forecast",
+                retrievedAt=ret, age=_age(ret), status=fstatus if fc.soil_moisture is not None else "unavailable"),
+        WhyItem(label="Crop coefficient", value=f"Kc {a['kcToday']:.2f} today ({a['stage']}, day {a['daysSincePlanting']})",
+                source=c["kc_source"], dataKind="reference"),
+        WhyItem(label="Planting date", value=planting.isoformat() + (" (assumed today: season not active)" if assumed_today
+                                                                     else " (entered)" if req.plantingDate
+                                                                     else " (from growth stage)" if req.stage
+                                                                     else " (typical date)"),
+                source="User input" if (req.plantingDate or req.stage) else c["planting_source"], dataKind="reference"),
+        WhyItem(label="Soil", value=f"{soil[req.soil]['label']}: TAW {a['tawMm']:.0f} mm, RAW {a['rawMm']:.0f} mm",
+                source=soil["source"], dataKind="reference"),
+        WhyItem(label="Irrigation efficiency", value=f"{eff:.2f}",
+                source="User input" if req.efficiency is not None else pentry("water_balance", "irrigation_efficiency")["source"],
+                dataKind="reference"),
+    ]
+    if missing:
+        why.append(WhyItem(label="Incomplete forecast days", value=", ".join(missing), source="Open-Meteo forecast",
+                           dataKind="forecast", status="unavailable"))
+    return why, context, point_name
