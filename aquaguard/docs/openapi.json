@@ -626,6 +626,176 @@
     }
    }
   },
+  "/api/explorer/intelligence": {
+   "get": {
+    "tags": [
+     "3D Water Explorer"
+    ],
+    "summary": "Intelligence",
+    "operationId": "intelligence_api_explorer_intelligence_get",
+    "parameters": [
+     {
+      "name": "region",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "default": "bd",
+       "title": "Region"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_RegionIntel_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/explorer/overview": {
+   "get": {
+    "tags": [
+     "3D Water Explorer"
+    ],
+    "summary": "Overview",
+    "operationId": "overview_api_explorer_overview_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_ExplorerOverview_"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/explorer/timeseries": {
+   "get": {
+    "tags": [
+     "3D Water Explorer"
+    ],
+    "summary": "Timeseries",
+    "operationId": "timeseries_api_explorer_timeseries_get",
+    "parameters": [
+     {
+      "name": "region",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "default": "bd",
+       "title": "Region"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_ExplorerSeries_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/explorer/compare": {
+   "get": {
+    "tags": [
+     "3D Water Explorer"
+    ],
+    "summary": "Compare",
+    "operationId": "compare_api_explorer_compare_get",
+    "parameters": [
+     {
+      "name": "region",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "default": "bd",
+       "title": "Region"
+      }
+     },
+     {
+      "name": "a",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "default": "1991-2000",
+       "title": "A"
+      }
+     },
+     {
+      "name": "b",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "default": "2016-2025",
+       "title": "B"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_PeriodComparison_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
   "/api/predictions/scarcity": {
    "get": {
     "tags": [
@@ -3231,6 +3401,44 @@
     ],
     "title": "CopilotLimits"
    },
+   "CopilotMapContext": {
+    "properties": {
+     "page": {
+      "type": "string",
+      "const": "explorer",
+      "title": "Page"
+     },
+     "kind": {
+      "type": "string",
+      "enum": [
+       "national",
+       "division",
+       "district",
+       "weather_point",
+       "grace_cell",
+       "river",
+       "water"
+      ],
+      "title": "Kind"
+     },
+     "name": {
+      "type": "string",
+      "maxLength": 80,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9 .,'&()\u00b0/\\-\u2013]+$",
+      "title": "Name"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "page",
+     "kind",
+     "name"
+    ],
+    "title": "CopilotMapContext",
+    "description": "What the user is looking at in the Water Explorer (validated app context, not instructions)."
+   },
    "CopilotReference": {
     "properties": {
      "module": {
@@ -3272,6 +3480,16 @@
       "type": "string",
       "title": "Region",
       "default": "bd"
+     },
+     "context": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/CopilotMapContext"
+       },
+       {
+        "type": "null"
+       }
+      ]
      },
      "scenario": {
       "$ref": "#/components/schemas/ScenarioParams"
@@ -3603,6 +3821,74 @@
     ],
     "title": "DashboardSummary"
    },
+   "DataQuality": {
+    "properties": {
+     "weatherMonths": {
+      "type": "integer",
+      "title": "Weathermonths"
+     },
+     "weatherIncompleteMonths": {
+      "type": "integer",
+      "title": "Weatherincompletemonths"
+     },
+     "weatherFirst": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Weatherfirst"
+     },
+     "weatherLast": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Weatherlast"
+     },
+     "completeYears": {
+      "type": "integer",
+      "title": "Completeyears"
+     },
+     "grace": {
+      "$ref": "#/components/schemas/GraceQuality"
+     },
+     "sources": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "type": "object",
+      "title": "Sources"
+     },
+     "resolution": {
+      "items": {
+       "$ref": "#/components/schemas/ResolutionRow"
+      },
+      "type": "array",
+      "title": "Resolution"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "weatherMonths",
+     "weatherIncompleteMonths",
+     "weatherFirst",
+     "weatherLast",
+     "completeYears",
+     "grace",
+     "sources",
+     "resolution"
+    ],
+    "title": "DataQuality"
+   },
    "DemandResponse": {
     "properties": {
      "context": {
@@ -3844,6 +4130,40 @@
     ],
     "title": "Envelope[DivisionIndicators]"
    },
+   "Envelope_ExplorerOverview_": {
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/ExplorerOverview"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[ExplorerOverview]"
+   },
+   "Envelope_ExplorerSeries_": {
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/ExplorerSeries"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[ExplorerSeries]"
+   },
    "Envelope_GroundwaterTrends_": {
     "properties": {
      "data": {
@@ -3895,6 +4215,23 @@
     ],
     "title": "Envelope[LastUpdated]"
    },
+   "Envelope_PeriodComparison_": {
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/PeriodComparison"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[PeriodComparison]"
+   },
    "Envelope_Predictions_": {
     "properties": {
      "data": {
@@ -3945,6 +4282,23 @@
      "meta"
     ],
     "title": "Envelope[RefreshResult]"
+   },
+   "Envelope_RegionIntel_": {
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/RegionIntel"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[RegionIntel]"
    },
    "Envelope_SearchResults_": {
     "properties": {
@@ -4136,6 +4490,228 @@
      "meta"
     ],
     "title": "Envelope[list[SourceStatus]]"
+   },
+   "Evidence": {
+    "properties": {
+     "label": {
+      "type": "string",
+      "title": "Label"
+     },
+     "measure": {
+      "$ref": "#/components/schemas/Measure"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "label",
+     "measure"
+    ],
+    "title": "Evidence"
+   },
+   "ExplorerOverview": {
+    "properties": {
+     "rows": {
+      "items": {
+       "$ref": "#/components/schemas/OverviewRow"
+      },
+      "type": "array",
+      "title": "Rows"
+     },
+     "normal": {
+      "type": "string",
+      "title": "Normal"
+     },
+     "notes": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Notes"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "rows",
+     "normal",
+     "notes"
+    ],
+    "title": "ExplorerOverview"
+   },
+   "ExplorerRegion": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "title": "Id"
+     },
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "level": {
+      "type": "string",
+      "enum": [
+       "national",
+       "division"
+      ],
+      "title": "Level"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "id",
+     "name",
+     "level"
+    ],
+    "title": "ExplorerRegion"
+   },
+   "ExplorerSeries": {
+    "properties": {
+     "region": {
+      "$ref": "#/components/schemas/ExplorerRegion"
+     },
+     "monthly": {
+      "items": {
+       "$ref": "#/components/schemas/MonthRow"
+      },
+      "type": "array",
+      "title": "Monthly"
+     },
+     "annual": {
+      "items": {
+       "$ref": "#/components/schemas/YearRow"
+      },
+      "type": "array",
+      "title": "Annual"
+     },
+     "rainTrend": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/Trend"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "tempTrend": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/Trend"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "grace": {
+      "items": {
+       "$ref": "#/components/schemas/GraceMonth"
+      },
+      "type": "array",
+      "title": "Grace"
+     },
+     "graceTrendCmPerYr": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Gracetrendcmperyr"
+     },
+     "graceTrendCi95": {
+      "anyOf": [
+       {
+        "items": {
+         "type": "number"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Gracetrendci95"
+     },
+     "graceTrendPeriod": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Gracetrendperiod"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "region",
+     "monthly",
+     "annual",
+     "rainTrend",
+     "tempTrend",
+     "grace",
+     "graceTrendCmPerYr",
+     "graceTrendCi95",
+     "graceTrendPeriod"
+    ],
+    "title": "ExplorerSeries"
+   },
+   "Finding": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "title": "Id"
+     },
+     "topic": {
+      "type": "string",
+      "title": "Topic"
+     },
+     "text": {
+      "type": "string",
+      "title": "Text"
+     },
+     "kind": {
+      "type": "string",
+      "title": "Kind"
+     },
+     "tone": {
+      "type": "string",
+      "enum": [
+       "good",
+       "neutral",
+       "warn",
+       "bad"
+      ],
+      "title": "Tone"
+     },
+     "evidence": {
+      "items": {
+       "$ref": "#/components/schemas/Evidence"
+      },
+      "type": "array",
+      "title": "Evidence"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "id",
+     "topic",
+     "text",
+     "kind",
+     "tone",
+     "evidence"
+    ],
+    "title": "Finding"
    },
    "FlowRequest": {
     "properties": {
@@ -4551,6 +5127,137 @@
      "drynessClass"
     ],
     "title": "ForecastPoint"
+   },
+   "GraceMonth": {
+    "properties": {
+     "t": {
+      "type": "string",
+      "title": "T"
+     },
+     "v": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "V"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "t",
+     "v"
+    ],
+    "title": "GraceMonth"
+   },
+   "GraceQuality": {
+    "properties": {
+     "first": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "First"
+     },
+     "last": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Last"
+     },
+     "months": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Months"
+     },
+     "missingMonths": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Missingmonths"
+     },
+     "longestGap": {
+      "anyOf": [
+       {
+        "items": {
+         "anyOf": [
+          {
+           "type": "string"
+          },
+          {
+           "type": "integer"
+          }
+         ]
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Longestgap"
+     },
+     "baseline": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Baseline"
+     },
+     "release": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Release"
+     },
+     "uncertaintyStored": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Uncertaintystored"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "title": "GraceQuality"
    },
    "GridCell": {
     "properties": {
@@ -5477,6 +6184,62 @@
     ],
     "title": "Kpi"
    },
+   "Last12": {
+    "properties": {
+     "start": {
+      "type": "string",
+      "title": "Start"
+     },
+     "end": {
+      "type": "string",
+      "title": "End"
+     },
+     "rain": {
+      "type": "number",
+      "title": "Rain"
+     },
+     "rainNormal": {
+      "type": "number",
+      "title": "Rainnormal"
+     },
+     "rainDeparturePct": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Raindeparturepct"
+     },
+     "tmean": {
+      "type": "number",
+      "title": "Tmean"
+     },
+     "tmeanNormal": {
+      "type": "number",
+      "title": "Tmeannormal"
+     },
+     "tmeanAnomaly": {
+      "type": "number",
+      "title": "Tmeananomaly"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "start",
+     "end",
+     "rain",
+     "rainNormal",
+     "rainDeparturePct",
+     "tmean",
+     "tmeanNormal",
+     "tmeanAnomaly"
+    ],
+    "title": "Last12"
+   },
    "LastUpdated": {
     "properties": {
      "sources": {
@@ -5982,6 +6745,85 @@
     ],
     "title": "MetricsResponse"
    },
+   "MonthRow": {
+    "properties": {
+     "t": {
+      "type": "string",
+      "title": "T"
+     },
+     "rain": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Rain"
+     },
+     "rainNormal": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Rainnormal"
+     },
+     "tmean": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Tmean"
+     },
+     "tmeanNormal": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Tmeannormal"
+     },
+     "pet": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Pet"
+     },
+     "complete": {
+      "type": "boolean",
+      "title": "Complete"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "t",
+     "rain",
+     "rainNormal",
+     "tmean",
+     "tmeanNormal",
+     "pet",
+     "complete"
+    ],
+    "title": "MonthRow"
+   },
    "MonthlyBalancePoint": {
     "properties": {
      "month": {
@@ -6295,6 +7137,138 @@
     ],
     "title": "OverviewResponse"
    },
+   "OverviewRow": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "title": "Id"
+     },
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "level": {
+      "type": "string",
+      "enum": [
+       "national",
+       "division"
+      ],
+      "title": "Level"
+     },
+     "area": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Area"
+     },
+     "population": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Population"
+     },
+     "districts": {
+      "type": "integer",
+      "title": "Districts"
+     },
+     "last12": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/Last12"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "risk": {
+      "$ref": "#/components/schemas/RiskInfo"
+     },
+     "drynessZ": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Drynessz"
+     },
+     "drynessAt": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Drynessat"
+     },
+     "drynessClass": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Drynessclass"
+     },
+     "tempNow": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Tempnow"
+     },
+     "tempNowAt": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Tempnowat"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "id",
+     "name",
+     "level",
+     "area",
+     "population",
+     "districts",
+     "last12",
+     "risk",
+     "drynessZ",
+     "drynessAt",
+     "drynessClass",
+     "tempNow",
+     "tempNowAt"
+    ],
+    "title": "OverviewRow"
+   },
    "ParameterRow": {
     "properties": {
      "key": {
@@ -6339,6 +7313,203 @@
      "assumption"
     ],
     "title": "ParameterRow"
+   },
+   "PeriodChange": {
+    "properties": {
+     "rain": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Rain"
+     },
+     "rainPct": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Rainpct"
+     },
+     "tmean": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Tmean"
+     },
+     "pet": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Pet"
+     },
+     "grace": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Grace"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "rain",
+     "rainPct",
+     "tmean",
+     "pet",
+     "grace"
+    ],
+    "title": "PeriodChange"
+   },
+   "PeriodComparison": {
+    "properties": {
+     "region": {
+      "$ref": "#/components/schemas/ExplorerRegion"
+     },
+     "a": {
+      "$ref": "#/components/schemas/PeriodStats"
+     },
+     "b": {
+      "$ref": "#/components/schemas/PeriodStats"
+     },
+     "change": {
+      "$ref": "#/components/schemas/PeriodChange"
+     },
+     "notes": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Notes"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "region",
+     "a",
+     "b",
+     "change",
+     "notes"
+    ],
+    "title": "PeriodComparison"
+   },
+   "PeriodStats": {
+    "properties": {
+     "start": {
+      "type": "integer",
+      "title": "Start"
+     },
+     "end": {
+      "type": "integer",
+      "title": "End"
+     },
+     "yearsExpected": {
+      "type": "integer",
+      "title": "Yearsexpected"
+     },
+     "yearsComplete": {
+      "type": "integer",
+      "title": "Yearscomplete"
+     },
+     "missingYears": {
+      "items": {
+       "type": "integer"
+      },
+      "type": "array",
+      "title": "Missingyears"
+     },
+     "rain": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Rain"
+     },
+     "tmean": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Tmean"
+     },
+     "pet": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Pet"
+     },
+     "graceMonths": {
+      "type": "integer",
+      "title": "Gracemonths"
+     },
+     "graceMonthsExpected": {
+      "type": "integer",
+      "title": "Gracemonthsexpected"
+     },
+     "grace": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Grace"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "start",
+     "end",
+     "yearsExpected",
+     "yearsComplete",
+     "missingYears",
+     "rain",
+     "tmean",
+     "pet",
+     "graceMonths",
+     "graceMonthsExpected",
+     "grace"
+    ],
+    "title": "PeriodStats"
    },
    "PipeState": {
     "properties": {
@@ -6821,6 +7992,106 @@
     ],
     "title": "Region"
    },
+   "RegionIntel": {
+    "properties": {
+     "region": {
+      "$ref": "#/components/schemas/ExplorerRegion"
+     },
+     "profile": {
+      "$ref": "#/components/schemas/RegionProfile"
+     },
+     "current": {
+      "additionalProperties": {
+       "$ref": "#/components/schemas/Measure"
+      },
+      "type": "object",
+      "title": "Current"
+     },
+     "last12": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/Last12"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "risk": {
+      "$ref": "#/components/schemas/RiskInfo"
+     },
+     "findings": {
+      "items": {
+       "$ref": "#/components/schemas/Finding"
+      },
+      "type": "array",
+      "title": "Findings"
+     },
+     "summary": {
+      "type": "string",
+      "title": "Summary"
+     },
+     "suggestions": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Suggestions"
+     },
+     "quality": {
+      "$ref": "#/components/schemas/DataQuality"
+     },
+     "limitations": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Limitations"
+     },
+     "graceAvailable": {
+      "type": "boolean",
+      "title": "Graceavailable"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "region",
+     "profile",
+     "current",
+     "last12",
+     "risk",
+     "findings",
+     "summary",
+     "suggestions",
+     "quality",
+     "limitations",
+     "graceAvailable"
+    ],
+    "title": "RegionIntel"
+   },
+   "RegionProfile": {
+    "properties": {
+     "area": {
+      "$ref": "#/components/schemas/Measure"
+     },
+     "population": {
+      "$ref": "#/components/schemas/Measure"
+     },
+     "districts": {
+      "type": "integer",
+      "title": "Districts"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "area",
+     "population",
+     "districts"
+    ],
+    "title": "RegionProfile"
+   },
    "RegionRef": {
     "properties": {
      "id": {
@@ -6990,6 +8261,35 @@
     ],
     "title": "RegionsResponse"
    },
+   "ResolutionRow": {
+    "properties": {
+     "layer": {
+      "type": "string",
+      "title": "Layer"
+     },
+     "spatial": {
+      "type": "string",
+      "title": "Spatial"
+     },
+     "temporal": {
+      "type": "string",
+      "title": "Temporal"
+     },
+     "status": {
+      "type": "string",
+      "title": "Status"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "layer",
+     "spatial",
+     "temporal",
+     "status"
+    ],
+    "title": "ResolutionRow"
+   },
    "RiskClass": {
     "properties": {
      "label": {
@@ -7026,6 +8326,102 @@
      "rule"
     ],
     "title": "RiskClass"
+   },
+   "RiskInfo": {
+    "properties": {
+     "label": {
+      "type": "string",
+      "title": "Label"
+     },
+     "level": {
+      "type": "integer",
+      "title": "Level"
+     },
+     "stressClass": {
+      "type": "string",
+      "title": "Stressclass"
+     },
+     "stressLevel": {
+      "type": "integer",
+      "title": "Stresslevel"
+     },
+     "drynessClass": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Drynessclass"
+     },
+     "drynessLevel": {
+      "type": "integer",
+      "title": "Drynesslevel"
+     },
+     "driver": {
+      "type": "string",
+      "enum": [
+       "stress",
+       "dryness",
+       "both",
+       "none"
+      ],
+      "title": "Driver"
+     },
+     "dryStressRatio": {
+      "type": "number",
+      "title": "Drystressratio"
+     },
+     "z": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Z"
+     },
+     "targetMonth": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Targetmonth"
+     },
+     "rule": {
+      "type": "string",
+      "title": "Rule"
+     },
+     "isSample": {
+      "type": "boolean",
+      "title": "Issample"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "label",
+     "level",
+     "stressClass",
+     "stressLevel",
+     "drynessClass",
+     "drynessLevel",
+     "driver",
+     "dryStressRatio",
+     "z",
+     "targetMonth",
+     "rule",
+     "isSample"
+    ],
+    "title": "RiskInfo"
    },
    "RuleTrace": {
     "properties": {
@@ -8371,6 +9767,50 @@
     ],
     "title": "TestPoint"
    },
+   "Trend": {
+    "properties": {
+     "slope": {
+      "type": "number",
+      "title": "Slope"
+     },
+     "low": {
+      "type": "number",
+      "title": "Low"
+     },
+     "high": {
+      "type": "number",
+      "title": "High"
+     },
+     "n": {
+      "type": "integer",
+      "title": "N"
+     },
+     "start": {
+      "type": "integer",
+      "title": "Start"
+     },
+     "end": {
+      "type": "integer",
+      "title": "End"
+     },
+     "clear": {
+      "type": "boolean",
+      "title": "Clear"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "slope",
+     "low",
+     "high",
+     "n",
+     "start",
+     "end",
+     "clear"
+    ],
+    "title": "Trend"
+   },
    "ValidationCheck": {
     "properties": {
      "label": {
@@ -8962,6 +10402,61 @@
      "dataKind"
     ],
     "title": "WhyItem"
+   },
+   "YearRow": {
+    "properties": {
+     "year": {
+      "type": "integer",
+      "title": "Year"
+     },
+     "complete": {
+      "type": "boolean",
+      "title": "Complete"
+     },
+     "rain": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Rain"
+     },
+     "tmean": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Tmean"
+     },
+     "pet": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Pet"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "year",
+     "complete",
+     "rain",
+     "tmean",
+     "pet"
+    ],
+    "title": "YearRow"
    }
   }
  }

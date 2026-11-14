@@ -112,7 +112,8 @@ def test_tool_registry_is_read_only_and_strictly_described():
     names = {t.name for t in copilot.TOOLS}
     assert names == {"get_current_weather", "get_weather_forecast", "get_dashboard_kpis", "get_division_indicators",
                      "get_water_statistics", "get_national_water_budget", "get_groundwater_trend", "get_alerts",
-                     "get_prediction", "estimate_irrigation", "run_what_if"}
+                     "get_prediction", "estimate_irrigation", "run_what_if", "get_regional_intelligence",
+                     "compare_divisions", "compare_periods"}
     specs = copilot.tool_specs()
     for spec in specs:
         assert not any(w in spec.name for w in ("sql", "write", "delete", "update", "insert", "exec", "set_"))

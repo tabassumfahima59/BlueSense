@@ -12,7 +12,7 @@ import { type CopilotEvent, streamCopilot } from "@/lib/api/copilot";
 import { useApi } from "@/lib/api/useApi";
 import { fmtNumber } from "@/lib/format";
 import { clientId, useAppStore } from "@/lib/store";
-import type { ChatTurn, CopilotToolCall } from "@/lib/types/contract";
+import type { ChatTurn, CopilotMapContext, CopilotToolCall } from "@/lib/types/contract";
 
 export interface Msg {
   role: "user" | "assistant";
@@ -38,6 +38,8 @@ export const TOOL_LABEL: Record<string, string> = {
   get_division_indicators: "Division indicators", get_water_statistics: "AQUASTAT statistics",
   get_national_water_budget: "National water budget", get_groundwater_trend: "GRACE storage trend", get_alerts: "Alerts",
   get_prediction: "ML prediction", estimate_irrigation: "Irrigation estimate", run_what_if: "What-if run",
+  get_regional_intelligence: "Regional analysis", compare_divisions: "Division comparison",
+  compare_periods: "Period comparison",
 };
 const MODULE_PATH: Record<string, string> = {
   "Command Center": "/command-center", "Water Budget": "/water-budget", "Water Explorer": "/explorer",
@@ -86,20 +88,35 @@ function ToolChips({ tools }: { tools: CopilotToolCall[] }) {
   );
 }
 
-export function ChatUI({ compact = false }: { compact?: boolean }) {
-  const region = useAppStore((s) => s.selectedRegion) || "bd";
+export function ChatUI({ compact = false, suggestions = SUGGESTIONS, intro, context = null, region: regionProp, idPrefix }: {
+  compact?: boolean;
+  /** Suggested first questions (default: the general Copilot list). */
+  suggestions?: string[];
+  /** Text above the suggestions (default: the general Copilot introduction). */
+  intro?: string;
+  /** Map selection sent to the backend as validated app context (Water Explorer). */
+  context?: CopilotMapContext | null;
+  /** Region id for the backend (default: the global region). */
+  region?: string;
+  /** Unique id prefix when more than one chat is on a page. */
+  idPrefix?: string;
+} = {}) {
+  const globalRegion = useAppStore((s) => s.selectedRegion) || "bd";
+  const region = regionProp ?? globalRegion;
   const status = useApi("copilot-status", api.copilotStatus);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const abort = useRef<AbortController | null>(null);
-  const end = useRef<HTMLDivElement>(null);
+  const list = useRef<HTMLDivElement>(null);
   const ready = status.data?.status === "ready";
-  const inputId = compact ? "copilot-input-panel" : "copilot-input";
+  const inputId = idPrefix ? `${idPrefix}-input` : compact ? "copilot-input-panel" : "copilot-input";
   const noteId = `${inputId}-status`;
 
   useEffect(() => {
-    end.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    // scroll only the message list (scrollIntoView would also scroll the page when the chat is embedded)
+    const el = list.current;
+    if (el && msgs.length) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [msgs]);
   useEffect(() => () => abort.current?.abort(), []);
 
@@ -115,7 +132,8 @@ export function ChatUI({ compact = false }: { compact?: boolean }) {
     const ctrl = new AbortController();
     abort.current = ctrl;
     try {
-      await streamCopilot({ message, region, history, clientId: clientId() }, (e) => update((m) => applyEvent(m, e)), ctrl.signal);
+      await streamCopilot({ message, region, history, clientId: clientId(), ...(context ? { context } : {}) },
+                          (e) => update((m) => applyEvent(m, e)), ctrl.signal);
       update((m) => (m.streaming ? { ...m, streaming: false } : m));
     } catch (e) {
       const err = e as Error;
@@ -128,7 +146,7 @@ export function ChatUI({ compact = false }: { compact?: boolean }) {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3" aria-live="polite" aria-busy={busy}>
+      <div ref={list} className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3" aria-live="polite" aria-busy={busy}>
         {status.data && !ready && (
           <div id={noteId} role="status" className="rounded-lg border border-warning/50 bg-[#fff6e5] p-3 text-[13px] text-ink">
             <p className="font-semibold">The Copilot is not configured.</p>
@@ -148,11 +166,10 @@ export function ChatUI({ compact = false }: { compact?: boolean }) {
         {ready && msgs.length === 0 && (
           <div className="space-y-3">
             <p className="text-[13px] text-muted">
-              Ask about water, weather, risk, statistics, predictions, irrigation or scenarios. The Copilot looks the numbers up with read-only
-              AquaGuard tools and shows which data it used.
+              {intro ?? "Ask about water, weather, risk, statistics, predictions, irrigation or scenarios. The Copilot looks the numbers up with read-only AquaGuard tools and shows which data it used."}
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {SUGGESTIONS.slice(0, compact ? 4 : 6).map((s) => (
+              {suggestions.slice(0, compact ? 4 : 6).map((s) => (
                 <button key={s} type="button" onClick={() => send(s)} className="rounded-full border border-border bg-white px-2.5 py-1 text-[12.5px] text-ink hover:border-primary hover:text-primary">
                   {s}
                 </button>
@@ -183,7 +200,6 @@ export function ChatUI({ compact = false }: { compact?: boolean }) {
             )}
           </div>
         ))}
-        <div ref={end} />
       </div>
       <form className="flex gap-2 border-t border-border p-3" onSubmit={(e) => { e.preventDefault(); send(input); }}>
         <label htmlFor={inputId} className="sr-only">Ask the Copilot</label>

@@ -123,6 +123,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/explorer/intelligence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Intelligence */
+        get: operations["intelligence_api_explorer_intelligence_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/explorer/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Overview */
+        get: operations["overview_api_explorer_overview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/explorer/timeseries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Timeseries */
+        get: operations["timeseries_api_explorer_timeseries_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/explorer/compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Compare */
+        get: operations["compare_api_explorer_compare_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/predictions/scarcity": {
         parameters: {
             query?: never;
@@ -892,6 +960,24 @@ export interface components {
             /** Resetsat */
             resetsAt: string;
         };
+        /**
+         * CopilotMapContext
+         * @description What the user is looking at in the Water Explorer (validated app context, not instructions).
+         */
+        CopilotMapContext: {
+            /**
+             * Page
+             * @constant
+             */
+            page: "explorer";
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "national" | "division" | "district" | "weather_point" | "grace_cell" | "river" | "water";
+            /** Name */
+            name: string;
+        };
         /** CopilotReference */
         CopilotReference: {
             /** Module */
@@ -909,6 +995,7 @@ export interface components {
              * @default bd
              */
             region: string;
+            context?: components["schemas"]["CopilotMapContext"] | null;
             scenario?: components["schemas"]["ScenarioParams"];
             /** History */
             history?: components["schemas"]["ChatTurn"][];
@@ -1011,6 +1098,26 @@ export interface components {
             /** Insights */
             insights?: components["schemas"]["Insight"][];
         };
+        /** DataQuality */
+        DataQuality: {
+            /** Weathermonths */
+            weatherMonths: number;
+            /** Weatherincompletemonths */
+            weatherIncompleteMonths: number;
+            /** Weatherfirst */
+            weatherFirst: string | null;
+            /** Weatherlast */
+            weatherLast: string | null;
+            /** Completeyears */
+            completeYears: number;
+            grace: components["schemas"]["GraceQuality"];
+            /** Sources */
+            sources: {
+                [key: string]: string;
+            };
+            /** Resolution */
+            resolution: components["schemas"]["ResolutionRow"][];
+        };
         /** DemandResponse */
         DemandResponse: {
             context: components["schemas"]["Context"];
@@ -1086,6 +1193,16 @@ export interface components {
             data: components["schemas"]["DivisionIndicators"];
             meta: components["schemas"]["Meta"];
         };
+        /** Envelope[ExplorerOverview] */
+        Envelope_ExplorerOverview_: {
+            data: components["schemas"]["ExplorerOverview"];
+            meta: components["schemas"]["Meta"];
+        };
+        /** Envelope[ExplorerSeries] */
+        Envelope_ExplorerSeries_: {
+            data: components["schemas"]["ExplorerSeries"];
+            meta: components["schemas"]["Meta"];
+        };
         /** Envelope[GroundwaterTrends] */
         Envelope_GroundwaterTrends_: {
             data: components["schemas"]["GroundwaterTrends"];
@@ -1101,6 +1218,11 @@ export interface components {
             data: components["schemas"]["LastUpdated"];
             meta: components["schemas"]["Meta"];
         };
+        /** Envelope[PeriodComparison] */
+        Envelope_PeriodComparison_: {
+            data: components["schemas"]["PeriodComparison"];
+            meta: components["schemas"]["Meta"];
+        };
         /** Envelope[Predictions] */
         Envelope_Predictions_: {
             data: components["schemas"]["Predictions"];
@@ -1114,6 +1236,11 @@ export interface components {
         /** Envelope[RefreshResult] */
         Envelope_RefreshResult_: {
             data: components["schemas"]["RefreshResult"];
+            meta: components["schemas"]["Meta"];
+        };
+        /** Envelope[RegionIntel] */
+        Envelope_RegionIntel_: {
+            data: components["schemas"]["RegionIntel"];
             meta: components["schemas"]["Meta"];
         };
         /** Envelope[SearchResults] */
@@ -1171,6 +1298,69 @@ export interface components {
             /** Data */
             data: components["schemas"]["SourceStatus"][];
             meta: components["schemas"]["Meta"];
+        };
+        /** Evidence */
+        Evidence: {
+            /** Label */
+            label: string;
+            measure: components["schemas"]["Measure"];
+        };
+        /** ExplorerOverview */
+        ExplorerOverview: {
+            /** Rows */
+            rows: components["schemas"]["OverviewRow"][];
+            /** Normal */
+            normal: string;
+            /** Notes */
+            notes: string[];
+        };
+        /** ExplorerRegion */
+        ExplorerRegion: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "national" | "division";
+        };
+        /** ExplorerSeries */
+        ExplorerSeries: {
+            region: components["schemas"]["ExplorerRegion"];
+            /** Monthly */
+            monthly: components["schemas"]["MonthRow"][];
+            /** Annual */
+            annual: components["schemas"]["YearRow"][];
+            rainTrend: components["schemas"]["Trend"] | null;
+            tempTrend: components["schemas"]["Trend"] | null;
+            /** Grace */
+            grace: components["schemas"]["GraceMonth"][];
+            /** Gracetrendcmperyr */
+            graceTrendCmPerYr: number | null;
+            /** Gracetrendci95 */
+            graceTrendCi95: number[] | null;
+            /** Gracetrendperiod */
+            graceTrendPeriod: string | null;
+        };
+        /** Finding */
+        Finding: {
+            /** Id */
+            id: string;
+            /** Topic */
+            topic: string;
+            /** Text */
+            text: string;
+            /** Kind */
+            kind: string;
+            /**
+             * Tone
+             * @enum {string}
+             */
+            tone: "good" | "neutral" | "warn" | "bad";
+            /** Evidence */
+            evidence: components["schemas"]["Evidence"][];
         };
         /** FlowRequest */
         FlowRequest: {
@@ -1305,6 +1495,32 @@ export interface components {
             z: components["schemas"]["Measure"];
             /** Drynessclass */
             drynessClass: string | null;
+        };
+        /** GraceMonth */
+        GraceMonth: {
+            /** T */
+            t: string;
+            /** V */
+            v: number | null;
+        };
+        /** GraceQuality */
+        GraceQuality: {
+            /** First */
+            first?: string | null;
+            /** Last */
+            last?: string | null;
+            /** Months */
+            months?: number | null;
+            /** Missingmonths */
+            missingMonths?: number | null;
+            /** Longestgap */
+            longestGap?: (string | number)[] | null;
+            /** Baseline */
+            baseline?: string | null;
+            /** Release */
+            release?: string | null;
+            /** Uncertaintystored */
+            uncertaintyStored?: boolean | null;
         };
         /** GridCell */
         GridCell: {
@@ -1556,6 +1772,25 @@ export interface components {
             /** Note */
             note?: string | null;
         };
+        /** Last12 */
+        Last12: {
+            /** Start */
+            start: string;
+            /** End */
+            end: string;
+            /** Rain */
+            rain: number;
+            /** Rainnormal */
+            rainNormal: number;
+            /** Raindeparturepct */
+            rainDeparturePct: number | null;
+            /** Tmean */
+            tmean: number;
+            /** Tmeannormal */
+            tmeanNormal: number;
+            /** Tmeananomaly */
+            tmeanAnomaly: number;
+        };
         /** LastUpdated */
         LastUpdated: {
             /** Sources */
@@ -1684,6 +1919,23 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
+        /** MonthRow */
+        MonthRow: {
+            /** T */
+            t: string;
+            /** Rain */
+            rain: number | null;
+            /** Rainnormal */
+            rainNormal: number | null;
+            /** Tmean */
+            tmean: number | null;
+            /** Tmeannormal */
+            tmeanNormal: number | null;
+            /** Pet */
+            pet: number | null;
+            /** Complete */
+            complete: boolean;
+        };
         /** MonthlyBalancePoint */
         MonthlyBalancePoint: {
             /** Month */
@@ -1784,6 +2036,36 @@ export interface components {
             /** Validation */
             validation: components["schemas"]["ValidationCheck"][];
         };
+        /** OverviewRow */
+        OverviewRow: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "national" | "division";
+            /** Area */
+            area: number | null;
+            /** Population */
+            population: number | null;
+            /** Districts */
+            districts: number;
+            last12: components["schemas"]["Last12"] | null;
+            risk: components["schemas"]["RiskInfo"];
+            /** Drynessz */
+            drynessZ: number | null;
+            /** Drynessat */
+            drynessAt: string | null;
+            /** Drynessclass */
+            drynessClass: string | null;
+            /** Tempnow */
+            tempNow: number | null;
+            /** Tempnowat */
+            tempNowAt: string | null;
+        };
         /** ParameterRow */
         ParameterRow: {
             /** Key */
@@ -1798,6 +2080,53 @@ export interface components {
             assumption: boolean;
             /** Note */
             note?: string | null;
+        };
+        /** PeriodChange */
+        PeriodChange: {
+            /** Rain */
+            rain: number | null;
+            /** Rainpct */
+            rainPct: number | null;
+            /** Tmean */
+            tmean: number | null;
+            /** Pet */
+            pet: number | null;
+            /** Grace */
+            grace: number | null;
+        };
+        /** PeriodComparison */
+        PeriodComparison: {
+            region: components["schemas"]["ExplorerRegion"];
+            a: components["schemas"]["PeriodStats"];
+            b: components["schemas"]["PeriodStats"];
+            change: components["schemas"]["PeriodChange"];
+            /** Notes */
+            notes: string[];
+        };
+        /** PeriodStats */
+        PeriodStats: {
+            /** Start */
+            start: number;
+            /** End */
+            end: number;
+            /** Yearsexpected */
+            yearsExpected: number;
+            /** Yearscomplete */
+            yearsComplete: number;
+            /** Missingyears */
+            missingYears: number[];
+            /** Rain */
+            rain: number | null;
+            /** Tmean */
+            tmean: number | null;
+            /** Pet */
+            pet: number | null;
+            /** Gracemonths */
+            graceMonths: number;
+            /** Gracemonthsexpected */
+            graceMonthsExpected: number;
+            /** Grace */
+            grace: number | null;
         };
         /** PipeState */
         PipeState: {
@@ -1953,6 +2282,35 @@ export interface components {
             /** Parentid */
             parentId?: string | null;
         };
+        /** RegionIntel */
+        RegionIntel: {
+            region: components["schemas"]["ExplorerRegion"];
+            profile: components["schemas"]["RegionProfile"];
+            /** Current */
+            current: {
+                [key: string]: components["schemas"]["Measure"];
+            };
+            last12: components["schemas"]["Last12"] | null;
+            risk: components["schemas"]["RiskInfo"];
+            /** Findings */
+            findings: components["schemas"]["Finding"][];
+            /** Summary */
+            summary: string;
+            /** Suggestions */
+            suggestions: string[];
+            quality: components["schemas"]["DataQuality"];
+            /** Limitations */
+            limitations: string[];
+            /** Graceavailable */
+            graceAvailable: boolean;
+        };
+        /** RegionProfile */
+        RegionProfile: {
+            area: components["schemas"]["Measure"];
+            population: components["schemas"]["Measure"];
+            /** Districts */
+            districts: number;
+        };
         /** RegionRef */
         RegionRef: {
             /** Id */
@@ -2010,6 +2368,17 @@ export interface components {
             /** Districts */
             districts: components["schemas"]["Region"][];
         };
+        /** ResolutionRow */
+        ResolutionRow: {
+            /** Layer */
+            layer: string;
+            /** Spatial */
+            spatial: string;
+            /** Temporal */
+            temporal: string;
+            /** Status */
+            status: string;
+        };
         /** RiskClass */
         RiskClass: {
             /** Label */
@@ -2022,6 +2391,36 @@ export interface components {
              */
             provenance: "observed" | "historical" | "predicted" | "estimated" | "simulated";
             rule: components["schemas"]["RuleTrace"];
+        };
+        /** RiskInfo */
+        RiskInfo: {
+            /** Label */
+            label: string;
+            /** Level */
+            level: number;
+            /** Stressclass */
+            stressClass: string;
+            /** Stresslevel */
+            stressLevel: number;
+            /** Drynessclass */
+            drynessClass: string | null;
+            /** Drynesslevel */
+            drynessLevel: number;
+            /**
+             * Driver
+             * @enum {string}
+             */
+            driver: "stress" | "dryness" | "both" | "none";
+            /** Drystressratio */
+            dryStressRatio: number;
+            /** Z */
+            z: number | null;
+            /** Targetmonth */
+            targetMonth: string | null;
+            /** Rule */
+            rule: string;
+            /** Issample */
+            isSample: boolean;
         };
         /**
          * RuleTrace
@@ -2451,6 +2850,23 @@ export interface components {
             actual: components["schemas"]["Measure"];
             predicted: components["schemas"]["Measure"];
         };
+        /** Trend */
+        Trend: {
+            /** Slope */
+            slope: number;
+            /** Low */
+            low: number;
+            /** High */
+            high: number;
+            /** N */
+            n: number;
+            /** Start */
+            start: number;
+            /** End */
+            end: number;
+            /** Clear */
+            clear: boolean;
+        };
         /** ValidationCheck */
         ValidationCheck: {
             /** Label */
@@ -2635,6 +3051,19 @@ export interface components {
             age?: string | null;
             /** Status */
             status?: ("fresh" | "stale" | "unavailable" | "not_configured") | null;
+        };
+        /** YearRow */
+        YearRow: {
+            /** Year */
+            year: number;
+            /** Complete */
+            complete: boolean;
+            /** Rain */
+            rain: number | null;
+            /** Tmean */
+            tmean: number | null;
+            /** Pet */
+            pet: number | null;
         };
     };
     responses: never;
@@ -2865,6 +3294,121 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WeatherResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    intelligence_api_explorer_intelligence_get: {
+        parameters: {
+            query?: {
+                region?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_RegionIntel_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    overview_api_explorer_overview_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_ExplorerOverview_"];
+                };
+            };
+        };
+    };
+    timeseries_api_explorer_timeseries_get: {
+        parameters: {
+            query?: {
+                region?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_ExplorerSeries_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    compare_api_explorer_compare_get: {
+        parameters: {
+            query?: {
+                region?: string;
+                a?: string;
+                b?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_PeriodComparison_"];
                 };
             };
             /** @description Validation Error */

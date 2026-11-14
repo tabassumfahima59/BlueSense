@@ -372,6 +372,44 @@ response adds `reservoirCapacity` (illustrative) and `defaultAllocationPct`.
   DPR 1). Without WebGL the schematic replaces the 3D view with a note. Labels are portalled into a fixed overlay
   (avoids a drei Html re-mount race that left labels empty).
 
+### 7.5 3D Bangladesh Water Explorer (transformation, implemented 2026-11-14)
+
+The M6 Explorer became an intelligent geospatial module. Existing integrations, boundaries, the scarcity-risk method
+and the other modules are unchanged; the map component keeps its old behaviour for Command Center and Irrigation and
+gets the new features only with `explorer`.
+
+**Spatial intelligence service** (`services/spatial_intel.py`, router `routers/explorer_intel.py`, schemas
+`schemas/explorer.py`), read-only, from stored data only:
+
+| Endpoint | Content |
+|---|---|
+| `GET /api/explorer/intelligence?region=` | Bangladesh or a division: profile (area, districts, population), current weather, last 12 complete months vs the 1991–2020 normal, findings (rainfall, temperature, seasonal dryness, rainfall and temperature trends with 95 % intervals, estimated risk and its driver, national GRACE, JRC note) each with its evidence Measures, rule-based suggestions, data quality (coverage, incomplete months, GRACE gaps, source status, spatial / temporal resolution), limitations. Districts → 422 `unsupported_region` |
+| `GET /api/explorer/overview` | Bangladesh and the eight divisions side by side (risk, 12-month rainfall and temperature vs normal, seasonal dryness, current temperature, area, population, districts) |
+| `GET /api/explorer/timeseries?region=` | monthly and annual weather (complete months / years only carry values), trends, national GRACE series with an explicit null for each missing month |
+| `GET /api/explorer/compare?region=&a=YYYY-YYYY&b=YYYY-YYYY` | mean annual rainfall, temperature, P − ET0 (complete years only, missing years listed) and national GRACE mean (months present) for two periods; % change for rainfall only |
+
+Rules: weather = representative point (national = area-weighted mean of the 8 points); GRACE national only (never a
+division value); no JRC statistic is stored, so no surface-water number is given; SDG 6.4.2 stays national and separate
+from the estimated risk; districts are geography only; trends describe change, never a cause; GRACE uncertainty is
+not in the stored product and is reported as such.
+
+**AI map assistant:** the existing provider-independent Copilot with three new read-only tools
+(`get_regional_intelligence`, `compare_divisions`, `compare_periods`, module "Water Explorer") and an optional,
+strictly validated `context` in `CopilotRequest` (page, feature kind from a fixed list, name with restricted
+characters ≤ 80) that is added to the existing app-context line. `ChatUI` takes optional suggestions, intro, context and
+region props (defaults unchanged); it now scrolls only its own message list.
+
+**Frontend** (`app/explorer`, `components/explorer/*`, `lib/explorer/*`, `components/maps/BangladeshMap.tsx`):
+six tabs — 3D Map, 2D Map (the same MapLibre map, flat, no re-creation; SVG map without WebGL), Time Series, Data
+Table, Analysis, Spatial Intelligence — sharing one selection (`lib/explorer/store.ts`) that mirrors divisions into the
+global region. Map: OpenStreetMap water restyled (rivers and canals by class with names, water bodies, Bay of Bengal,
+wetlands where mapped), division labels, JRC occurrence, GRACE cells, weather points, estimated-risk choropleth or
+extrusion, terrain with an exaggeration slider (×1–40, always disclosed) and a pitch slider, camera buttons (reset,
+rotate, north), click priority weather point > GRACE cell > river > water body > division / district, amber highlight
+of the selection. Region panel (desktop overlay, phone bottom sheet) for every feature kind. National KPI strip: 8-point
+weather now, 12-month rainfall vs normal, GRACE latest month, SDG 6.4.2 (AQUASTAT), estimated risk, each with its
+basis.
+
 ## 8. Dependency strategy
 
 * Pin exact versions; prefer releases at least two weeks old; check OSV (Python) and `npm audit` (Node) before and
@@ -408,6 +446,7 @@ response adds `reservoirCapacity` (illustrative) and `defaultAllocationPct`.
 | M6 Water Explorer | GRACE grid cells (~300 km), weather points, districts as reference layer, backend info panel, 2D fallback (no WebGL / small screen), lazy layers | implemented and verified |
 | M7 Water Flow | conceptual illustration (data kind `conceptual`), real AQUASTAT magnitudes marked and kept separate, play/pause, speed, layer switches | implemented and verified |
 | Water Flow 3D transformation | interactive conceptual simulation: operating controls in the engine, detailed 3D facilities and zones, selection, camera, three synchronised views, scenarios with baseline comparison, water balance identity (§7.4) | implemented and verified |
+| Water Explorer transformation | spatial intelligence service and endpoints, six synchronised views, OSM water styling, terrain / pitch controls, regional panels, period comparison, AI map assistant on the existing Copilot (§7.5) | implemented and verified |
 | M8 Copilot | Claude with 11 read-only backend tools, streamed answers, validated inputs, logged tool calls, per-client rate limit, unmatched numbers flagged, `not_configured` without a key (no canned answers) | implemented and verified |
 | P5 Verification | §7 checks of the master prompt, final report | done (`aquaguard-final-report.md`) |
 

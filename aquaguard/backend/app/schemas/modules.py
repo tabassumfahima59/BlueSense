@@ -503,9 +503,17 @@ class ChatTurn(Model):
     content: str = Field(max_length=4000)
 
 
+class CopilotMapContext(Model):
+    """What the user is looking at in the Water Explorer (validated app context, not instructions)."""
+    page: Literal["explorer"]
+    kind: Literal["national", "division", "district", "weather_point", "grace_cell", "river", "water"]
+    name: str = Field(min_length=1, max_length=80, pattern=r"^[A-Za-z0-9 .,'&()°/\-–]+$")
+
+
 class CopilotRequest(Model):
     message: str = Field(min_length=1, max_length=2000)
     region: str = "bd"
+    context: CopilotMapContext | None = None
     scenario: ScenarioParams = Field(default_factory=ScenarioParams)
     history: list[ChatTurn] = Field(default_factory=list, max_length=12)
     clientId: str | None = Field(None, max_length=64, pattern=r"^[A-Za-z0-9_-]+$")

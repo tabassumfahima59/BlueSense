@@ -2,6 +2,18 @@
 
 Updated after every verified phase or module. A task is **done** only when a check was run and passed.
 
+## 3D Bangladesh Water Explorer transformation — verified (2026-11-14)
+
+| Task | Status | Evidence |
+|---|---|---|
+| Spatial intelligence service | done | `services/spatial_intel.py` + `/api/explorer/{intelligence,overview,timeseries,compare}`: findings with evidence Measures (rainfall and temperature vs 1991–2020, dryness, trends with 95 % intervals, estimated risk and driver, national GRACE, JRC note), suggestions, data quality (coverage, GRACE gaps, source status, resolution), limitations; districts 422; no surface-water number, no GRACE uncertainty invented |
+| AI map assistant | done | existing Copilot: 3 new read-only tools (`get_regional_intelligence`, `compare_divisions`, `compare_periods`), optional validated `context` (fixed kinds, restricted name) added to the app-context line; `ChatUI` optional props (defaults unchanged) and list-only auto-scroll |
+| Map | done | OSM rivers / canals (by class, named), water bodies, Bay of Bengal, wetlands where mapped; division labels; terrain exaggeration ×1–40 (disclosed) and pitch sliders; rotate / north / reset; 3D ↔ 2D on one map; click priority point > GRACE cell > river > water > area; amber highlight incl. a 3D block for the selected division. Command Center / Irrigation maps unchanged (`explorer` opt-in) |
+| Views and panels | done | tabs 3D Map, 2D Map, Time Series (annual rain / temperature + trends, 36 months vs normal, GRACE with gaps, period comparison), Data Table (API values, sort, CSV, district reference list), Analysis (patterns with basis, charts, two-region comparison), Spatial Intelligence (overview, water intelligence, risk analysis, data quality, suggestions, AI insights, limitations); region panel for every feature kind (desktop overlay, phone sheet); national KPI strip (8-point weather, 12-month rainfall, GRACE, SDG 6.4.2, estimated risk) |
+| Tests | done | backend `test_explorer_intel.py` 8 (traceability recomputed from the DB, risk = existing estimate, no JRC number, GRACE gaps kept, districts 422, comparison, tools, assistant context validated), full **372 passed**; vitest `explorer.test.ts` 6, total **57 passed**; `tsc` and `eslint .` clean; e2e `explorer.spec.ts` rewritten, 12 tests; full Playwright **80 / 80 passed** (12.3 min) |
+
+Screenshots: `docs/screenshots/explorer*.png`. Remaining console output: none in the screenshot runs.
+
 ## 3D Water Flow transformation — verified (2026-11-14)
 
 | Task | Status | Evidence |

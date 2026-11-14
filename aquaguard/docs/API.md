@@ -20,6 +20,10 @@ Every numeric field is a `Measure`: `{value, unit, provenance, isSample, sourceI
 | GET | `/api/predictions/groundwater?region` | GRACE series, deseasonalised, trend ± 95% CI, projection | Prediction Lab |
 | GET | `/api/models/metrics` | contents of `ml/artifacts/metrics.json` or `evaluated: false` | Prediction Lab |
 | GET | `/api/models/shap?region&horizon` | global importance + local explanation | Prediction Lab |
+| GET | `/api/explorer/intelligence?region=` | evidence-based regional analysis for `bd` or a division (findings with evidence Measures, risk and driver, data quality, suggestions, limitations); districts 422 | Water Explorer |
+| GET | `/api/explorer/overview` | Bangladesh and the 8 divisions side by side (risk, 12-month rainfall / temperature vs normal, dryness, area, population) | Water Explorer |
+| GET | `/api/explorer/timeseries?region=` | monthly and annual weather (complete periods only), trends, national GRACE with null for missing months | Water Explorer |
+| GET | `/api/explorer/compare?region=&a=YYYY-YYYY&b=YYYY-YYYY` | two-period comparison (complete years, missing years listed, national GRACE months present) | Water Explorer |
 | POST | `/api/flow/simulate` | `{pumpFlowM3s, setpointM, leaks{pipe: severity}, lossPct?, leakageExponent?, optimize, pumpOn?, pumpCapacityM3s?, sourceLimitM3s?, allocationPct?{zone: %}, closedPipes?[], demandFactors?{zone: ×}}` → state (pipes, zones, daily volumes, balance and efficiency; + optimized, savings), reservoirCapacity, defaultAllocationPct. Conceptual only | Water Flow |
 | GET | `/api/budget?region&period=annual\|dry\|1..12` | Sankey nodes/links, sector table, balance check | Water Budget |
 | POST | `/api/budget/optimize` | `{region, period, scenario, mode: optimized\|shares, shares?}` → current vs proposed + savings | Water Budget |

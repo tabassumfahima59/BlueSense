@@ -73,7 +73,8 @@ def _events(req: CopilotRequest, client_key: str, slot: int) -> Iterator[dict]:
     try:
         conn = connection.connect(get_settings().db_path, read_only=True)
         yield from copilot.stream_answer(req.message, [t.model_dump() for t in req.history], conn, client_key,
-                                         req.region, take_model_call=lambda: LIMITS.take_model_call(site_calls))
+                                         req.region, take_model_call=lambda: LIMITS.take_model_call(site_calls),
+                                         map_context=req.context.model_dump() if req.context else None)
     except copilot.NotConfigured as e:
         yield {"type": "error", "code": "not_configured", "detail": str(e)}
     finally:

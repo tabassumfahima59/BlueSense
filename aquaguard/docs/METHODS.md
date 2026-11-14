@@ -63,6 +63,10 @@ Interval ≈ trigger / daily loss; trigger = RAW (upland crops) or the AWD pondi
 
 Advisor: a daily root-zone depletion balance over the next 16 days. Starting depletion comes from Open-Meteo model soil moisture (3–9 cm) when present, Dr0 = (θFC − θ) × 1000 × Zr; otherwise RAW/2 (assumption). Rice is assumed flooded at the start (AWD). Outputs are Estimated ("validate locally").
 
+## 3b. Spatial intelligence (`services/spatial_intel.py`)
+
+Monthly weather per division comes from `weather_monthly` (ERA5 reanalysis at the representative point); a month counts only when all its days are present, and a national month only when all eight divisions have it (area-weighted mean, the platform's national weather method). Last 12 months = the latest 12 consecutive complete months; their rainfall total and mean temperature are compared with the 1991–2020 climatology of the same calendar months (departure % for rainfall, °C anomaly for temperature). Annual series use complete calendar years only; trends are OLS slopes per decade with a 95 % t-interval (autocorrelation ignored, stated); a trend is called clear only when the interval excludes zero. Thresholds of the wording: rainfall ±10 % ("below / above normal"), temperature ±0.5 °C, suggestions at ≤ −15 % rainfall, dryness z ≤ −1 or estimated risk ≥ Medium-high. The risk driver is the component (engine stress class or ML dryness class) whose level equals the combined level. GRACE: national series only; missing months are counted and the longest gap reported; period means use the months present. Period comparison: means over complete years, missing years listed, percentage change for rainfall only.
+
 ## 4. Flow simulation (`engine/flow_sim.py`)
 
 ```

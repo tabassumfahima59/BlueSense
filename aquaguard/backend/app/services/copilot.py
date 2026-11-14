@@ -53,7 +53,11 @@ resolution, never a well level), statistic (give the AQUASTAT reference year), d
 National AQUASTAT statistics are never split into divisions; national weather is the area-weighted mean of eight \
 divisional points.
 - Mention the AquaGuard module a value comes from in brackets, using the "aquaguardModule" field of the tool result \
-that provided it, e.g. [Command Center], [Prediction Lab], [Water Budget], [What-if], [Smart Irrigation].
+that provided it, e.g. [Command Center], [Prediction Lab], [Water Budget], [What-if], [Smart Irrigation], \
+[Water Explorer].
+- For questions about a region on the map, or comparisons of divisions or time periods, use the Water Explorer \
+tools (get_regional_intelligence, compare_divisions, compare_periods). Districts have no water data in \
+AquaGuard: say so and offer the parent division. Never present a pattern or correlation as a cause.
 - Be concise (normally under 180 words). Give practical, clearly hedged recommendations when asked.
 - Write plain text for a chat window: short paragraphs and simple "- " lists. No Markdown headings, no bold or italic \
 markers, no tables and no LaTeX; write formulas in words or plain characters (for example P - ET0).
@@ -147,6 +151,11 @@ class PredictionArgs(RegionArgs):
     horizon: Literal[1, 3, 6] = Field(1, description="months ahead: 1, 3 or 6")
 
 
+class PeriodArgs(RegionArgs):
+    periodA: str = Field("1991-2000", pattern=r"^\d{4}-\d{4}$", description="first year range YYYY-YYYY (from 1991)")
+    periodB: str = Field("2016-2025", pattern=r"^\d{4}-\d{4}$", description="second year range YYYY-YYYY")
+
+
 class IrrigationArgs(_Args):
     crop: str = Field(pattern=r"^[a-z_]{2,30}$", description="crop id, e.g. 'boro_rice', 'wheat', 'potato', 'maize'")
     region: str = Field("dhaka", pattern=REGION, description="division id whose weather point is used")
@@ -229,6 +238,29 @@ def _t_grace(conn, a: RegionArgs) -> dict:
     return out
 
 
+def _t_intelligence(conn, a: RegionArgs) -> dict:
+    from ..routers import explorer_intel
+    out = _env(explorer_intel.intelligence(a.region, conn))
+    for f in out.get("data", {}).get("findings", []):
+        for e in f.get("evidence", []):
+            e.get("measure", {}).pop("sourceId", None)
+    return out
+
+
+def _t_compare_divisions(conn, a: NoArgs) -> dict:
+    from ..routers import explorer_intel
+    out = _env(explorer_intel.overview(conn))
+    for r in out.get("data", {}).get("rows", []):
+        r.get("risk", {}).pop("rule", None)  # the same rule for every row; given once below
+    out["riskRule"] = "risk level = max(stress level, dryness level) (estimate, division level)"
+    return out
+
+
+def _t_compare_periods(conn, a: PeriodArgs) -> dict:
+    from ..routers import explorer_intel
+    return _env(explorer_intel.compare(a.region, a.periodA, a.periodB, conn))
+
+
 def _t_alerts(conn, a: RegionArgs) -> dict:
     from ..routers.deps import region_or_404
     from . import alert_engine
@@ -304,6 +336,17 @@ TOOLS: list[Tool] = [
          "Prediction Lab"),
     Tool("estimate_irrigation", "FAO-56 irrigation estimate for a crop over the next 7 days using the stored "
          "forecast of a division's weather point.", IrrigationArgs, _t_irrigation, "Smart Irrigation"),
+    Tool("get_regional_intelligence", "Evidence-based analysis of Bangladesh or one division from the Water Explorer: "
+         "rainfall and temperature of the last 12 complete months vs the 1991-2020 normal, seasonal dryness, "
+         "long-term trends with 95% intervals, the estimated scarcity risk and what drives it, national GRACE "
+         "context, data coverage, source status and limitations. Every finding lists its values.", RegionArgs,
+         _t_intelligence, "Water Explorer"),
+    Tool("compare_divisions", "All eight divisions and Bangladesh side by side: estimated scarcity risk with its "
+         "stress and dryness classes, rainfall of the last 12 complete months vs normal, seasonal dryness class and "
+         "current temperature.", NoArgs, _t_compare_divisions, "Water Explorer"),
+    Tool("compare_periods", "Compare two year ranges for Bangladesh or a division: mean annual rainfall, temperature "
+         "and P - ET0 (complete years only, missing years listed) and the national GRACE mean anomaly.",
+         PeriodArgs, _t_compare_periods, "Water Explorer"),
     Tool("run_what_if", "Run the national what-if water-balance model with scenario levers (computes only, stores "
          "nothing). Returns baseline vs scenario.", WhatIfArgs, _t_whatif, "What-if"),
 ]
@@ -417,7 +460,8 @@ def _valid_history(history: list[dict]) -> list[tuple[str, str]]:
 
 
 def stream_answer(question: str, history: list[dict], conn, client_key: str = "-", region: str = "bd",
-                  take_model_call: Callable[[], bool] | None = None) -> Iterator[dict]:
+                  take_model_call: Callable[[], bool] | None = None,
+                  map_context: dict | None = None) -> Iterator[dict]:
     """Yield events: {"type": "tool", ...}, {"type": "delta", "text"}, {"type": "done", ...} or
     {"type": "error", "code", "detail"}. Raises NotConfigured before anything is yielded when there is no key.
     ``take_model_call`` books one model call against the site-wide daily budget (False = budget used up)."""
@@ -431,6 +475,9 @@ def stream_answer(question: str, history: list[dict], conn, client_key: str = "-
     provider = make_provider(cfg)
     # the region id is validated by the router; it is app context, separate from the user's own words
     context = f"App context (set by AquaGuard, not by the user): selected region = {region}"
+    if map_context:  # validated by CopilotMapContext (fixed kinds, restricted characters, 80 chars)
+        context += (f"; page = 3D Water Explorer; selected map feature = {map_context['name']} "
+                    f"({map_context['kind'].replace('_', ' ')})")
     messages = [provider.history_message(role, text) for role, text in _valid_history(history)]
     messages.append(provider.user_message(context, question))
     tools = tool_specs()

@@ -8,7 +8,7 @@ import type {
   GroundwaterResponse, IrrigationRequest, IrrigationResponse, LastUpdated, MapLayersResponse, MetricsResponse,
   OptimizeRequest, OptimizeResponse, OverviewResponse, ReadResult, RefreshResult, RegionsResponse, Scenario,
   ScarcityResponse, ScenarioRequest, ScenarioResponse, SearchResults, ShapResponse, SourceStatus, SourcesResponse,
-  StatusResponse, WeatherResponse,
+  StatusResponse, WeatherResponse, RegionIntel, ExplorerOverview, ExplorerSeries, PeriodComparison,
 } from "../types/contract";
 
 export const API_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001").replace(/\/$/, "");
@@ -88,6 +88,12 @@ export const api = {
   refresh: () => post<Envelope<RefreshResult>>("/refresh"),
   markRead: (alertId: number, clientId: string) => post<Envelope<ReadResult>>(`/alerts/${alertId}/read`, { clientId }),
   // M1 Command Center
+  // Water Explorer spatial intelligence
+  intelligence: (region: string) => request<Envelope<RegionIntel>>(`/explorer/intelligence?${new URLSearchParams({ region })}`),
+  explorerOverview: () => request<Envelope<ExplorerOverview>>("/explorer/overview"),
+  explorerSeries: (region: string) => request<Envelope<ExplorerSeries>>(`/explorer/timeseries?${new URLSearchParams({ region })}`),
+  comparePeriods: (region: string, a: string, b: string) =>
+    request<Envelope<PeriodComparison>>(`/explorer/compare?${new URLSearchParams({ region, a, b })}`),
   dashboard: (region: string, targetEfficiency?: number) =>
     request<Envelope<DashboardSummary>>(`/dashboard/summary?${new URLSearchParams({ region, ...(targetEfficiency ? { targetEfficiency: String(targetEfficiency) } : {}) })}`),
   divisions: () => request<Envelope<DivisionIndicators>>("/water/scarcity/divisions"),

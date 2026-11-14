@@ -149,3 +149,23 @@ Not modelled (shown as such): reservoir inflow and level, treatment losses, pump
 ![Schematic](screenshots/water-flow_schematic.png)
 ![Data table](screenshots/water-flow_table.png)
 ![Phone bottom sheet](screenshots/water-flow_mobile-sheet.png)
+
+## Addendum — 3D Bangladesh Water Explorer transformation (2026-11-14)
+
+Design: `aquaguard-plan.md` §7.5; methods: `METHODS.md` §3b; verification: `aquaguard-progress.md`.
+
+| Area | Result |
+|---|---|
+| Spatial intelligence | 4 read-only endpoints; every finding lists its values with source, data kind and date; districts carry no water values |
+| Views | 3D Map, 2D Map, Time Series, Data Table, Analysis, Spatial Intelligence share one selection |
+| Water layers | OpenStreetMap rivers, canals, water bodies and wetlands; JRC occurrence 1984–2021; GRACE cells (~300 km) |
+| AI | existing provider-independent Copilot with 3 new read-only tools and validated map context; not_configured without a key |
+| Tests | backend 372 passed; vitest 57 passed; full Playwright 80 / 80 passed |
+
+![Explorer 3D](screenshots/explorer.png)
+![Explorer 2D](screenshots/explorer_2d.png)
+![Time series](screenshots/explorer_series.png)
+![Analysis](screenshots/explorer_analysis.png)
+![Spatial intelligence](screenshots/explorer_intel.png)
+![Phone](screenshots/explorer_mobile.png)
+

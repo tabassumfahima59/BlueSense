@@ -18,6 +18,7 @@ from .routers import (
     copilot,
     data_api,
     explorer,
+    explorer_intel,
     health,
     irrigation,
     platform_api,
@@ -101,6 +102,6 @@ async def cache_headers(request: Request, call_next):
     return response
 
 
-for r in (health, regions, sources, command_center, explorer, prediction_lab, water_flow, water_budget, what_if,
+for r in (health, regions, sources, command_center, explorer, explorer_intel, prediction_lab, water_flow, water_budget, what_if,
           irrigation, copilot, data_api, platform_api):
     app.include_router(r.router, prefix="/api")

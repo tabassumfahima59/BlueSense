@@ -27,6 +27,7 @@ export type DataKind = NonNullable<Measure["dataKind"]>;
 export type DataStatus = NonNullable<Measure["status"]>;
 export type Alert = S["Alert"];
 export type MapLayersResponse = S["MapLayersResponse"];
+export type LayerInfo = S["LayerInfo"];
 export type RegionValues = S["RegionValues"];
 export type WeatherResponse = S["WeatherResponse"];
 export type ScarcityResponse = S["ScarcityResponse"];
@@ -93,6 +94,15 @@ export type WeatherPoints = S["WeatherPoints"];
 export type WeatherPoint = S["WeatherPoint"];
 export type WeatherCurrent = S["WeatherCurrent"];
 export type GridCell = S["GridCell"];
+// Water Explorer spatial intelligence
+export type RegionIntel = S["RegionIntel"];
+export type ExplorerFinding = S["Finding"];
+export type RiskInfo = S["RiskInfo"];
+export type ExplorerOverview = S["ExplorerOverview"];
+export type OverviewRow = S["OverviewRow"];
+export type ExplorerSeries = S["ExplorerSeries"];
+export type PeriodComparison = S["PeriodComparison"];
+export type CopilotMapContext = S["CopilotMapContext"];
 
 /** Scenario with every field explicit; `null` efficiency/loss = use the baseline from config. */
 export interface Scenario {
