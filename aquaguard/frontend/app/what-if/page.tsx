@@ -101,6 +101,9 @@ export default function WhatIf() {
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" onClick={() => { setLocal({ ...BASELINE }); resetGlobal(); }}><RotateCcw size={14} aria-hidden /> Reset to baseline</Button>
           <Button onClick={() => setScenario(local)} disabled={applied}><Globe2 size={14} aria-hidden /> {applied && !isBaseline(local) ? "Applied across platform" : "Apply across platform"}</Button>
+          {applied && isBaseline(local) && (
+            <span className="self-center text-[12.5px] text-muted" data-testid="apply-hint">Change a lever below to apply a scenario across the platform.</span>
+          )}
         </div>
       </PageHeader>
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[340px_minmax(0,1fr)]">

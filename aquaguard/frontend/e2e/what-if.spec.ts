@@ -39,3 +39,22 @@ test("a division selection keeps the national model", async ({ page }) => {
   await open(page, "/what-if?region=sylhet");
   await expect(page.getByText(/National model: results are for Bangladesh/)).toBeVisible();
 });
+
+test("apply across platform: disabled with a reason at baseline, then carries the levers to every module", async ({ page }) => {
+  await open(page);
+  const apply = page.getByRole("button", { name: "Apply across platform" });
+  await expect(apply).toBeDisabled();
+  await expect(page.getByTestId("apply-hint")).toHaveText("Change a lever below to apply a scenario across the platform.");
+  await page.getByRole("button", { name: "Dry year: rainfall −20%" }).click();
+  await expect(page.getByTestId("apply-hint")).toHaveCount(0);
+  await expect(apply).toBeEnabled();
+  await apply.click();
+  await expect(page.getByRole("button", { name: "Applied across platform" })).toBeDisabled();
+  await expect(page.getByText(/^Scenario active: /)).toBeVisible();
+  // move to another module the way a user does (the applied scenario lasts for the session, not across reloads)
+  await page.getByRole("navigation", { name: "Modules" }).getByRole("link", { name: "Water Budget Sankey" }).click();
+  await page.getByRole("radio", { name: "Monthly model (derived)" }).click();
+  await expect(page.getByText(/Scenario applied: Rain -20%/)).toBeVisible(); // another module picks the scenario up
+  await page.getByRole("button", { name: "Reset scenario to baseline" }).click();
+  await expect(page.getByText(/^Scenario active: /)).toHaveCount(0);
+});
