@@ -1,6 +1,6 @@
 # AquaGuard — Implementation Plan (Main Rebuild)
 
-Status: **P4 Design system + shell implemented and verified — awaiting review before M1.** Evidence:
+Status: **M1 Command Center implemented and verified — awaiting review before M2.** Evidence:
 `aquaguard-progress.md`.
 This plan implements the approved *Final Implementation Scope* and *Final Master Implementation Prompt*. It is an
 evolution of the existing repository, not a rebuild: working features, routes, tables and records are preserved.
@@ -297,6 +297,33 @@ settings, table view, profile menu, and axe (WCAG 2.1 A/AA, no serious or critic
 The e2e run builds into `.next-e2e` (env `NEXT_DIST_DIR`) and uses `backend/scripts/e2e_server.py` (database copy,
 offline, port 8013), so neither the regular build nor the real database is touched.
 
+### 7.3 M1 Command Center (implemented)
+
+**Backend:** `GET /api/water/scarcity/divisions` (weather-derived indicators for the eight divisions + the area-weighted
+national row, with legend classes; `services/indicators.py`, cached 60 s), `GET /api/water/history?codes=` (AQUASTAT
+genuine reference years only, never interpolated), `GET /api/weather/history?...&normals=true` (1991–2020 monthly
+normals aligned to the months), `GET /api/geo/divisions|districts` (geoBoundaries reference geometry, cached 1 day)
+and `insights` in `GET /api/dashboard/summary` (`services/insights.py`: sentences built only from stored values, each
+with sources, data kind, observation date and status; left out when its data is unavailable).
+
+**Legend classes and their sources:** dryness z (3-month P − ET0) — SPI classes (McKee et al. 1993; WMO-No. 1090);
+30-day rainfall vs 1991–2020 — India Meteorological Department rainfall departure categories (not classified when the
+normal is below 5 mm); next-7-day P − ET0 and 30-day reference-crop irrigation need — AquaGuard display bins, flagged
+as an assumption. A value on a class boundary belongs to the class farther from neutral (SPI convention).
+
+**Page** (`frontend/app/command-center`): five KPI cards (value, unit, date, data kind, status, comparison only with a
+real earlier value of the same time step) each opening a DetailDrawer with its chart (reference-year chart, GRACE
+months, last-30-day rain vs ET0 for a division), formula, sources and context; the saving KPI has a target-efficiency
+slider (scenario, debounced request). Key insights; stored alerts with severity filter, per-browser read marks and a
+detail dialog (value, threshold and its source, data source, observation date; predictions labelled). Weather-derived
+choropleth with a category filter, legend (classes, thresholds, source), hover panel and click-to-select; regional
+table (sortable, keyboard selectable, CSV). Availability vs demand by AQUASTAT reference year (log axis, markers only
+at genuine years). Rainfall and P − ET0 anomalies against the 1991–2020 normal that follow the global date filter over
+the whole archive (1991 → latest complete month; default the last ~24 months). Model checks (legacy national engine
+vs AQUASTAT) load only when expanded. With a division selected, national statistics are labelled "National data".
+The legacy engine KPIs, engine-based division stress, risk map and sector chart were removed from this page
+(decision 1); the national engine stays in Water Budget and What-if.
+
 ## 8. Dependency strategy
 
 * Pin exact versions; prefer releases at least two weeks old; check OSV (Python) and `npm audit` (Node) before and
@@ -324,8 +351,9 @@ offline, port 8013), so neither the regular build nor the real database is touch
 | P1 Foundation | audit, docs, backup, migration runner, migrations 0001–0007, SQLite config, settings, HTTP client, admin auth, dependencies | implemented and verified |
 | P2 Sources + scheduler | Open-Meteo, AQUASTAT, GRACE CSR adapters; APScheduler + DB lease lock; status; bootstrap seed; backend sample fallback removed; approved security upgrades | implemented and verified |
 | P3 API | new endpoints, meta envelope, alerts engine, search, refresh, admin sync | implemented and verified |
-| P4 Design + shell | Blue & White glass tokens, shared components, TopBar, Settings, mock mode removal | implemented and verified; awaiting review |
-| M1–M8 | Command Center → Irrigation → What-if → Water Budget → Prediction Lab → Explorer → Water Flow → Copilot | not started |
+| P4 Design + shell | Blue & White glass tokens, shared components, TopBar, Settings, mock mode removal | implemented and verified |
+| M1 Command Center | KPIs + drawers, insights, stored alerts, weather choropleth + regional table, reference-year trend, weather anomalies with date filter | implemented and verified; awaiting review |
+| M2–M8 | Irrigation → What-if → Water Budget → Prediction Lab → Explorer → Water Flow → Copilot | not started |
 | P5 Verification | §7 checks of the master prompt, final report | not started |
 
 ## 10. Known limitations

@@ -1506,6 +1506,16 @@
        "default": "monthly",
        "title": "Step"
       }
+     },
+     {
+      "name": "normals",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean",
+       "default": false,
+       "title": "Normals"
+      }
      }
     ],
     "responses": {
@@ -1749,6 +1759,124 @@
          "$ref": "#/components/schemas/Envelope_DashboardSummary_"
         }
        }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/water/scarcity/divisions": {
+   "get": {
+    "tags": [
+     "Data API (P3)"
+    ],
+    "summary": "Scarcity Divisions",
+    "description": "Weather-derived indicators for all eight divisions (choropleth and regional table) with legend classes.",
+    "operationId": "scarcity_divisions_api_water_scarcity_divisions_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_DivisionIndicators_"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/water/history": {
+   "get": {
+    "tags": [
+     "Data API (P3)"
+    ],
+    "summary": "Water History",
+    "operationId": "water_history_api_water_history_get",
+    "parameters": [
+     {
+      "name": "codes",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "default": "4188,4253,4550",
+       "title": "Codes"
+      }
+     },
+     {
+      "name": "region",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "default": "bd",
+       "title": "Region"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Envelope_StatHistory_"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/geo/{level}": {
+   "get": {
+    "tags": [
+     "Data API (P3)"
+    ],
+    "summary": "Geo",
+    "description": "Division / district boundaries (geoBoundaries gbOpen BGD, reference data; districts are a map reference\nlayer only).",
+    "operationId": "geo_api_geo__level__get",
+    "parameters": [
+     {
+      "name": "level",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "enum": [
+        "divisions",
+        "districts"
+       ],
+       "type": "string",
+       "title": "Level"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/geo+json": {}
       }
      },
      "422": {
@@ -2837,6 +2965,13 @@
      "openAlerts": {
       "type": "integer",
       "title": "Openalerts"
+     },
+     "insights": {
+      "items": {
+       "$ref": "#/components/schemas/Insight"
+      },
+      "type": "array",
+      "title": "Insights"
      }
     },
     "additionalProperties": false,
@@ -2951,6 +3086,82 @@
     ],
     "title": "DestinationState"
    },
+   "DivisionIndicators": {
+    "properties": {
+     "indicators": {
+      "items": {
+       "$ref": "#/components/schemas/IndicatorDef"
+      },
+      "type": "array",
+      "title": "Indicators"
+     },
+     "divisions": {
+      "items": {
+       "$ref": "#/components/schemas/DivisionRow"
+      },
+      "type": "array",
+      "title": "Divisions"
+     },
+     "national": {
+      "$ref": "#/components/schemas/DivisionRow"
+     },
+     "note": {
+      "type": "string",
+      "title": "Note"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "indicators",
+     "divisions",
+     "national",
+     "note"
+    ],
+    "title": "DivisionIndicators"
+   },
+   "DivisionRow": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "title": "Id"
+     },
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "values": {
+      "additionalProperties": {
+       "$ref": "#/components/schemas/Measure"
+      },
+      "type": "object",
+      "title": "Values"
+     },
+     "classes": {
+      "additionalProperties": {
+       "anyOf": [
+        {
+         "$ref": "#/components/schemas/IndicatorClass"
+        },
+        {
+         "type": "null"
+        }
+       ]
+      },
+      "type": "object",
+      "title": "Classes"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "id",
+     "name",
+     "values",
+     "classes"
+    ],
+    "title": "DivisionRow"
+   },
    "Envelope_DashboardSummary_": {
     "properties": {
      "data": {
@@ -2967,6 +3178,23 @@
      "meta"
     ],
     "title": "Envelope[DashboardSummary]"
+   },
+   "Envelope_DivisionIndicators_": {
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/DivisionIndicators"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[DivisionIndicators]"
    },
    "Envelope_GroundwaterTrends_": {
     "properties": {
@@ -3086,6 +3314,23 @@
      "meta"
     ],
     "title": "Envelope[SearchResults]"
+   },
+   "Envelope_StatHistory_": {
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/StatHistory"
+     },
+     "meta": {
+      "$ref": "#/components/schemas/Meta"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "data",
+     "meta"
+    ],
+    "title": "Envelope[StatHistory]"
    },
    "Envelope_SyncResult_": {
     "properties": {
@@ -3700,6 +3945,199 @@
     },
     "type": "object",
     "title": "HTTPValidationError"
+   },
+   "IndicatorClass": {
+    "properties": {
+     "label": {
+      "type": "string",
+      "title": "Label"
+     },
+     "min": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Min"
+     },
+     "max": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Max"
+     },
+     "tone": {
+      "type": "integer",
+      "maximum": 3.0,
+      "minimum": -3.0,
+      "title": "Tone",
+      "description": "-3 driest / most need ... +3 wettest; 0 neutral"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "label",
+     "min",
+     "max",
+     "tone"
+    ],
+    "title": "IndicatorClass"
+   },
+   "IndicatorDef": {
+    "properties": {
+     "key": {
+      "type": "string",
+      "title": "Key"
+     },
+     "label": {
+      "type": "string",
+      "title": "Label"
+     },
+     "unit": {
+      "type": "string",
+      "title": "Unit"
+     },
+     "dataKind": {
+      "type": "string",
+      "enum": [
+       "observed",
+       "model_current",
+       "forecast",
+       "reanalysis",
+       "satellite_monthly",
+       "satellite_historical",
+       "statistic",
+       "derived",
+       "prediction",
+       "scenario",
+       "conceptual",
+       "reference"
+      ],
+      "title": "Datakind"
+     },
+     "sourceId": {
+      "type": "string",
+      "title": "Sourceid"
+     },
+     "method": {
+      "type": "string",
+      "title": "Method"
+     },
+     "classSource": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Classsource"
+     },
+     "assumption": {
+      "type": "boolean",
+      "title": "Assumption"
+     },
+     "classes": {
+      "items": {
+       "$ref": "#/components/schemas/IndicatorClass"
+      },
+      "type": "array",
+      "title": "Classes"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "key",
+     "label",
+     "unit",
+     "dataKind",
+     "sourceId",
+     "method",
+     "classSource",
+     "assumption",
+     "classes"
+    ],
+    "title": "IndicatorDef"
+   },
+   "Insight": {
+    "properties": {
+     "key": {
+      "type": "string",
+      "title": "Key"
+     },
+     "text": {
+      "type": "string",
+      "title": "Text"
+     },
+     "dataKind": {
+      "type": "string",
+      "enum": [
+       "observed",
+       "model_current",
+       "forecast",
+       "reanalysis",
+       "satellite_monthly",
+       "satellite_historical",
+       "statistic",
+       "derived",
+       "prediction",
+       "scenario",
+       "conceptual",
+       "reference"
+      ],
+      "title": "Datakind"
+     },
+     "sources": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Sources"
+     },
+     "observedAt": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Observedat"
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "fresh",
+       "stale",
+       "unavailable",
+       "not_configured"
+      ],
+      "title": "Status"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "key",
+     "text",
+     "dataKind",
+     "sources",
+     "observedAt",
+     "status"
+    ],
+    "title": "Insight"
    },
    "Interval": {
     "properties": {
@@ -6416,6 +6854,65 @@
     ],
     "title": "SourcesResponse"
    },
+   "StatHistory": {
+    "properties": {
+     "series": {
+      "items": {
+       "$ref": "#/components/schemas/StatSeries"
+      },
+      "type": "array",
+      "title": "Series"
+     },
+     "note": {
+      "type": "string",
+      "title": "Note"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "series",
+     "note"
+    ],
+    "title": "StatHistory"
+   },
+   "StatSeries": {
+    "properties": {
+     "code": {
+      "type": "string",
+      "title": "Code"
+     },
+     "key": {
+      "type": "string",
+      "title": "Key"
+     },
+     "label": {
+      "type": "string",
+      "title": "Label"
+     },
+     "unit": {
+      "type": "string",
+      "title": "Unit"
+     },
+     "points": {
+      "items": {
+       "$ref": "#/components/schemas/Measure"
+      },
+      "type": "array",
+      "title": "Points"
+     }
+    },
+    "additionalProperties": false,
+    "type": "object",
+    "required": [
+     "code",
+     "key",
+     "label",
+     "unit",
+     "points"
+    ],
+    "title": "StatSeries"
+   },
    "StatValue": {
     "properties": {
      "key": {
@@ -7091,6 +7588,14 @@
       },
       "type": "array",
       "title": "Series"
+     },
+     "normals": {
+      "items": {
+       "$ref": "#/components/schemas/SeriesValues"
+      },
+      "type": "array",
+      "title": "Normals",
+      "description": "1991-2020 monthly normals aligned to the series months"
      }
     },
     "additionalProperties": false,

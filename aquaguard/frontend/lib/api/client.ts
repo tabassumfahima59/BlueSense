@@ -4,7 +4,7 @@
  */
 import { scenarioQuery } from "../store/scenario";
 import type {
-  AlertsResponse, BudgetResponse, CopilotRequest, CopilotResponse, DemandResponse, Envelope, FlowRequest, FlowResponse,
+  AlertsResponse, BudgetResponse, DashboardSummary, DivisionIndicators, GroundwaterTrends, StatHistory, WeatherSeries, CopilotRequest, CopilotResponse, DemandResponse, Envelope, FlowRequest, FlowResponse,
   GroundwaterResponse, IrrigationRequest, IrrigationResponse, LastUpdated, MapLayersResponse, MetricsResponse,
   OptimizeRequest, OptimizeResponse, OverviewResponse, ReadResult, RefreshResult, RegionsResponse, Scenario,
   ScarcityResponse, ScenarioRequest, ScenarioResponse, SearchResults, ShapResponse, SourceStatus, SourcesResponse,
@@ -85,4 +85,18 @@ export const api = {
   lastUpdated: () => request<Envelope<LastUpdated>>("/data/last-updated"),
   refresh: () => post<Envelope<RefreshResult>>("/refresh"),
   markRead: (alertId: number, clientId: string) => post<Envelope<ReadResult>>(`/alerts/${alertId}/read`, { clientId }),
+  // M1 Command Center
+  dashboard: (region: string, targetEfficiency?: number) =>
+    request<Envelope<DashboardSummary>>(`/dashboard/summary?${new URLSearchParams({ region, ...(targetEfficiency ? { targetEfficiency: String(targetEfficiency) } : {}) })}`),
+  divisions: () => request<Envelope<DivisionIndicators>>("/water/scarcity/divisions"),
+  waterHistory: (codes: number[], region = "bd") =>
+    request<Envelope<StatHistory>>(`/water/history?${new URLSearchParams({ codes: codes.join(","), region })}`),
+  weatherHistory: (region: string, opts: { start?: string; end?: string; step?: "daily" | "monthly"; normals?: boolean } = {}) =>
+    request<Envelope<WeatherSeries>>(`/weather/history?${new URLSearchParams({
+      region, step: opts.step ?? "monthly",
+      ...(opts.start ? { start: opts.start } : {}), ...(opts.end ? { end: opts.end } : {}),
+      ...(opts.normals ? { normals: "true" } : {}) })}`),
+  groundwaterTrends: (region: string, start?: string) =>
+    request<Envelope<GroundwaterTrends>>(`/groundwater/trends?${new URLSearchParams({ region, ...(start ? { start } : {}) })}`),
+  geo: (level: "divisions" | "districts") => request<GeoJSON.FeatureCollection>(`/geo/${level}`),
 };

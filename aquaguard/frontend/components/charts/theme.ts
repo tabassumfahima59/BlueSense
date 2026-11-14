@@ -47,3 +47,12 @@ export function baseLayout(overrides: Record<string, unknown> = {}): Record<stri
 }
 
 export const axisTitle = (text: string) => ({ text, font: { size: 12, color: NEUTRAL.muted } });
+
+/**
+ * Diverging class colours for weather indicators (tone -3 driest / most need ... +3 wettest), two hues with a
+ * neutral grey midpoint (never a hue at the midpoint). Always shown with the class label in the legend and hover.
+ */
+export const TONE_COLOR: Record<number, string> = {
+  [-3]: "#8C3209", [-2]: "#C2410C", [-1]: "#E8A27A", 0: "#D5DEE8", 1: "#9CC5EE", 2: "#3D8AD6", 3: "#0755B8",
+};
+export const NO_CLASS = "#EEF2F6";

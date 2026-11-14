@@ -63,6 +63,19 @@ export type SourceStatus = S["SourceStatus"];
 export type LastUpdated = S["LastUpdated"];
 export type RefreshResult = S["RefreshResult"];
 export type ReadResult = S["ReadResult"];
+// M1 Command Center
+export type DashboardSummary = S["DashboardSummary"];
+export type Kpi = S["Kpi"];
+export type Insight = S["Insight"];
+export type DivisionIndicators = S["DivisionIndicators"];
+export type IndicatorDef = S["IndicatorDef"];
+export type IndicatorClass = S["IndicatorClass"];
+export type DivisionRow = S["DivisionRow"];
+export type StatHistory = S["StatHistory"];
+export type StatSeries = S["StatSeries"];
+export type WeatherSeries = S["WeatherSeries"];
+export type SeriesValues = S["SeriesValues"];
+export type GroundwaterTrends = S["GroundwaterTrends"];
 
 /** Scenario with every field explicit; `null` efficiency/loss = use the baseline from config. */
 export interface Scenario {

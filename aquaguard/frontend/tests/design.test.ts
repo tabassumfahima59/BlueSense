@@ -90,6 +90,8 @@ describe("date range", () => {
     expect(effectiveRange({ from: null, to: null }, b)).toEqual({ from: "2024-11", to: "2026-10" });
     expect(effectiveRange({ from: "2020-01", to: "2025-06" }, b)).toEqual({ from: "2024-11", to: "2025-06" });
     expect(effectiveRange({ from: "2026-01", to: null }, null)).toEqual({ from: null, to: null });
+    // an unset range shows the page's default window, so the filter and the charts always agree
+    expect(effectiveRange({ from: null, to: null }, { ...b, defaultFrom: "2025-01" })).toEqual({ from: "2025-01", to: "2026-10" });
   });
   it("filters monthly and daily points", () => {
     expect(inRange("2025-03", { from: "2025-01", to: "2025-06" })).toBe(true);

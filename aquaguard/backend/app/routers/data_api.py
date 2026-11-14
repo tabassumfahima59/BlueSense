@@ -6,12 +6,15 @@ are never split into divisions (decision 1): for a division they are returned as
 """
 from __future__ import annotations
 
+import json
 import re
 from collections.abc import Iterator
 from datetime import date, timedelta
+from functools import lru_cache
 from typing import Literal
 
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import Response
 
 from ..config.params import pval
 from ..db import connection
@@ -22,10 +25,15 @@ from ..schemas.v2 import (
     BudgetLink,
     BudgetNode,
     DashboardSummary,
+    DivisionIndicators,
+    DivisionRow,
     Envelope,
     GridCell,
     GroundwaterPoint,
     GroundwaterTrends,
+    IndicatorClass,
+    IndicatorDef,
+    Insight,
     Kpi,
     NationalBudget,
     PredictionPoint,
@@ -33,6 +41,8 @@ from ..schemas.v2 import (
     RegionRef,
     ScarcityIndicator,
     SeriesValues,
+    StatHistory,
+    StatSeries,
     StatValue,
     WaterAvailability,
     WaterBudget,
@@ -41,7 +51,7 @@ from ..schemas.v2 import (
     WeatherSeries,
     WhatIf,
 )
-from ..services import catalog, regional, store
+from ..services import catalog, indicators, insights, regional, store
 from ..services import ml_artifacts as mla
 from ..services.catalog import NATIONAL_DATA_NOTE, NATIONAL_WEATHER_NOTE, mv
 from ..settings import get_settings
@@ -137,9 +147,30 @@ def weather_forecast(region: str = "bd", days: int = Query(7, ge=1, le=16),
                                       note=note, status=None if has else "unavailable"))
 
 
+def _normals(conn, reg: dict, months: list[str]) -> list[SeriesValues]:
+    """1991-2020 monthly normals (climatology table) aligned to the given YYYY-MM list; national = area-weighted."""
+    pts = store.points_for(conn, reg)
+    marks = ",".join("?" for _ in pts)
+    cols = {"precip_mm": ("Precipitation normal 1991-2020", "mm"), "et0_mm": ("ET0 normal 1991-2020", "mm"),
+            "d_mm": ("P - ET0 normal 1991-2020", "mm"), "tmean_c": ("Temperature normal 1991-2020", "°C")}
+    rows = conn.execute(f"SELECT division, month, {', '.join(cols)} FROM climatology WHERE division IN ({marks})",
+                        list(pts)).fetchall()
+    by_month: dict[int, dict[str, dict[str, float]]] = {}
+    for r in rows:
+        for i, c in enumerate(cols):
+            by_month.setdefault(int(r[1]), {}).setdefault(c, {})[r[0]] = r[2 + i]
+    out = []
+    for c, (label, unit) in cols.items():
+        vals = [store.weighted(by_month.get(int(t[5:7]), {}).get(c, {}), pts) for t in months]
+        out.append(SeriesValues(variable=c, label=label, unit=unit, t=months,
+                                v=[None if v is None else round(v, 3) for v in vals]))
+    return out
+
+
 @router.get("/weather/history", response_model=Envelope[WeatherSeries])
 def weather_history(region: str = "bd", start: str | None = None, end: str | None = None,
-                    step: Literal["daily", "monthly"] = "monthly", conn=Depends(db)) -> Envelope[WeatherSeries]:
+                    step: Literal["daily", "monthly"] = "monthly", normals: bool = False,
+                    conn=Depends(db)) -> Envelope[WeatherSeries]:
     reg = resolve(conn, region)
     pattern = DAY_RE if step == "daily" else MONTH_RE
     for name, v in (("start", start), ("end", end)):
@@ -166,8 +197,14 @@ def weather_history(region: str = "bd", start: str | None = None, end: str | Non
     if not any(s.t for s in series):
         note += " No data in this range."
     observed = max((s.t[-1] for s in series if s.t), default=None)
+    norm: list[SeriesValues] = []
+    if normals:
+        if step != "monthly":
+            raise ApiError(422, "invalid_parameter", "normals are available for step=monthly only.")
+        months = sorted({t for s in series for t in s.t})
+        norm = _normals(conn, reg, months)
     return Envelope(data=WeatherSeries(region=ref(reg), step=step, timezone=store.TIMEZONE, start=start, end=end,
-                                       series=series),
+                                       series=series, normals=norm),
                     meta=catalog.meta(["openmeteo_archive"], ["reanalysis"] + (["derived"] if step == "monthly" else []),
                                       lvl, observed_at=observed, note=note))
 
@@ -412,9 +449,109 @@ def dashboard_summary(region: str = "bd", targetEfficiency: float | None = Query
                        "SELECT COUNT(*) FROM alerts WHERE resolved_at IS NULL AND location_id IN (?, ?)", scope
                    ).fetchone()[0])
     sources = ["fao_aquastat", "grace_csr"] + ([] if reg["level"] == "country" else ["openmeteo_archive"])
-    return Envelope(data=DashboardSummary(region=ref(reg), kpis=kpis, openAlerts=open_alerts),
+    names = dict(conn.execute("SELECT id, name FROM locations WHERE level IN ('country', 'division')").fetchall())
+    divs = indicators.all_divisions(conn, str(get_settings().db_path))
+    notes = [Insight(**i) for i in insights.build(conn, reg, divs, names)]
+    return Envelope(data=DashboardSummary(region=ref(reg), kpis=kpis, openAlerts=open_alerts, insights=notes),
                     meta=catalog.meta(sources, ["statistic", "satellite_monthly", "derived", "scenario"], "mixed",
                                       note=national_note))
+
+
+# ---------------------------------------------------------------- division indicators (map + regional table)
+
+def _measure(key: str, value: float | None, observed: str | None, spatial: str) -> Measure:
+    d = indicators.BY_KEY[key]
+    digits = 2 if d["unit"] == "z-score" else 1
+    return mv(value, d["unit"], d["dataKind"], d["sourceId"], spatial, observed_at=observed, digits=digits)
+
+
+def _row(rid: str, name: str, vals: dict, spatial: str) -> DivisionRow:
+    values, classes = {}, {}
+    for d in indicators.DEFINITIONS:
+        v, observed = vals.get(d["key"], (None, None))
+        values[d["key"]] = _measure(d["key"], v, observed, spatial)
+        c = indicators.classify(d["key"], v)
+        classes[d["key"]] = IndicatorClass(**{k: c[k] for k in ("label", "min", "max", "tone")}) if c else None
+    return DivisionRow(id=rid, name=name, values=values, classes=classes)
+
+
+@router.get("/water/scarcity/divisions", response_model=Envelope[DivisionIndicators])
+def scarcity_divisions(conn=Depends(db)) -> Envelope[DivisionIndicators]:
+    """Weather-derived indicators for all eight divisions (choropleth and regional table) with legend classes."""
+    data = indicators.all_divisions(conn, str(get_settings().db_path))
+    names = dict(conn.execute("SELECT id, name FROM locations WHERE level IN ('country', 'division')").fetchall())
+    defs = [IndicatorDef(key=d["key"], label=d["label"], unit=d["unit"], dataKind=d["dataKind"],
+                         sourceId=d["sourceId"], method=d["method"], classSource=d["classSource"],
+                         assumption=d["assumption"],
+                         classes=[IndicatorClass(label=c[2], min=c[0], max=c[1], tone=c[3]) for c in d["classes"]])
+            for d in indicators.DEFINITIONS]
+    rows = [_row(p, names.get(p, p), data[p], "point") for p in sorted(k for k in data if k != "bd")]
+    note = ("Weather-derived indicators at each division's representative point (ERA5 reanalysis and Open-Meteo "
+            "forecast). National statistics (AQUASTAT) are not available per division and are not shown here.")
+    return Envelope(data=DivisionIndicators(indicators=defs, divisions=rows,
+                                            national=_row("bd", names.get("bd", "Bangladesh"), data["bd"], "national"),
+                                            note=note),
+                    meta=catalog.meta(["openmeteo_archive", "openmeteo_forecast"], ["reanalysis", "derived", "forecast"],
+                                      "division", note=note))
+
+
+# ---------------------------------------------------------------- AQUASTAT history by reference year
+
+HISTORY_CODES = {4188: "Total renewable water resources", 4185: "Renewable surface water",
+                 4187: "Renewable groundwater", 4549: "Environmental flow requirements",
+                 4253: "Total freshwater withdrawal", 4250: "Agricultural withdrawal", 4251: "Municipal withdrawal",
+                 4252: "Industrial withdrawal", 4550: "Water stress (SDG 6.4.2)"}
+
+
+@router.get("/water/history", response_model=Envelope[StatHistory])
+def water_history(codes: str = "4188,4253,4550", region: str = "bd", conn=Depends(db)) -> Envelope[StatHistory]:
+    reg = resolve(conn, region)
+    try:
+        wanted = [int(c) for c in codes.split(",") if c.strip()]
+    except ValueError:
+        raise ApiError(422, "invalid_parameter", "codes must be comma-separated AQUASTAT variable codes.") from None
+    unknown = [c for c in wanted if c not in HISTORY_CODES]
+    if unknown or not wanted:
+        raise ApiError(422, "invalid_parameter", f"Supported codes: {', '.join(str(c) for c in HISTORY_CODES)}.")
+    series = []
+    for code in wanted:
+        rows = conn.execute(
+            "SELECT reference_year, value, unit, symbol, indicator_key FROM water_statistics WHERE source_id = "
+            "'fao_aquastat' AND indicator_code = ? AND superseded_at IS NULL AND imputed = 0 ORDER BY reference_year",
+            (str(code),)).fetchall()
+        if not rows:
+            continue
+        unit = store.AQUASTAT_UNIT.get(rows[0][2], rows[0][2])
+        series.append(StatSeries(code=str(code), key=rows[0][4], label=HISTORY_CODES[code], unit=unit, points=[
+            mv(v, unit, "statistic", "fao_aquastat", "national", observed_at=str(y), reference_year=y, digits=3,
+               note=f"AQUASTAT symbol {sym}" if sym else None) for y, v, _u, sym, _k in rows]))
+    note = ("Only genuine AQUASTAT reference years are listed (imputed 'I' values are excluded); years are not "
+            "interpolated. National statistics." + ("" if reg["level"] == "country" else " " + NATIONAL_DATA_NOTE))
+    years = [p.referenceYear for s_ in series for p in s_.points if p.referenceYear]
+    return Envelope(data=StatHistory(series=series, note=note),
+                    meta=catalog.meta(["fao_aquastat"], ["statistic"], "national",
+                                      observed_at=str(max(years)) if years else None, note=note,
+                                      status=None if series else "unavailable"))
+
+
+# ---------------------------------------------------------------- reference geometry (static, geoBoundaries)
+
+@lru_cache(maxsize=2)
+def _geo_text(level: str) -> str:
+    path = get_settings().data_dir / "geo" / f"{level}.geojson"
+    return json.dumps(json.loads(path.read_text(encoding="utf-8")), separators=(",", ":"))
+
+
+@router.get("/geo/{level}", response_class=Response, responses={200: {"content": {"application/geo+json": {}}}})
+def geo(level: Literal["divisions", "districts"]) -> Response:
+    """Division / district boundaries (geoBoundaries gbOpen BGD, reference data; districts are a map reference
+    layer only)."""
+    try:
+        body = _geo_text(level)
+    except FileNotFoundError:
+        raise ApiError(503, "unavailable", "Boundary data is not available.") from None
+    return Response(content=body, media_type="application/geo+json",
+                    headers={"Cache-Control": "public, max-age=86400"})
 
 
 # ---------------------------------------------------------------- predictions

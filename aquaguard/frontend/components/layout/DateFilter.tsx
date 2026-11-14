@@ -12,7 +12,7 @@ import { monthLabel } from "@/lib/format/time";
 /** Pages that use dates call this with their data range (null while loading). */
 export function useDateBounds(bounds: DateBounds | null): void {
   const setBounds = useAppStore((s) => s.setDateBounds);
-  const key = bounds ? `${bounds.min}|${bounds.max}|${bounds.label}` : "";
+  const key = bounds ? `${bounds.min}|${bounds.max}|${bounds.label}|${bounds.defaultFrom}|${bounds.defaultTo}` : "";
   useEffect(() => {
     setBounds(bounds);
     return () => setBounds(null);
@@ -20,11 +20,11 @@ export function useDateBounds(bounds: DateBounds | null): void {
   }, [key, setBounds]);
 }
 
-/** Clamp the selected range to the page's bounds (both ends optional). */
+/** Clamp the selected range to the page's bounds; an unset end falls back to the page's default window. */
 export function effectiveRange(range: { from: string | null; to: string | null }, b: DateBounds | null) {
   if (!b) return { from: null, to: null };
-  const from = range.from && range.from >= b.min && range.from <= b.max ? range.from : b.min;
-  const to = range.to && range.to <= b.max && range.to >= b.min ? range.to : b.max;
+  const from = range.from && range.from >= b.min && range.from <= b.max ? range.from : b.defaultFrom ?? b.min;
+  const to = range.to && range.to <= b.max && range.to >= b.min ? range.to : b.defaultTo ?? b.max;
   return from <= to ? { from, to } : { from: to, to: from };
 }
 

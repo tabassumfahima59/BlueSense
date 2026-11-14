@@ -74,6 +74,8 @@ export interface DateBounds {
   min: string; // YYYY-MM
   max: string; // YYYY-MM
   label: string; // what the range applies to
+  defaultFrom?: string; // the window the page shows when no range is chosen (defaults to min..max)
+  defaultTo?: string;
 }
 
 interface AppState {

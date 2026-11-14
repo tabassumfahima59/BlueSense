@@ -429,6 +429,64 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/water/scarcity/divisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Scarcity Divisions
+         * @description Weather-derived indicators for all eight divisions (choropleth and regional table) with legend classes.
+         */
+        get: operations["scarcity_divisions_api_water_scarcity_divisions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/water/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Water History */
+        get: operations["water_history_api_water_history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/geo/{level}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Geo
+         * @description Division / district boundaries (geoBoundaries gbOpen BGD, reference data; districts are a map reference
+         *     layer only).
+         */
+        get: operations["geo_api_geo__level__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/predictions": {
         parameters: {
             query?: never;
@@ -779,6 +837,8 @@ export interface components {
             kpis: components["schemas"]["Kpi"][];
             /** Openalerts */
             openAlerts: number;
+            /** Insights */
+            insights?: components["schemas"]["Insight"][];
         };
         /** DemandResponse */
         DemandResponse: {
@@ -811,9 +871,39 @@ export interface components {
             /** Serviceok */
             serviceOk: boolean;
         };
+        /** DivisionIndicators */
+        DivisionIndicators: {
+            /** Indicators */
+            indicators: components["schemas"]["IndicatorDef"][];
+            /** Divisions */
+            divisions: components["schemas"]["DivisionRow"][];
+            national: components["schemas"]["DivisionRow"];
+            /** Note */
+            note: string;
+        };
+        /** DivisionRow */
+        DivisionRow: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Values */
+            values: {
+                [key: string]: components["schemas"]["Measure"];
+            };
+            /** Classes */
+            classes: {
+                [key: string]: components["schemas"]["IndicatorClass"] | null;
+            };
+        };
         /** Envelope[DashboardSummary] */
         Envelope_DashboardSummary_: {
             data: components["schemas"]["DashboardSummary"];
+            meta: components["schemas"]["Meta"];
+        };
+        /** Envelope[DivisionIndicators] */
+        Envelope_DivisionIndicators_: {
+            data: components["schemas"]["DivisionIndicators"];
             meta: components["schemas"]["Meta"];
         };
         /** Envelope[GroundwaterTrends] */
@@ -849,6 +939,11 @@ export interface components {
         /** Envelope[SearchResults] */
         Envelope_SearchResults_: {
             data: components["schemas"]["SearchResults"];
+            meta: components["schemas"]["Meta"];
+        };
+        /** Envelope[StatHistory] */
+        Envelope_StatHistory_: {
+            data: components["schemas"]["StatHistory"];
             meta: components["schemas"]["Meta"];
         };
         /** Envelope[SyncResult] */
@@ -1020,6 +1115,65 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** IndicatorClass */
+        IndicatorClass: {
+            /** Label */
+            label: string;
+            /** Min */
+            min: number | null;
+            /** Max */
+            max: number | null;
+            /**
+             * Tone
+             * @description -3 driest / most need ... +3 wettest; 0 neutral
+             */
+            tone: number;
+        };
+        /** IndicatorDef */
+        IndicatorDef: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Unit */
+            unit: string;
+            /**
+             * Datakind
+             * @enum {string}
+             */
+            dataKind: "observed" | "model_current" | "forecast" | "reanalysis" | "satellite_monthly" | "satellite_historical" | "statistic" | "derived" | "prediction" | "scenario" | "conceptual" | "reference";
+            /** Sourceid */
+            sourceId: string;
+            /** Method */
+            method: string;
+            /** Classsource */
+            classSource: string | null;
+            /** Assumption */
+            assumption: boolean;
+            /** Classes */
+            classes: components["schemas"]["IndicatorClass"][];
+        };
+        /** Insight */
+        Insight: {
+            /** Key */
+            key: string;
+            /** Text */
+            text: string;
+            /**
+             * Datakind
+             * @enum {string}
+             */
+            dataKind: "observed" | "model_current" | "forecast" | "reanalysis" | "satellite_monthly" | "satellite_historical" | "statistic" | "derived" | "prediction" | "scenario" | "conceptual" | "reference";
+            /** Sources */
+            sources: string[];
+            /** Observedat */
+            observedAt: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "fresh" | "stale" | "unavailable" | "not_configured";
         };
         /** Interval */
         Interval: {
@@ -1846,6 +2000,26 @@ export interface components {
             /** Parameters */
             parameters: components["schemas"]["ParameterRow"][];
         };
+        /** StatHistory */
+        StatHistory: {
+            /** Series */
+            series: components["schemas"]["StatSeries"][];
+            /** Note */
+            note: string;
+        };
+        /** StatSeries */
+        StatSeries: {
+            /** Code */
+            code: string;
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Unit */
+            unit: string;
+            /** Points */
+            points: components["schemas"]["Measure"][];
+        };
         /** StatValue */
         StatValue: {
             /** Key */
@@ -2055,6 +2229,11 @@ export interface components {
             end: string | null;
             /** Series */
             series: components["schemas"]["SeriesValues"][];
+            /**
+             * Normals
+             * @description 1991-2020 monthly normals aligned to the series months
+             */
+            normals?: components["schemas"]["SeriesValues"][];
         };
         /** WhatIf */
         WhatIf: {
@@ -2749,6 +2928,7 @@ export interface operations {
                 start?: string | null;
                 end?: string | null;
                 step?: "daily" | "monthly";
+                normals?: boolean;
             };
             header?: never;
             path?: never;
@@ -2891,6 +3071,89 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_DashboardSummary_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scarcity_divisions_api_water_scarcity_divisions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_DivisionIndicators_"];
+                };
+            };
+        };
+    };
+    water_history_api_water_history_get: {
+        parameters: {
+            query?: {
+                codes?: string;
+                region?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_StatHistory_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    geo_api_geo__level__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                level: "divisions" | "districts";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/geo+json": unknown;
                 };
             };
             /** @description Validation Error */

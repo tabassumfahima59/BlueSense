@@ -64,8 +64,11 @@ def sources() -> dict[str, dict]:
 
 
 def clear() -> None:
+    from . import indicators
+
     with _lock:
         _cache.update(at=0.0, value=None)
+    indicators.clear()
 
 
 def source(source_id: str) -> dict:

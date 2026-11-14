@@ -64,6 +64,8 @@ class WeatherSeries(Model):
     start: str | None
     end: str | None
     series: list[SeriesValues]
+    normals: list[SeriesValues] = Field(default_factory=list,
+                                        description="1991-2020 monthly normals aligned to the series months")
 
 
 # ---------------------------------------------------------------- water
@@ -140,10 +142,70 @@ class Kpi(Model):
     note: str | None = None
 
 
+class Insight(Model):
+    key: str
+    text: str
+    dataKind: DataKind
+    sources: list[str]
+    observedAt: str | None
+    status: DataStatus
+
+
 class DashboardSummary(Model):
     region: RegionRef
     kpis: list[Kpi]
     openAlerts: int
+    insights: list[Insight] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------- division indicators (map, regional table)
+
+class IndicatorClass(Model):
+    label: str
+    min: float | None
+    max: float | None
+    tone: int = Field(ge=-3, le=3, description="-3 driest / most need ... +3 wettest; 0 neutral")
+
+
+class IndicatorDef(Model):
+    key: str
+    label: str
+    unit: str
+    dataKind: DataKind
+    sourceId: str
+    method: str
+    classSource: str | None
+    assumption: bool
+    classes: list[IndicatorClass]
+
+
+class DivisionRow(Model):
+    id: str
+    name: str
+    values: dict[str, Measure]
+    classes: dict[str, IndicatorClass | None]
+
+
+class DivisionIndicators(Model):
+    indicators: list[IndicatorDef]
+    divisions: list[DivisionRow]
+    national: DivisionRow
+    note: str
+
+
+# ---------------------------------------------------------------- AQUASTAT history by reference year
+
+class StatSeries(Model):
+    code: str
+    key: str
+    label: str
+    unit: str
+    points: list[Measure]
+
+
+class StatHistory(Model):
+    series: list[StatSeries]
+    note: str
 
 
 # ---------------------------------------------------------------- predictions

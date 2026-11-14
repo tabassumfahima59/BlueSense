@@ -70,7 +70,8 @@ export function timeLabel(i: StatusInfo): string {
   switch (i.kind) {
     case "model_current":
     case "forecast":
-      return i.status === "fresh" ? "Live" : `${prefix}updated ${fmtDateTime(i.retrievedAt)}`;
+      return i.status === "fresh" ? "Live"
+        : i.retrievedAt ? `${prefix}updated ${fmtDateTime(i.retrievedAt)}` : `${prefix}${DATA_KIND_LABEL[i.kind]}`;
     case "satellite_monthly":
       return `${prefix}Latest: ${monthLabel(i.observedAt)}`;
     case "statistic": {

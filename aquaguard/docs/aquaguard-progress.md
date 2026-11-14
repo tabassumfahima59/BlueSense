@@ -2,7 +2,20 @@
 
 Updated after every verified phase or module. A task is **done** only when a check was run and passed.
 
-## Current phase: P4 Design system + shell — implemented and verified, awaiting review (M1 not started)
+## Current phase: M1 Command Center — implemented and verified, awaiting review (M2 not started)
+
+| Phase | Task | Status | Evidence (2026-11-14) |
+|---|---|---|---|
+| M1 | Push of P4 | done | `develop` pushed (`2307fc1..00edb13`) on request |
+| M1 | Division indicators API | done | `/api/water/scarcity/divisions`: 8 divisions + national row; values only `derived`/`reanalysis`/`forecast` (decision 1); classes with cited sources; boundary bug found by tests (z = −1.0 / −2.0 fell into the milder class) and fixed |
+| M1 | AQUASTAT history, normals, geometry, insights | done | `/api/water/history` (withdrawal: 2008 only; no imputed years), normals equal to the climatology table, `/api/geo/divisions` (8 features, cached 1 day), 6 national / 6 division insights with sources and status |
+| M1 | Backend tests | done | `test_command_center.py` **23 passed** (classes and boundaries, decision 1, genuine years, normals, insights, saving formula, geometry); full backend **303 passed**; ruff OK |
+| M1 | Command Center page | done | KPIs + DetailDrawers, saving slider, insights, alerts (filter, read marks, detail dialog), choropleth (category filter, legend + source, hover, click), regional table (sort, select, CSV), reference-year chart, anomaly trends with the date filter, model checks |
+| M1 | E2E | done | `e2e/command-center.spec.ts` 7: region change refetches `dashboard/summary?region=dhaka` and shows the weather-based demand KPI; **availability and water stress keep `spatialLevel = national` for a division**; drawer (chart, formula, sources, focus return); saving slider (`targetEfficiency=0.9` request, value changes); map legend sources per category; table selects a division; alerts filter/detail/read; insights + date filter request (`start=2020-01`) |
+| M1 | Visual review | done | screenshots (national, Sylhet, drawer) reviewed; fixed: the date filter showed 1991–2026 while the charts showed their default 24 months (pages can now register a default window; unit-tested) |
+| M1 | Regression | done | Playwright **30 passed** (11 axe routes incl. the new page, 12 shell, 7 Command Center); vitest 24; tsc; eslint; `next build`; backend 303 |
+
+## P4 Design system + shell — verified
 
 | Phase | Task | Status | Evidence (2026-11-14) |
 |---|---|---|---|
@@ -139,6 +152,9 @@ Updated after every verified phase or module. A task is **done** only when a che
 * Docker image not built locally (no Docker on this machine); the Dockerfile no longer copies `data/sample`.
 * `data/sample/` is no longer read by the API or the frontend and stays on disk untouched; `make mocks` exports
   only the OpenAPI spec; the Phase-0 mock JSON is kept as frontend test fixtures.
+* M1 notes: national weather indicators are area-weighted means of the eight division values (the national rainfall
+  anomaly is the weighted mean of division anomalies, not an anomaly of weighted totals). AQUASTAT values after 2008
+  for SDG 6.4.2 are FAO estimates (symbol E) and are labelled so. The Sankey colour clash (groundwater = losses) is M4.
 * P4 notes: modules keep their current content and endpoints (they were restyled through the tokens); moving each
   module to the P3 endpoints, DataStatusBadge per value, KPI DetailDrawers, insights and choropleth is M1–M8. The
   date filter is wired to the Command Center trend cards (within the 24 months the legacy endpoint returns); other

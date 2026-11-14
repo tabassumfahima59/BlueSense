@@ -30,15 +30,25 @@ function riskExpression(values: Record<string, RegionValues>, ids: string[]) {
   return (pairs.length ? ["match", ["get", "id"], ...pairs, "#CBD5E1"] : "#CBD5E1") as unknown as ExpressionSpecification;
 }
 
+/** Explicit colour per region id (M1 choropleth of a weather indicator class); unknown ids get the no-data grey. */
+function colorExpression(colors: Record<string, string>, ids: string[]) {
+  const pairs = ids.flatMap((id) => [id, colors[id] ?? "#EEF2F6"]);
+  return (pairs.length ? ["match", ["get", "id"], ...pairs, "#EEF2F6"] : "#EEF2F6") as unknown as ExpressionSpecification;
+}
+
 function heightExpression(values: Record<string, RegionValues>, ids: string[]) {
   const pairs = ids.flatMap((id) => [id, 4000 + 9000 * (values[id]?.riskLevel ?? 0)]);
   return (pairs.length ? ["match", ["get", "id"], ...pairs, 0] : 0) as unknown as ExpressionSpecification;
 }
 
-export function BangladeshMap({ divisions, districts, values, layers, selected, onSelect, graceColor, interactive = true, height = "100%", flat = false, lite = false, resetSignal = 0 }: {
+export function BangladeshMap({ divisions, districts, values, layers, selected, onSelect, graceColor, interactive = true, height = "100%", flat = false, lite = false, resetSignal = 0, colors, onHover }: {
   divisions: GeoJSON.FeatureCollection;
   districts: GeoJSON.FeatureCollection;
   values: Record<string, RegionValues>;
+  /** Fill colour per region id; replaces the risk-level colours when given. */
+  colors?: Record<string, string>;
+  /** Hovered region id (null when the pointer leaves). */
+  onHover?: (id: string | null) => void;
   layers: LayerState;
   selected?: string;
   onSelect?: (id: string) => void;
@@ -55,6 +65,8 @@ export function BangladeshMap({ divisions, districts, values, layers, selected, 
   const pending = useRef<(() => void) | null>(null);
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
+  const onHoverRef = useRef(onHover);
+  onHoverRef.current = onHover;
 
   // create once
   useEffect(() => {
@@ -117,7 +129,14 @@ export function BangladeshMap({ divisions, districts, values, layers, selected, 
           if (id && onSelectRef.current) onSelectRef.current(String(id));
         });
         m.on("mouseenter", `${lvl}-fill`, () => (m.getCanvas().style.cursor = "pointer"));
-        m.on("mouseleave", `${lvl}-fill`, () => (m.getCanvas().style.cursor = ""));
+        m.on("mouseleave", `${lvl}-fill`, () => {
+          m.getCanvas().style.cursor = "";
+          onHoverRef.current?.(null);
+        });
+        m.on("mousemove", `${lvl}-fill`, (e: MapLayerMouseEvent) => {
+          const id = e.features?.[0]?.properties?.id;
+          if (id) onHoverRef.current?.(String(id));
+        });
       }
       ready.current = true;
       pending.current?.();
@@ -160,8 +179,9 @@ export function BangladeshMap({ divisions, districts, values, layers, selected, 
       } else {
         m.setPaintProperty(`${lvl}-fill`, "fill-opacity", layers.opacity.scarcity);
       }
-      m.setPaintProperty(`${lvl}-fill`, "fill-color", riskExpression(values, ids));
-      m.setPaintProperty(`${lvl}-extrude`, "fill-extrusion-color", riskExpression(values, ids));
+      const fill = colors ? colorExpression(colors, ids) : riskExpression(values, ids);
+      m.setPaintProperty(`${lvl}-fill`, "fill-color", fill);
+      m.setPaintProperty(`${lvl}-extrude`, "fill-extrusion-color", fill);
       m.setPaintProperty(`${lvl}-extrude`, "fill-extrusion-height", heightExpression(values, ids));
       m.setPaintProperty(`${lvl}-extrude`, "fill-extrusion-opacity", layers.opacity.scarcity);
       m.setPaintProperty(`${lvl}-grace`, "fill-opacity", layers.opacity.groundwater);
@@ -175,7 +195,7 @@ export function BangladeshMap({ divisions, districts, values, layers, selected, 
     };
     if (ready.current) apply();
     else pending.current = apply;
-  }, [layers, values, selected, divisions, districts, graceColor, flat, lite]);
+  }, [layers, values, selected, divisions, districts, graceColor, flat, lite, colors]);
 
   // reset view
   useEffect(() => {
