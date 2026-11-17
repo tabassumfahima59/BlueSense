@@ -6,11 +6,11 @@ Drop one or more CSV files into data/raw/bwdb/ with this header (see docs/DATA_S
 
     variable ∈ {water_level_m, discharge_m3s, groundwater_depth_m, rainfall_mm}
     date     = YYYY-MM-DD
-    division = one of the 8 AquaGuard division ids (dhaka, chattogram, ...)
+    division = one of the 8 BlueSense division ids (dhaka, chattogram, ...)
 
 Then run:  python ml/import_bwdb.py
 Rows are validated and appended to the station_observations table with provenance = "observed".
-This is the path by which measured groundwater levels may enter the platform — AquaGuard never
+This is the path by which measured groundwater levels may enter the platform — BlueSense never
 displays a groundwater depth that did not come through here.
 """
 from __future__ import annotations

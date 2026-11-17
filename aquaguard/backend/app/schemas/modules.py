@@ -6,7 +6,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from .common import Measure, Model, Region, RiskClass, ScenarioParams, Series
+from .common import DataKind, DataStatus, Measure, Model, Region, RiskClass, ScenarioParams, Series
 
 Sector = Literal["agriculture", "domestic", "industry", "environment"]
 
@@ -237,6 +237,13 @@ class FlowRequest(Model):
     lossPct: float | None = Field(None, ge=0, le=50)
     leakageExponent: float | None = Field(None, ge=0.5, le=1.5)
     optimize: bool = False
+    # operating controls (all optional; omitted = the normal operating point)
+    pumpOn: bool = True
+    pumpCapacityM3s: float | None = Field(None, gt=0, le=3.0)
+    sourceLimitM3s: float | None = Field(None, ge=0, le=3.0, description="water available at the source (shortage)")
+    allocationPct: dict[str, float] | None = Field(None, description="destination -> % of the junction flow (sum 100)")
+    closedPipes: list[str] = Field(default_factory=list, max_length=10)
+    demandFactors: dict[str, float] | None = Field(None, description="destination -> demand multiplier (0-3)")
 
 
 class PipeState(Model):
@@ -251,6 +258,12 @@ class PipeState(Model):
     pressureEndKpa: Measure
     leak: Measure
     burstSeverity: float
+    kind: Literal["main", "branch"]
+    status: Literal["open", "closed", "leaking"]
+    lengthM: float
+    diameterM: float
+    flowDaily: Measure
+    leakDaily: Measure
 
 
 class DestinationState(Model):
@@ -260,6 +273,11 @@ class DestinationState(Model):
     pressure: Measure
     minServicePressure: Measure
     serviceOk: bool
+    demandDaily: Measure
+    allocatedDaily: Measure
+    share: Measure                 # % of the junction flow allocated to this destination
+    supply: Measure                # delivered / demand, % (value null when demand is 0)
+    status: Literal["served", "under_supplied", "low_pressure", "no_supply", "closed"]
 
 
 class FlowState(Model):
@@ -271,6 +289,28 @@ class FlowState(Model):
     deliveredTotal: Measure
     lossPct: Measure
     massBalanceError: Measure
+    requestedPumpFlow: Measure
+    pumpOn: bool
+    pumpCapacity: Measure
+    pumpUtilization: Measure
+    sourceLimit: Measure | None
+    limitingFactor: Literal["pump_off", "valve_closed", "pump_capacity", "source_limit"] | None
+    inflowDaily: Measure
+    deliveredDaily: Measure
+    leakDaily: Measure
+    demandDaily: Measure
+    supplyBalanceDaily: Measure    # delivered - demand
+    accountingResidualDaily: Measure  # inflow - delivered - leakage (storage change not modelled)
+    efficiency: Measure            # delivered / inflow, %
+    balanceStatus: Literal["balanced", "surplus", "deficit"]
+    closedPipes: list[str]
+
+
+class ScaleItem(Model):
+    """A real national magnitude shown beside the conceptual network for scale (never used by it)."""
+    key: str
+    label: str
+    value: Measure
 
 
 class FlowResponse(Model):
@@ -280,6 +320,11 @@ class FlowResponse(Model):
     savings: dict[str, Measure] | None
     backgroundLossRate: Measure
     disclaimer: str
+    reservoirCapacity: Measure | None = None
+    defaultAllocationPct: dict[str, float] = Field(default_factory=dict)
+    label: str = "Conceptual illustration"
+    realPartsUsed: list[str] = Field(default_factory=list, description="real data used by the network (none today)")
+    scaleContext: list[ScaleItem] = Field(default_factory=list)
 
 
 # ---------------------------------------------------------------- budget
@@ -395,6 +440,17 @@ class AssumptionRow(Model):
     assumption: bool
 
 
+class WhyItem(Model):
+    label: str
+    value: str
+    source: str
+    dataKind: DataKind
+    observedAt: str | None = None
+    retrievedAt: str | None = None
+    age: str | None = None
+    status: DataStatus | None = None
+
+
 class IrrigationResponse(Model):
     crop: str
     cropLabel: str
@@ -430,6 +486,14 @@ class IrrigationResponse(Model):
     recommendations: list[str]
     assumptions: list[AssumptionRow]
     note: str
+    # M2: why the estimate is what it is (each input with its source and age), conditions and data completeness
+    why: list[WhyItem] = Field(default_factory=list)
+    context: list[WhyItem] = Field(default_factory=list)
+    forecastStatus: DataStatus | None = None
+    pointId: str | None = None
+    missingDays: list[str] = Field(default_factory=list)
+    windowNote: str | None = None
+
 
 
 # ---------------------------------------------------------------- copilot
@@ -439,11 +503,20 @@ class ChatTurn(Model):
     content: str = Field(max_length=4000)
 
 
+class CopilotMapContext(Model):
+    """What the user is looking at in the Water Explorer (validated app context, not instructions)."""
+    page: Literal["explorer"]
+    kind: Literal["national", "division", "district", "weather_point", "grace_cell", "river", "water"]
+    name: str = Field(min_length=1, max_length=80, pattern=r"^[A-Za-z0-9 .,'&()°/\-–]+$")
+
+
 class CopilotRequest(Model):
     message: str = Field(min_length=1, max_length=2000)
     region: str = "bd"
+    context: CopilotMapContext | None = None
     scenario: ScenarioParams = Field(default_factory=ScenarioParams)
     history: list[ChatTurn] = Field(default_factory=list, max_length=12)
+    clientId: str | None = Field(None, max_length=64, pattern=r"^[A-Za-z0-9_-]+$")
 
 
 class CopilotReference(Model):
@@ -452,8 +525,52 @@ class CopilotReference(Model):
     measure: Measure | None = None
 
 
+class CopilotToolCall(Model):
+    name: str
+    module: str | None = None
+    status: Literal["running", "done", "error"]
+    input: dict | None = None
+    dataKind: list[str] | None = None
+    source: list[str] | None = None
+    observedAt: str | None = None
+    ms: int | None = None
+
+
 class CopilotResponse(Model):
     answer: str
-    mode: Literal["llm", "fallback"]
+    mode: Literal["llm", "fallback"]  # "fallback" is no longer produced (M8: no canned answers)
     references: list[CopilotReference]
     intent: str
+    tools: list[CopilotToolCall] = Field(default_factory=list)
+    unverifiedNumbers: list[float] = Field(default_factory=list)
+
+
+class CopilotToolInfo(Model):
+    name: str
+    description: str
+    module: str
+
+
+class CopilotLimits(Model):
+    perMinute: int
+    perDay: int
+    siteModelCallsPerDay: int
+    siteModelCallsUsedToday: int
+    maxConcurrent: int
+    maxModelCallsPerQuestion: int
+    resetsAt: str
+
+
+class CopilotStatus(Model):
+    status: Literal["ready", "not_configured"]
+    provider: str
+    providerLabel: str
+    model: str
+    reason: str | None
+    disclosure: str | None = None   # how the external provider processes questions (shown before use)
+    policyUrl: str | None = None
+    readOnly: bool = True
+    tools: list[CopilotToolInfo]
+    rateLimitPerMin: int
+    limits: CopilotLimits
+    streaming: bool = True

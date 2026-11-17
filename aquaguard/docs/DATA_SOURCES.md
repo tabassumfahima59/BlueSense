@@ -1,6 +1,6 @@
 # Data sources
 
-The live registry (with retrieval times read from `data/processed/sources_retrieved.json`) is served at `GET /api/sources` and shown on the Data Sources page. Times below are from the build of 12 Nov 2026.
+The source registry is served at `GET /api/sources`; synchronization status is available at `GET /api/data/sources`. The former Data Sources screen is disabled. Times below are historical retrieval times from the build of 12 Nov 2026, not a claim of current freshness.
 
 | Source | Used for | URL | Licence | Resolution | Period | Retrieved (UTC) | Label |
 |---|---|---|---|---|---|---|---|
@@ -21,7 +21,7 @@ The live registry (with retrieval times read from `data/processed/sources_retrie
 
 - Raw responses: `data/raw/` (git-ignored; re-download with `make fetch`).
 - Cleaned tables: `data/processed/` → SQLite `data/aquaguard.db` (tables: regions, sources, weather_daily, weather_monthly, climatology, water_resources, inflow_shape, population_projection, storage_anomaly, station_observations, predictions, scenarios, alerts_log). Every record carries `source_id`, `retrieved_at`, `provenance`, `is_sample`.
-- Offline fallback: `data/sample/*.csv` is a frozen snapshot of the same tables (daily weather: last 400 days) plus forecast snapshots. When the database is missing (or `AQUAGUARD_FORCE_SAMPLE=1`) these are served with `isSample = true` and a "Sample data" banner. Live forecasts fall back to the 3-hour cache, then to the snapshot.
+- No sample fallback (P2, decision 5): every table is read from the database; when the database is missing at startup it is bootstrapped from `data/processed` (original dates, reported `stale` until the first sync). Point forecasts: live request → 3-hour cache → forecast stored by the scheduled sync for the nearest divisional point → unavailable. `data/sample/` is no longer read by the API.
 
 ## BWDB CSV schema {#bwdb}
 
@@ -32,4 +32,4 @@ station_id,station_name,division,lon,lat,variable,date,value,unit
 SW46.9L,Bahadurabad,mymensingh,89.70,25.15,water_level_m,2024-07-01,19.42,m
 ```
 
-`variable` ∈ `water_level_m` (m), `discharge_m3s` (m3/s), `groundwater_depth_m` (m), `rainfall_mm` (mm); `division` is an AquaGuard division id. Rows are validated (columns, ids, units) and stored with provenance **Observed**. (The example row illustrates the format only; it is not data.)
+`variable` ∈ `water_level_m` (m), `discharge_m3s` (m3/s), `groundwater_depth_m` (m), `rainfall_mm` (mm); `division` is an BlueSense division id. Rows are validated (columns, ids, units) and stored with provenance **Observed**. (The example row illustrates the format only; it is not data.)

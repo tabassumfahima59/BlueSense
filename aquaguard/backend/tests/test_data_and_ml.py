@@ -1,4 +1,4 @@
-"""Derived parameters match their datasets; ML artifacts are code-produced; sample/offline fallback works."""
+"""Derived parameters match their datasets; ML artifacts are code-produced; no sample fallback exists."""
 import json
 
 import pytest
@@ -73,26 +73,22 @@ def test_no_groundwater_depth_anywhere(client):
     assert "depth" not in blob and "water level" not in blob
 
 
-def test_offline_sample_mode(monkeypatch, client):
-    """With the database unavailable and external APIs blocked, the app serves the sample snapshot, flagged."""
+def test_missing_database_has_no_sample_fallback(monkeypatch, client, tmp_path):
+    """Decision 5: no runtime sample/mock data. Without a database (and with external APIs blocked) the API reports
+    'degraded' and 'unavailable' — it never serves a snapshot labelled as sample data."""
     s = get_settings()
-    monkeypatch.setattr(s, "force_sample", True)
+    monkeypatch.setattr(s, "db_path", tmp_path / "missing.db")
+    monkeypatch.setattr(s, "data_dir", tmp_path)  # no forecast cache either
     monkeypatch.setattr(s, "offline", True)
-    from app.services import inputs, regional
-
     da.clear_cache()
-    inputs.clear()
-    regional._division_balance.cache_clear()
     try:
         h = client.get("/api/health").json()
-        assert h["sampleMode"] is True
-        ov = client.get("/api/overview?region=bd").json()
-        assert ov["context"]["sampleData"] is True
-        assert ov["kpis"]["availability"]["isSample"] is True
-        r = client.post("/api/irrigation/estimate", json={"crop": "potato", "region": "dhaka", "plantingDate": "2026-11-15"})
-        assert r.status_code == 200
+        assert h["status"] == "degraded" and h["sampleMode"] is False
+        t = da.table("weather_monthly")
+        assert t.df.empty and t.is_sample is False and da.sample_tables() == []
+        r = client.post("/api/irrigation/estimate",
+                        json={"crop": "potato", "lat": 23.8, "lon": 90.4, "plantingDate": "2026-11-15"})
+        assert r.status_code == 503 and "No weather data" in r.json()["detail"]
     finally:
         monkeypatch.undo()
         da.clear_cache()
-        inputs.clear()
-        regional._division_balance.cache_clear()

@@ -18,7 +18,7 @@ const ICON: Record<Provenance, typeof Activity> = {
 };
 
 /** Icon + word, never colour alone. */
-export function ProvenanceBadge({ p, sample, small }: { p: Provenance; sample?: boolean; small?: boolean }) {
+export function ProvenanceBadge({ p, small }: { p: Provenance; small?: boolean }) {
   const Icon = ICON[p];
   return (
     <span className="inline-flex items-center gap-1 align-middle">
@@ -29,34 +29,21 @@ export function ProvenanceBadge({ p, sample, small }: { p: Provenance; sample?: 
         <Icon aria-hidden size={small ? 10 : 11} />
         {PROVENANCE_LABEL[p]}
       </span>
-      {sample && <SampleTag small={small} />}
-    </span>
-  );
-}
-
-export function SampleTag({ small }: { small?: boolean }) {
-  return (
-    <span
-      title="From the frozen sample snapshot (live data or database unavailable)"
-      className={`rounded-full border border-[#d6dee8] bg-[#f1f4f8] px-1.5 ${small ? "text-[10px]" : "text-[10.5px]"} font-medium text-muted`}
-    >
-      Sample
     </span>
   );
 }
 
 export function MeasureBadge({ m, small }: { m: Measure | null | undefined; small?: boolean }) {
   if (!m) return null;
-  return <ProvenanceBadge p={m.provenance} sample={m.isSample} small={small} />;
+  return <ProvenanceBadge p={m.provenance} small={small} />;
 }
 
-export function ProvenanceLegend() {
+export function ProvenanceLegend({ inline = false }: { inline?: boolean }) {
   return (
-    <div className="hidden items-center gap-1.5 xl:flex" aria-label="Provenance legend">
+    <div className={inline ? "flex flex-wrap items-center gap-1.5" : "hidden items-center gap-1.5 xl:flex"} aria-label="Provenance legend">
       {(Object.keys(PROVENANCE_LABEL) as Provenance[]).map((p) => (
         <ProvenanceBadge key={p} p={p} small />
       ))}
-      <SampleTag small />
     </div>
   );
 }

@@ -29,7 +29,7 @@ Stress_ratio    = (Agriculture + Domestic + Industry demand) / (Supply − envir
 
 National and division values are sums over divisions; districts show their parent division. Annual and dry-season (Dec–Apr) values are sums of months.
 
-**Stress ratio form.** The specification wrote ΣDemand/Supply including the environment. Including the environmental reserve in the numerator double-counts it (it is ~50% of surface supply), so AquaGuard uses the SDG 6.4.2 / WRI Aqueduct form — consumptive demand over renewable supply minus environmental flow requirements (see ASSUMPTIONS A-10). The Command Center shows the result next to FAO's SDG 6.4.2 value for Bangladesh as a check.
+**Stress ratio form.** The specification wrote ΣDemand/Supply including the environment. Including the environmental reserve in the numerator double-counts it (it is ~50% of surface supply), so BlueSense uses the SDG 6.4.2 / WRI Aqueduct form — consumptive demand over renewable supply minus environmental flow requirements (see ASSUMPTIONS A-10). The Command Center shows the result next to FAO's SDG 6.4.2 value for Bangladesh as a check.
 
 **Stress classes** (WRI Aqueduct 4.0 baseline water stress; Kuzma et al., 2023): < 10% Low, 10–20% Low-medium, 20–40% Medium-high, 40–80% High, > 80% Extremely high.
 
@@ -40,6 +40,7 @@ National and division values are sums over divisions; districts show their paren
 | Rainfall change % | P × (1 + r) → local runoff and FAO-56 effective rainfall |
 | Temperature change °C | ET0 × (Tmean + ΔT + 17.8)/(Tmean + 17.8) (Hargreaves temperature term) → ETc → agricultural demand |
 | Demand change % | domestic and industrial demand × (1 + d) |
+| Agricultural consumption change % | gross agricultural demand × (1 + a) |
 | Groundwater availability % | groundwater supply × (1 + g) |
 | Irrigation efficiency | GIR = NIR / efficiency |
 | Pipeline loss % | loss_rate in the water balance and the flow-simulation background leakage |
@@ -63,6 +64,10 @@ Interval ≈ trigger / daily loss; trigger = RAW (upland crops) or the AWD pondi
 
 Advisor: a daily root-zone depletion balance over the next 16 days. Starting depletion comes from Open-Meteo model soil moisture (3–9 cm) when present, Dr0 = (θFC − θ) × 1000 × Zr; otherwise RAW/2 (assumption). Rice is assumed flooded at the start (AWD). Outputs are Estimated ("validate locally").
 
+## 3b. Spatial intelligence (`services/spatial_intel.py`)
+
+Monthly weather per division comes from `weather_monthly` (ERA5 reanalysis at the representative point); a month counts only when all its days are present, and a national month only when all eight divisions have it (area-weighted mean, the platform's national weather method). Last 12 months = the latest 12 consecutive complete months; their rainfall total and mean temperature are compared with the 1991–2020 climatology of the same calendar months (departure % for rainfall, °C anomaly for temperature). Annual series use complete calendar years only; trends are OLS slopes per decade with a 95 % t-interval (autocorrelation ignored, stated); a trend is called clear only when the interval excludes zero. Thresholds of the wording: rainfall ±10 % ("below / above normal"), temperature ±0.5 °C, suggestions at ≤ −15 % rainfall, dryness z ≤ −1 or estimated risk ≥ Medium-high. The risk driver is the component (engine stress class or ML dryness class) whose level equals the combined level. GRACE: national series only; missing months are counted and the longest gap reported; period means use the months present. Period comparison: means over complete years, missing years listed, percentage change for rainfall only.
+
 ## 4. Flow simulation (`engine/flow_sim.py`)
 
 ```
@@ -73,6 +78,8 @@ Loss %               = Σ Q_leak / Q_pump × 100
 ```
 
 Steady state solved by fixed-point iteration on pipe-mean pressures. Background k (per metre of pipe) is calibrated by bisection so that loss % equals the platform loss rate at the default set-point and pump flow. Burst leaks add k = 2.5×10⁻⁴ × severity. **Optimisation** = pressure management: burst leaks isolated for repair, then the minimum set-point meeting each destination's minimum service pressure is found by bisection (+0.05 m margin). Everything is Simulated.
+
+**Operating controls (3D Water Flow).** Pump flow = min(requested, capacity, water available at the source), 0 when the pump is off or no path is open. The junction flow is split by the allocation shares, renormalised over open branches (a closed valve takes its branch out). Demand per zone = hypothetical demand × demand factor. Zone status: no supply (0 delivered), valve closed, low pressure (below its minimum service pressure), under-supplied (< 98 % of demand) or served. Efficiency = delivered ÷ pumped. Balance status compares delivered with demand (±2 % = balanced, otherwise surplus or deficit). Accounting boundary pump outlet → delivery points: pumped = delivered + leakage (storage change not modelled, steady state); the residual is reported and must be ~0.
 
 ## 5. Risk and alerts (`engine/risk.py`, `services/alerts.py`)
 

@@ -1,5 +1,5 @@
 {
-  "what": "Frozen snapshot of AquaGuard's processed real datasets, used only when the database and live APIs are unavailable. Every record is flagged is_sample = 1 and shown with a 'Sample' tag.",
+  "what": "Legacy frozen snapshot of BlueSense's processed real datasets. Records are flagged is_sample = 1. This snapshot is not read by the runtime API or frontend; bootstrap uses data/processed instead.",
   "sources_retrieved": {
     "openmeteo_forecast": {
       "retrievedAt": "2026-11-12T16:23:39+00:00",

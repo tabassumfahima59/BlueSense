@@ -1,0 +1,9 @@
+# Local editor preferences are not part of the submission.
+/.vscode/
+/.cache/
+/.pytest_cache/
+
+# Keep local environment credentials out of every repository directory.
+.env
+.env.*
+!.env.example

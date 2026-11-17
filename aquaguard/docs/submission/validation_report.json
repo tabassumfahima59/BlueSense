@@ -1,0 +1,67 @@
+{
+  "checked_at": "2026-11-17T20:57:00.336651+06:00",
+  "scope": "Local draft structure, lengths, URL shape, paths and file integrity; no live link or eligibility certification",
+  "draft_integrity_passed": true,
+  "submission_ready": false,
+  "eligibility_verified": false,
+  "score": null,
+  "field_count": 22,
+  "minimum_length_checks": {
+    "token_optimization": {
+      "characters": 390,
+      "minimum": 50
+    },
+    "ai_dlc": {
+      "characters": 403,
+      "minimum": 100
+    },
+    "agent_orchestration": {
+      "characters": 329,
+      "minimum": 80
+    },
+    "fine_tuning_adaptation": {
+      "characters": 322,
+      "minimum": 80
+    },
+    "evaluation_quality": {
+      "characters": 403,
+      "minimum": 80
+    },
+    "guardrails": {
+      "characters": 442,
+      "minimum": 80
+    },
+    "tunneling": {
+      "characters": 280,
+      "minimum": 80
+    },
+    "data_quality": {
+      "characters": 389,
+      "minimum": 80
+    },
+    "privacy_compliance": {
+      "characters": 417,
+      "minimum": 80
+    },
+    "lineage_observability": {
+      "characters": 377,
+      "minimum": 80
+    }
+  },
+  "errors": [],
+  "blockers": [
+    "Required field is missing: youtube_url",
+    "Required field is missing: live_demo_url",
+    "Required field is missing: design_url",
+    "Required field is missing: team_members",
+    "Applicable submission round/deadline is unconfirmed.",
+    "Original execution evidence is unavailable and organizer acceptance is not recorded.",
+    "Release evidence pending: final_source_revision_published",
+    "Release evidence pending: public_metadata_corrected",
+    "Release evidence pending: artifact_links_checked",
+    "Release evidence pending: team_registration_verified",
+    "Release evidence pending: live_app_verified",
+    "Release evidence pending: video_uploaded",
+    "Release evidence pending: original_or_organizer_accepted_execution_evidence"
+  ]
+}

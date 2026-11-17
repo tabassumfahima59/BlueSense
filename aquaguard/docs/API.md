@@ -20,12 +20,18 @@ Every numeric field is a `Measure`: `{value, unit, provenance, isSample, sourceI
 | GET | `/api/predictions/groundwater?region` | GRACE series, deseasonalised, trend ± 95% CI, projection | Prediction Lab |
 | GET | `/api/models/metrics` | contents of `ml/artifacts/metrics.json` or `evaluated: false` | Prediction Lab |
 | GET | `/api/models/shap?region&horizon` | global importance + local explanation | Prediction Lab |
-| POST | `/api/flow/simulate` | `{pumpFlowM3s, setpointM, leaks{pipe: severity}, lossPct?, leakageExponent?, optimize}` → state (+ optimized, savings) | Water Flow |
+| GET | `/api/explorer/intelligence?region=` | evidence-based regional analysis for `bd` or a division (findings with evidence Measures, risk and driver, data quality, suggestions, limitations); districts 422 | Water Explorer |
+| GET | `/api/explorer/overview` | Bangladesh and the 8 divisions side by side (risk, 12-month rainfall / temperature vs normal, dryness, area, population) | Water Explorer |
+| GET | `/api/explorer/timeseries?region=` | monthly and annual weather (complete periods only), trends, national GRACE with null for missing months | Water Explorer |
+| GET | `/api/explorer/compare?region=&a=YYYY-YYYY&b=YYYY-YYYY` | two-period comparison (complete years, missing years listed, national GRACE months present) | Water Explorer |
+| POST | `/api/flow/simulate` | `{pumpFlowM3s, setpointM, leaks{pipe: severity}, lossPct?, leakageExponent?, optimize, pumpOn?, pumpCapacityM3s?, sourceLimitM3s?, allocationPct?{zone: %}, closedPipes?[], demandFactors?{zone: ×}}` → state (pipes, zones, daily volumes, balance and efficiency; + optimized, savings), reservoirCapacity, defaultAllocationPct. Conceptual only | Water Flow |
 | GET | `/api/budget?region&period=annual\|dry\|1..12` | Sankey nodes/links, sector table, balance check | Water Budget |
 | POST | `/api/budget/optimize` | `{region, period, scenario, mode: optimized\|shares, shares?}` → current vs proposed + savings | Water Budget |
 | POST | `/api/scenario/run` | `{region, params}` → baseline vs simulated comparisons, risk, monthly series, summary | What-if |
 | POST | `/api/irrigation/estimate` | `{crop, region\|lat+lon, soil, plantingDate\|stage, areaHa, efficiency?, overrides}` → requirement, timing, quantity, assumptions | Irrigation |
-| POST | `/api/copilot/chat` | `{message, region, scenario, history}` → answer, mode, references (rate-limited per IP) | Copilot |
+| GET | `/api/copilot/status` | `ready` / `not_configured` (reason), provider and label, model, data-use disclosure and terms link, read-only tool list, usage limits and today's site-wide model calls; never a key | Copilot |
+| POST | `/api/copilot/stream` | `{message, region, history, clientId}` → server-sent events `tool`, `delta`, `done` (provider, model, tools used, unverified numbers) or `error` (`quota_exhausted`, `llm_unavailable`, `llm_timeout`, `llm_auth`, `llm_config`, `refusal`, `site_daily_limit`, ...); 503 `not_configured` without a key, 429 `rate_limited` / `daily_limit` / `site_daily_limit`, 503 `busy` | Copilot |
+| POST | `/api/copilot/chat` | same as `/copilot/stream` as one JSON response; errors as HTTP status (429 quota and limits, 503 unavailable / not configured, 504 timeout, 502 other model errors) | Copilot |
 
 Example:
 

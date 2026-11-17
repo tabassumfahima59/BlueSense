@@ -1,0 +1,122 @@
+{
+  "record_type": "repository_evidence_snapshot_not_transcript",
+  "prepared_date": "2026-11-17",
+  "timezone": "Asia/Dhaka",
+  "head": "804fb1983ab8c2d1cf747be48bd26939549847d4",
+  "branch": "develop",
+  "dirty_worktree": true,
+  "runtime_prompt_source": "aquaguard/backend/app/services/copilot.py",
+  "runtime_prompt_sha256": "b8487ef3a049bae21622e1ee4498410dd261df659a4e9f5b77ef1cde4b8311da",
+  "runtime_prompt_source_sha256": "7de7fe9316287fa6c46f393464de900b6c39779ab90a20d6b1b442bfeb2fe807",
+  "recent_commits": [
+    {
+      "sha": "804fb1983ab8c2d1cf747be48bd26939549847d4",
+      "author_date": "2026-11-14T23:07:46+06:00",
+      "subject": "Clarify baseline scenario apply state and cover cross-module behavior"
+    },
+    {
+      "sha": "4ace28e18825484c109d1200d8ffbf7cd8691259",
+      "author_date": "2026-11-14T22:51:39+06:00",
+      "subject": "AquaGuard Water Explorer: 3D Bangladesh hydrological explorer with spatial intelligence"
+    },
+    {
+      "sha": "907ffd036fc864e14d382f935cff92c289c7708c",
+      "author_date": "2026-11-14T21:20:36+06:00",
+      "subject": "AquaGuard Water Flow: interactive 3D conceptual simulation"
+    },
+    {
+      "sha": "60c9a0cabeb6697a6c09f2b3ebdd4254ddb2aaeb",
+      "author_date": "2026-11-14T18:27:48+06:00",
+      "subject": "AquaGuard Copilot: fixes from the first real Gemini answers"
+    },
+    {
+      "sha": "a0c9691d17f37555a82ae16c4a7e6efa757bde57",
+      "author_date": "2026-11-14T17:55:53+06:00",
+      "subject": "AquaGuard Copilot: Gemini free tier behind a provider-independent layer"
+    },
+    {
+      "sha": "73a220ec51d1d2585e8fee573e3491d53ffcd652",
+      "author_date": "2026-11-14T14:42:37+06:00",
+      "subject": "AquaGuard P5: final verification against the master prompt checklist and final report"
+    },
+    {
+      "sha": "3981c05ba99cd2fbb243380050da3cea9e2c54d7",
+      "author_date": "2026-11-14T14:12:36+06:00",
+      "subject": "AquaGuard M8: Copilot on Claude with read-only tools, streaming and no canned answers"
+    },
+    {
+      "sha": "4e3906cad2ebbc5abc574fff9dce64347c4d377d",
+      "author_date": "2026-11-14T13:55:06+06:00",
+      "subject": "AquaGuard M7: Water Flow as a labelled conceptual illustration with working controls"
+    },
+    {
+      "sha": "c255698d3df9e7adf8f133c3a7deccf29f0967ba",
+      "author_date": "2026-11-14T13:40:45+06:00",
+      "subject": "AquaGuard M6: Water Explorer with GRACE cells, weather points and a 2D fallback"
+    },
+    {
+      "sha": "99ca238b73153a913278d50da48e0e9bffacac93",
+      "author_date": "2026-11-14T12:50:06+06:00",
+      "subject": "AquaGuard M5: Prediction Lab on stored, event-driven predictions with a model card"
+    },
+    {
+      "sha": "e303d5afd114a450b4fa3085b2f95f68201f5aee",
+      "author_date": "2026-11-14T12:27:25+06:00",
+      "subject": "AquaGuard M4: Water Budget with the national AQUASTAT Sankey and a derived model tab"
+    },
+    {
+      "sha": "ebcb4876d74cd2ff2f138e1591e904fc51b8184e",
+      "author_date": "2026-11-14T09:02:06+06:00",
+      "subject": "AquaGuard M3: What-if on the latest real data, national and labelled"
+    }
+  ],
+  "original_master_prompt": null,
+  "original_transcript": null,
+  "original_transcript_status": "not_available_per_user",
+  "single_prompt_compliance": "unverified",
+  "user_confirmed_track": "Idea to Unicorn",
+  "public_repository_check": {
+    "url": "https://github.com/tabassumfahima59/BlueSense",
+    "checked_at": "2026-11-17T13:29:16.813Z",
+    "status": 200,
+    "final_url": "https://github.com/tabassumfahima59/BlueSense",
+    "public_marker": true,
+    "default_branch": "main",
+    "api_status": "rate_limited_403",
+    "description_status": "unrelated_old_product_metadata_requires_correction"
+  },
+  "guideline_source": {
+    "server": "cloudcamp-bd",
+    "uri": "cloudcamp://knowledge-base",
+    "retrieved_date": "2026-11-17",
+    "full_source_characters": 32022,
+    "source_sha256": "c54e4789a320ef8380b4cac1fcf73403edd8bd359baeb5e995e8ff792b2fec20"
+  },
+  "local_verification": {
+    "date": "2026-11-17",
+    "frontend_lint": "passed",
+    "frontend_typecheck": "passed",
+    "frontend_unit_tests": {
+      "passed": 68,
+      "files": 10
+    },
+    "production_build": "passed",
+    "playwright": {
+      "passed": 18,
+      "specs": [
+        "water-rhythm.spec.ts",
+        "copilot.spec.ts",
+        "responsive.spec.ts",
+        "settings-sync.spec.ts"
+      ]
+    },
+    "backend": {
+      "passed": 406,
+      "skipped": 3,
+      "failed": 0
+    },
+    "ruff": "passed",
+    "developer_env_and_db_hashes_unchanged": true,
+    "scope": "Local working tree; not public deployment or original build transcript"
+  }
+}

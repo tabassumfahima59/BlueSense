@@ -21,7 +21,7 @@ GEO = DATA / "geo"
 ARTIFACTS = ROOT / "ml" / "artifacts"
 RETRIEVED_FILE = PROCESSED / "sources_retrieved.json"
 
-USER_AGENT = "AquaGuard-prototype/0.1 (research prototype)"
+USER_AGENT = "BlueSense-prototype/0.1 (research prototype)"
 
 
 def now_iso() -> str:

@@ -47,6 +47,32 @@ def division_climates() -> dict[str, DivisionClimate]:
     return out
 
 
+@lru_cache
+def latest_climates() -> tuple[dict[str, DivisionClimate], str | None]:
+    """Baseline climate from the latest 12 consecutive complete months (ERA5 reanalysis) per division, instead of
+    the 1991-2020 normal year. Falls back to the normals (period None) when 12 consecutive months are not stored."""
+    from dataclasses import replace
+
+    base = division_climates()
+    mon = da.monthly().df
+    if mon.empty:
+        return base, None
+    out, spans = {}, set()
+    for d, clim in base.items():
+        dm = mon[mon["division"] == d].dropna(subset=["precip_mm", "et0_mm", "tmean_c"]).sort_values(["year", "month"])
+        last = dm.tail(12)
+        idx = [int(r.year) * 12 + int(r.month) for r in last.itertuples()]
+        if len(last) < 12 or idx[-1] - idx[0] != 11:
+            return base, None
+        by = {int(r.month): r for r in last.itertuples()}
+        out[d] = replace(clim, precip_mm=tuple(float(by[m].precip_mm) for m in range(1, 13)),
+                         et0_mm=tuple(float(by[m].et0_mm) for m in range(1, 13)),
+                         tmean_c=tuple(float(by[m].tmean_c) for m in range(1, 13)))
+        first, end = last.iloc[0], last.iloc[-1]
+        spans.add(f"{int(first.year):04d}-{int(first.month):02d} to {int(end.year):04d}-{int(end.month):02d}")
+    return out, (spans.pop() if len(spans) == 1 else None)
+
+
 def inputs_are_sample() -> bool:
     return any(da.table(t).is_sample for t in ("climatology", "regions", "inflow_shape"))
 
@@ -54,3 +80,4 @@ def inputs_are_sample() -> bool:
 def clear() -> None:
     baseline_config.cache_clear()
     division_climates.cache_clear()
+    latest_climates.cache_clear()

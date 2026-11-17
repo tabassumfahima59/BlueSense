@@ -1,0 +1,22 @@
+{
+  "record_type": "execution_evidence_index_template",
+  "status": "template_not_executed",
+  "track": "Idea to Unicorn",
+  "organizer_authorization_reference": null,
+  "started_at": null,
+  "ended_at": null,
+  "timezone": "Asia/Dhaka",
+  "starting_repository_revision": null,
+  "starting_state_description": null,
+  "tool": null,
+  "model": null,
+  "master_prompt_path": null,
+  "master_prompt_sha256": null,
+  "raw_transcript_path": null,
+  "raw_transcript_sha256": null,
+  "redactions": [],
+  "events": [],
+  "final_repository_revision": null,
+  "verification_artifacts": [],
+  "instructions": "Populate only from genuine records after an organizer-accepted execution; this empty index is not a transcript."
+}

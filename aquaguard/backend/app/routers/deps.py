@@ -14,13 +14,15 @@ def scenario_query(
     rainfallChangePct: float = Query(0.0, description="-50..+50 %"),
     temperatureChangeC: float = Query(0.0, description="-2..+4 °C"),
     demandChangePct: float = Query(0.0, description="-30..+50 %"),
+    agriculturalDemandChangePct: float = Query(0.0, description="-50..+50 % (agricultural consumption)"),
     groundwaterAvailabilityPct: float = Query(0.0, description="-50..+20 %"),
     irrigationEfficiency: float | None = Query(None, description="0.30..0.90; absent = baseline"),
     pipelineLossPct: float | None = Query(None, description="0..50 %; absent = baseline"),
 ) -> ScenarioParams:
     try:
         return ScenarioParams(rainfallChangePct=rainfallChangePct, temperatureChangeC=temperatureChangeC,
-                              demandChangePct=demandChangePct, groundwaterAvailabilityPct=groundwaterAvailabilityPct,
+                              demandChangePct=demandChangePct, agriculturalDemandChangePct=agriculturalDemandChangePct,
+                              groundwaterAvailabilityPct=groundwaterAvailabilityPct,
                               irrigationEfficiency=irrigationEfficiency, pipelineLossPct=pipelineLossPct)
     except ValidationError as e:
         msg = "; ".join(f"{'.'.join(str(x) for x in err['loc'])}: {err['msg']}" for err in e.errors())

@@ -1,17 +1,24 @@
-# Demo script (5–7 minutes)
+# BlueSense extended demo rehearsal (about 7 minutes)
 
-**Before the demo (10 min ahead):** open `<backend>/api/health` to wake the API (or rely on the keep-warm job), then open the frontend once so tiles cache. If any external service is down the app still runs: the backend serves its database, cached forecasts and the sample snapshot, and the header shows a "Sample data" banner. Emergency fallback with no backend at all: `NEXT_PUBLIC_API_MODE=mock npm run build && npm start` in `frontend/`.
+**Predict water risk, protect every drop**
 
-| Time | Screen | Say / do |
+The retrieved CloudCamp checklist calls for a **2-3 minute YouTube video**. Use the [2:45 submission-video plan](CLOUDCAMP_SUBMISSION.md#two-to-three-minute-submission-video). This longer walkthrough is for rehearsal and deeper technical discussion.
+
+Before recording or presenting, open the backend health endpoint, confirm source freshness and load the frontend. Inspect which national statistics and GRACE cells are available. A clean processed-data bootstrap lacks some genuine source-history records; sync and verify them before promising those views. Configure a server-side provider key only if showing generated Copilot answers. Use displayed dates and values rather than memorized figures.
+
+| Time | Screen | Demonstration |
 |---|---|---|
-| 0:00 | **Command Center** (national) | "AquaGuard predicts, analyses, visualises, optimises and recommends — and every number carries its provenance." Point at the legend, then KPIs: availability vs demand, dry-season stress ~50% (High), GRACE −0.53 cm/yr (regional, not well depth), 30-day rainfall vs normal. Show the model checks against FAO AQUASTAT. |
-| 0:50 | Command Center → click **Rajshahi** in the table | Region selector and URL update; KPIs re-compute for the division. |
-| 1:15 | **What-if** | Click preset "Dry year: rainfall −20%". Baseline vs Simulated cards update (dry-season supply ↓, irrigation need ↑, unmet ↑, stress ↑). Click **Apply across platform** — the header chip shows "Scenario active". |
-| 2:00 | **Command Center** | Same page now Simulated (teal dashed badges); alerts re-evaluated. |
-| 2:20 | **Water Budget Sankey** | Dry season Sankey under the scenario; balance indicator green (input = output within 0.01 MCM). Click **Optimize allocation**: domestic first, environment protected, savings shown. |
-| 3:10 | **Prediction Lab** | Forecast with 90% interval; actual vs predicted on 2021–2026 (never seen in training); metrics table with climatology and persistence beside the model — honest about modest skill. SHAP global + select Dhaka for a local explanation. Switch to Groundwater: GRACE series + trend. |
-| 4:20 | **3D Water Explorer** | Tilt the map: terrain (×25, labelled), divisions extruded by risk; toggle surface water (JRC) and GRACE; click a district → info panel (values from its division, stated). |
-| 5:00 | **3D Water Flow** | "SIMULATED" banner. Add a leak on the residential branch (severity 2) — red marker, loss % rises. Click **Optimize**: leak isolated, set-point lowered to the minimum service pressure; before/after chart shows leakage avoided. |
-| 5:45 | **Smart Irrigation** | Potato, Rangpur, sandy loam, planting 2026-11-15, 1.5 ha → ET0, Kc, ETc, effective rain, net/gross mm and m³, next irrigation date, AWD/efficiency advice; assumptions table; "Estimate — validate locally". |
-| 6:20 | **Copilot** (floating) | Ask "Explain the active scenario" → grounded answer naming modules; ask "What is the groundwater depth in my well?" → "I don't have that data". Ask in Bangla. |
-| 6:50 | Reset scenario | Close: limitations page, data sources with licences and retrieval times. |
+| 0:00 | Command Center | Introduce decision support for Bangladesh. Inspect a KPI's sources and dates. Select a division and explain which values remain national and which use representative point weather. |
+| 0:45 | Water Rhythm | Switch rainfall anomaly, raw P − ET0 and three-month dryness. Scrub a month, demonstrate playback and explain missing-data gaps. This timeline shows stored history, not forecasts. |
+| 1:25 | What-if | Select the dry-year preset. Compare baseline and simulated demand/stress; explain assumptions and seven levers. Applying a scenario affects supported derived modules, not historical records or national reference-year statistics. |
+| 2:10 | Water Budget | Show the national view only when genuine AQUASTAT records are available. Explain reference years and unavailable flows. Switch to the derived/model view, demonstrate balance closure and allocation optimization. |
+| 3:00 | Prediction Lab | Show one-, three- and six-month climatic water-balance forecasts. Compare held-out metrics against climatology and persistence; show uncertainty and SHAP. State that dry-class detection is weak and intervals under-cover. |
+| 3:55 | Water Explorer | Inspect a divisional weather point, switch to history/table and explain district reference boundaries. If GRACE cells are ingested, explain their ~300 km effective resolution. Terrain height is exaggerated and labelled. |
+| 4:45 | Water Flow | State that this is a hypothetical conceptual network. Add a leak, change operating controls, optimize pressure and compare delivered flow/leakage. Do not describe it as a real leak detector or infrastructure controller. |
+| 5:35 | Irrigation | Select a supported crop, region, soil, area and planting date within the stored forecast's useful range. Explain ET0, Kc, effective rainfall and gross irrigation requirement. Show unavailable inputs when data are missing; advice needs local validation. |
+| 6:15 | Copilot | With a configured provider, ask it to explain available data or the scenario; show the tools used. Ask for groundwater depth in a particular well and explain that the dataset cannot answer it. Without credentials, demonstrate the honest not-configured state. |
+| 6:50 | Close | Reset the scenario. Point to repository Data Sources, Model Card and Limitations documents. Close with the tagline. |
+
+The former `/data-sources` screen is disabled. Use [DATA_SOURCES.md](DATA_SOURCES.md), [MODEL_CARD.md](MODEL_CARD.md) and [LIMITATIONS.md](LIMITATIONS.md) for supporting evidence. Existing screenshots are historical captures and should be refreshed after final validation if included in a submission.
+
+This extended rehearsal is not the submission video. The complete official knowledge base was read on 17 November 2026; its two-to-three-minute video checklist, original-prompt constraint and eligibility questions are documented in [CLOUDCAMP_SUBMISSION.md](CLOUDCAMP_SUBMISSION.md).

@@ -25,7 +25,7 @@ export function ErrorCard({ error, onRetry, title = "Could not load data" }: { e
       </div>
       <p className="text-[13px] text-muted">{error.message}</p>
       {onRetry && (
-        <button onClick={onRetry} className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-[13px] font-medium hover:bg-bg">
+        <button onClick={onRetry} className="inline-flex items-center gap-1.5 rounded-lg border border-control bg-white px-3 py-1.5 text-[13px] font-medium transition hover:bg-light">
           <RefreshCw size={14} aria-hidden /> Retry
         </button>
       )}
@@ -33,9 +33,12 @@ export function ErrorCard({ error, onRetry, title = "Could not load data" }: { e
   );
 }
 
+/** Shared name from the design system (master prompt §5). */
+export const ErrorState = ErrorCard;
+
 export function EmptyState({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="flex flex-col items-start gap-1.5 rounded-xl border border-dashed border-border bg-bg/60 p-5">
+    <div className="flex flex-col items-start gap-1.5 rounded-xl border border-dashed border-control/60 bg-light/60 p-5">
       <div className="flex items-center gap-2 font-semibold text-ink">
         <DatabaseZap size={18} className="text-muted" aria-hidden /> {title}
       </div>

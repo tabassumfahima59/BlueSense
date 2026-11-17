@@ -3,6 +3,10 @@
 Artifacts (ml/artifacts/): predictions.json, metrics.json, shap.json, model_meta.json, grace_trend.json,
 train_climatology.csv, model_h{1,3,6}.joblib. Missing artifacts -> callers show "Not evaluated yet" /
 empty states.
+
+M5: baseline forecasts prefer the predictions stored in ``predictions_v2`` by the event-driven inference
+(services/inference.py) when they are at least as recent as predictions.json; otherwise the artifact is used. Every
+forecast dict says where it came from (``storage``) and when it was generated (``generatedAt``).
 """
 from __future__ import annotations
 
@@ -90,11 +94,36 @@ def available() -> bool:
     return predictions() is not None and model_meta() is not None
 
 
+@lru_cache
+def stored_forecasts() -> dict[str, dict[int, dict]]:
+    """Latest predictions_v2 rows of the current model version (read-only connection, cached until a sync)."""
+    from ..db import connection
+    from .inference import stored
+
+    path = get_settings().db_path
+    if not path.exists():
+        return {}
+    conn = connection.connect(path, read_only=True)
+    try:
+        return stored(conn)
+    finally:
+        conn.close()
+
+
+def clear_stored() -> None:
+    stored_forecasts.cache_clear()
+    scenario_forecast.cache_clear()
+
+
 def baseline_forecast(division: str, h: int) -> dict | None:
     p = predictions()
-    if not p:
+    art = (p or {}).get("forecasts", {}).get(division, {}).get(str(h))
+    db = stored_forecasts().get(division, {}).get(h)
+    if db and (art is None or db["issuedMonth"] >= art["issuedMonth"]):
+        return db
+    if art is None:
         return None
-    return p["forecasts"].get(division, {}).get(str(h))
+    return {**art, "storage": "artifact", "generatedAt": p.get("generatedAt")}
 
 
 @lru_cache(maxsize=256)
@@ -129,5 +158,5 @@ def scenario_forecast(division: str, h: int, rain_pct: float, temp_c: float) -> 
 
 def clear() -> None:
     for fn in (predictions, metrics, shap_values, model_meta, grace_trend, split_info, _model, _train_clim,
-               scenario_forecast):
+               scenario_forecast, stored_forecasts):
         fn.cache_clear()

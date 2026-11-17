@@ -1,0 +1,267 @@
+{
+  "schema_version": 1,
+  "prepared_date": "2026-11-17",
+  "track": "Idea to Unicorn",
+  "status": "draft_not_ready",
+  "eligibility": {
+    "applicable_round": null,
+    "deadline_extension_reference": null,
+    "original_prompt_path": null,
+    "original_transcript_path": null,
+    "organizer_acceptance_reference": null
+  },
+  "fields": {
+    "project_title": {
+      "label": "Project Title",
+      "value": "BlueSense",
+      "minimum_characters": null,
+      "required_by_guide": true,
+      "status": "draft_needs_review",
+      "evidence": [
+        "../../../README.md"
+      ]
+    },
+    "tagline": {
+      "label": "Tagline / Elevator Pitch",
+      "value": "Predict water risk, protect every drop: BlueSense helps Bangladesh water planners and agricultural advisers inspect public data, compare simulated scenarios and understand climatic water-balance predictions.",
+      "minimum_characters": null,
+      "required_by_guide": true,
+      "status": "draft_needs_review",
+      "evidence": [
+        "../../../README.md"
+      ]
+    },
+    "youtube_url": {
+      "label": "YouTube Video URL",
+      "value": null,
+      "minimum_characters": null,
+      "required_by_guide": true,
+      "status": "missing",
+      "evidence": [
+        "VIDEO_SCRIPT.md"
+      ]
+    },
+    "github_url": {
+      "label": "GitHub Repository URL",
+      "value": "https://github.com/tabassumfahima59/BlueSense",
+      "minimum_characters": null,
+      "required_by_guide": true,
+      "status": "draft_needs_review",
+      "evidence": [
+        "evidence_snapshot.json"
+      ]
+    },
+    "live_demo_url": {
+      "label": "Live Demo URL",
+      "value": null,
+      "minimum_characters": null,
+      "required_by_guide": true,
+      "status": "missing",
+      "evidence": []
+    },
+    "design_url": {
+      "label": "Figma / Design Link",
+      "value": null,
+      "minimum_characters": null,
+      "required_by_guide": true,
+      "status": "missing",
+      "evidence": [
+        "ARCHITECTURE_DIAGRAM.mmd",
+        "../ARCHITECTURE.md"
+      ]
+    },
+    "other_links": {
+      "label": "Other Links",
+      "value": [],
+      "minimum_characters": null,
+      "required_by_guide": false,
+      "status": "draft_needs_review",
+      "evidence": []
+    },
+    "access_note": {
+      "label": "Access Note",
+      "value": "The current application uses guest browsing and has no end-user accounts. A working public demo URL and deployment access instructions still need verification. Copilot requires a configured server-side provider key; judges should never be asked to enter a private API key in the browser.",
+      "minimum_characters": null,
+      "required_by_guide": false,
+      "status": "draft_needs_review",
+      "evidence": [
+        "../../frontend/components/layout/ProfileMenu.tsx"
+      ]
+    },
+    "team_members": {
+      "label": "Team Composition",
+      "value": [],
+      "minimum_characters": null,
+      "required_by_guide": true,
+      "status": "missing",
+      "evidence": []
+    },
+    "nrb_member": {
+      "label": "NRB Member Bonus",
+      "value": null,
+      "minimum_characters": null,
+      "required_by_guide": false,
+      "status": "missing",
+      "evidence": []
+    },
+    "female_member": {
+      "label": "Female Member Bonus",
+      "value": null,
+      "minimum_characters": null,
+      "required_by_guide": false,
+      "status": "missing",
+      "evidence": []
+    },
+    "prompt_strategy": {
+      "label": "Prompt Strategy Text",
+      "value": "BlueSense uses a source-grounded Copilot system prompt, validated read-only tools and explicit distinctions between historical data, predictions and simulated scenarios. The original build transcript is unavailable. We provide a retrospective master-prompt reconstruction and Git-backed development record, which do not prove one-prompt compliance. We do not present hidden reasoning traces as submission evidence.",
+      "minimum_characters": null,
+      "required_by_guide": true,
+      "status": "draft_needs_review",
+      "evidence": [
+        "COPILOT_SYSTEM_PROMPT.txt",
+        "MASTER_PROMPT_RECONSTRUCTED.md",
+        "DEVELOPMENT_RECORD.md"
+      ]
+    },
+    "token_optimization": {
+      "label": "Token Optimization Notes",
+      "value": "The backend retains at most six history turns, truncates history content to 4,000 characters per turn and rejects tool results above 24,000 characters. Default limits allow four model calls per question and 4,096 output tokens per call. Bounded retries and request deadlines control further usage. These are configured limits, not measured token savings or a verified prompt-cache hit rate.",
+      "minimum_characters": 50,
+      "required_by_guide": true,
+      "status": "draft_needs_review",
+      "evidence": [
+        "../../backend/app/services/copilot.py",
+        "../../backend/app/settings.py"
+      ]
+    },
+    "ai_dlc": {
+      "label": "AI-DLC Process Notes",
+      "value": "Development records include an implementation plan, source-controlled modules, API contracts, an ML model card, assumptions, a progress log and a current technical audit. Tests cover calculation engines, data adapters, API behavior, provider errors and frontend behavior. This documents the process actually used; it does not establish adoption of Kiro, BMAD, Spec-Kit or another named AI-DLC framework.",
+      "minimum_characters": 100,
+      "required_by_guide": true,
+      "status": "draft_needs_review",
+      "evidence": [
+        "../aquaguard-plan.md",
+        "../SUBMISSION_AUDIT.md",
+        "../MODEL_CARD.md"
+      ]
+    },
+    "agent_orchestration": {
+      "label": "Agent / Orchestration Notes",
+      "value": "The Copilot uses a custom provider-independent tool loop: it validates model-requested tool arguments, invokes allowlisted read-only backend functions, returns tool results and streams the answer within configured call/deadline limits. This is tool orchestration, not evidence of multi-agent execution or a named agent framework.",
+      "minimum_characters": 80,
+      "required_by_guide": true,
+      "status": "draft_needs_review",
+      "evidence": [
+        "../../backend/app/services/copilot.py"
+      ]
+    },
+    "fine_tuning_adaptation": {
+      "label": "Fine-Tuning / Adaptation Notes",
+      "value": "Adaptation consists of explicit BlueSense system instructions, structured tool schemas and curated public-source inputs. We have no verified LoRA or LLM weight fine-tuning. Separately, Random Forest and XGBoost are trained on chronological climatic water-balance data; that conventional ML training is not LLM fine-tuning.",
+      "minimum_characters": 80,
+      "required_by_guide": true,
+      "status": "draft_needs_review",
+      "evidence": [
+        "COPILOT_SYSTEM_PROMPT.txt",
+        "../MODEL_CARD.md"
+      ]
+    },
+    "evaluation_quality": {
+      "label": "Evaluation & Quality Methods",
+      "value": "The stored ML evaluation uses target-date train/validation/test splits, climatology and persistence baselines, MAE/RMSE/R-squared, dryness-class macro-F1 and interval coverage. Automated tests also cover tool validation, provider failures and UI behavior. The current audit still records source-dependent failures and incomplete browser validation; historical passing reports are not final verification.",
+      "minimum_characters": 80,
+      "required_by_guide": true,
+      "status": "draft_needs_review",
+      "evidence": [
+        "../MODEL_CARD.md",
+        "../SUBMISSION_AUDIT.md"
+      ]
+    },
+    "guardrails": {
+      "label": "Guardrails / Safety / Privacy",
+      "value": "Tool arguments are schema-validated, extra fields are forbidden and Copilot data access is read-only with no arbitrary SQL tool. The system treats user text and tool results as untrusted, flags unmatched answer numbers, applies usage limits and identifies the configured provider in the Status panel. A missing provider key yields no generated answer. These controls do not guarantee factual correctness or establish a PII-redaction pipeline.",
+      "minimum_characters": 80,
+      "required_by_guide": true,
+      "status": "draft_needs_review",
+      "evidence": [
+        "../../backend/app/services/copilot.py",
+        "../../frontend/components/copilot/ChatUI.tsx"
+      ]
+    },
+    "tunneling": {
+      "label": "Tunneling Usage Notes",
+      "value": "No Cloudflare Tunnel, ngrok or equivalent local-to-public tunnel has been verified for this submission. The repository contains ordinary frontend/backend hosting configuration. We do not claim tunneling points from that configuration or from using an external hosted MCP endpoint.",
+      "minimum_characters": 80,
+      "required_by_guide": true,
+      "status": "draft_needs_review",
+      "evidence": [
+        "../../../render.yaml"
+      ]
+    },
+    "data_quality": {
+      "label": "Data Quality Measures",
+      "value": "Source adapters validate formats and values, use idempotent upserts and preserve existing valid data when incoming values are null. Monthly weather aggregation requires complete inputs. Source IDs, retrieval dates, reference years and data kinds distinguish observations from estimates. Genuine national history and GRACE grid-cell coverage remain incomplete in the audited local database.",
+      "minimum_characters": 80,
+      "required_by_guide": true,
+      "status": "draft_needs_review",
+      "evidence": [
+        "../DATA_SOURCES.md",
+        "../SUBMISSION_AUDIT.md",
+        "../../backend/app/sync/"
+      ]
+    },
+    "privacy_compliance": {
+      "label": "Privacy & Compliance Notes",
+      "value": "Provider credentials stay server-side. The configured external AI provider receives submitted questions and looked-up data, as documented in the limitations guide. Tool logs use a hashed client identifier and do not intentionally record raw questions or keys. Source-specific licences apply. Full retention/deletion procedures, identity/RBAC and independent compliance certification are not established by this draft.",
+      "minimum_characters": 80,
+      "required_by_guide": true,
+      "status": "draft_needs_review",
+      "evidence": [
+        "../../backend/app/services/copilot.py",
+        "../LIMITATIONS.md"
+      ]
+    },
+    "lineage_observability": {
+      "label": "Lineage & Observability Notes",
+      "value": "Data responses retain source identifiers, observation or reference dates, retrieval times, spatial scope and freshness where applicable. Ingestion runs are logged; Copilot tool events include validated arguments, outcome and duration. We do not claim LangSmith/Phoenix integration or complete provider-token accounting. In-memory usage counters reset when the service restarts.",
+      "minimum_characters": 80,
+      "required_by_guide": true,
+      "status": "draft_needs_review",
+      "evidence": [
+        "../../backend/app/services/copilot.py",
+        "../../backend/app/services/copilot_limits.py",
+        "../ARCHITECTURE.md"
+      ]
+    }
+  },
+  "technology_disclosures": {
+    "llm_adapters": [
+      "Gemini",
+      "Anthropic"
+    ],
+    "configured_live_provider_verified": true,
+    "custom_tool_loop": true,
+    "document_rag_verified": false,
+    "custom_mcp_server_verified": false,
+    "development_mcp_resource_used": "cloudcamp-bd / cloudcamp://knowledge-base",
+    "product_runtime_external_mcp_verified": false,
+    "named_agent_frameworks_verified": [],
+    "named_ai_dlc_frameworks_verified": [],
+    "automation": "APScheduler; not evidence of a named scored automation tool",
+    "local_llm_runtimes_verified": [],
+    "local_llm_models_run_verified": [],
+    "tunneling_verified": false
+  },
+  "release": {
+    "technical_audit_complete": true,
+    "final_source_revision_published": false,
+    "public_metadata_corrected": false,
+    "artifact_links_checked": false,
+    "team_registration_verified": false,
+    "live_app_verified": false,
+    "video_uploaded": false,
+    "original_or_organizer_accepted_execution_evidence": false
+  }
+}

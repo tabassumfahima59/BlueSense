@@ -16,7 +16,7 @@ from ..engine import water_balance as wb
 from ..schemas.common import ScenarioParams
 from . import data_access as da
 from . import ml_artifacts as mla
-from .inputs import baseline_config, division_climates, inputs_are_sample
+from .inputs import baseline_config, division_climates, inputs_are_sample, latest_climates
 
 PERIODS = ("annual", "dry")
 
@@ -64,23 +64,24 @@ def _key(p: ScenarioParams) -> str:
     return json.dumps(p.model_dump(), sort_keys=True)
 
 
-@lru_cache(maxsize=128)
-def _division_balance(division: str, key: str) -> wb.Balance:
+@lru_cache(maxsize=256)
+def _division_balance(division: str, key: str, basis: str = "normal") -> wb.Balance:
     p = ScenarioParams(**json.loads(key))
-    clim, cfg = scen.apply(division_climates()[division], baseline_config(), p)
+    climates = latest_climates()[0] if basis == "latest" else division_climates()
+    clim, cfg = scen.apply(climates[division], baseline_config(), p)
     return wb.division_balance(clim, cfg)
 
 
-def run(region_id: str, params: ScenarioParams | None = None) -> RegionRun:
+def run(region_id: str, params: ScenarioParams | None = None, basis: str = "normal") -> RegionRun:
     params = params or ScenarioParams()
     region = da.region(region_id)
     if region is None:
         raise KeyError(region_id)
     divisions, note = da.resolve_division_scope(region_id)
     key = _key(params)
-    balances = {d: _division_balance(d, key) for d in divisions}
+    balances = {d: _division_balance(d, key, basis) for d in divisions}
     cfg = scen.apply_config(baseline_config(), params.demandChangePct, params.groundwaterAvailabilityPct,
-                            params.irrigationEfficiency, params.pipelineLossPct)
+                            params.irrigationEfficiency, params.pipelineLossPct, params.agriculturalDemandChangePct)
     return RegionRun(region=region, divisions=divisions, scope_note=note, params=params,
                      is_scenario=not params.is_baseline(), is_sample=inputs_are_sample(), balances=balances,
                      loss_rate=cfg.loss_rate, irrigation_efficiency=cfg.irrigation_efficiency)

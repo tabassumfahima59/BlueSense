@@ -19,9 +19,15 @@ export type StatusResponse = S["StatusResponse"];
 export type RegionsResponse = S["RegionsResponse"];
 export type SourcesResponse = S["SourcesResponse"];
 export type OverviewResponse = S["OverviewResponse"];
-export type AlertsResponse = S["AlertsResponse"];
+// P3: /api/alerts returns the legacy fields plus stored alerts (`data`) and `meta`.
+export type AlertsResponse = S["AlertsResponseV2"];
+export type StoredAlert = S["StoredAlert"];
+export type Meta = S["Meta"];
+export type DataKind = NonNullable<Measure["dataKind"]>;
+export type DataStatus = NonNullable<Measure["status"]>;
 export type Alert = S["Alert"];
 export type MapLayersResponse = S["MapLayersResponse"];
+export type LayerInfo = S["LayerInfo"];
 export type RegionValues = S["RegionValues"];
 export type WeatherResponse = S["WeatherResponse"];
 export type ScarcityResponse = S["ScarcityResponse"];
@@ -45,12 +51,65 @@ export type IrrigationResponse = S["IrrigationResponse"];
 export type CopilotRequest = S["CopilotRequest"];
 export type CopilotResponse = S["CopilotResponse"];
 export type ChatTurn = S["ChatTurn"];
+export type CopilotStatus = S["CopilotStatus"];
+export type CopilotToolCall = S["CopilotToolCall"];
+
+// P3 envelope endpoints
+/** `{ data, meta }` returned by the P3 endpoints (generated as Envelope_<Name>_ in api.d.ts). */
+export interface Envelope<T> {
+  data: T;
+  meta: Meta;
+}
+export type SearchResults = S["SearchResults"];
+export type SearchItem = S["SearchItem"];
+export type SourceStatus = S["SourceStatus"];
+export type LastUpdated = S["LastUpdated"];
+export type RefreshResult = S["RefreshResult"];
+export type ReadResult = S["ReadResult"];
+// M1 Command Center
+export type DashboardSummary = S["DashboardSummary"];
+export type Kpi = S["Kpi"];
+export type Insight = S["Insight"];
+export type DivisionIndicators = S["DivisionIndicators"];
+export type IndicatorDef = S["IndicatorDef"];
+export type IndicatorClass = S["IndicatorClass"];
+export type DivisionRow = S["DivisionRow"];
+export type StatHistory = S["StatHistory"];
+export type StatSeries = S["StatSeries"];
+export type WeatherSeries = S["WeatherSeries"];
+export type SeriesValues = S["SeriesValues"];
+export type GroundwaterTrends = S["GroundwaterTrends"];
+export type WhatIf = S["WhatIf"];
+// M4 Water Budget
+export type WaterBudget = S["WaterBudget"];
+export type NationalBudget = S["NationalBudget"];
+export type BudgetNode = S["BudgetNode"];
+export type BudgetHistory = S["BudgetHistory"];
+// M5 Prediction Lab
+export type Predictions = S["Predictions"];
+export type PredictionPoint = S["PredictionPoint"];
+export type PredictionCategory = S["PredictionCategory"];
+// M6 Explorer
+export type WeatherPoints = S["WeatherPoints"];
+export type WeatherPoint = S["WeatherPoint"];
+export type WeatherCurrent = S["WeatherCurrent"];
+export type GridCell = S["GridCell"];
+// Water Explorer spatial intelligence
+export type RegionIntel = S["RegionIntel"];
+export type ExplorerFinding = S["Finding"];
+export type RiskInfo = S["RiskInfo"];
+export type ExplorerOverview = S["ExplorerOverview"];
+export type OverviewRow = S["OverviewRow"];
+export type ExplorerSeries = S["ExplorerSeries"];
+export type PeriodComparison = S["PeriodComparison"];
+export type CopilotMapContext = S["CopilotMapContext"];
 
 /** Scenario with every field explicit; `null` efficiency/loss = use the baseline from config. */
 export interface Scenario {
   rainfallChangePct: number;
   temperatureChangeC: number;
   demandChangePct: number;
+  agriculturalDemandChangePct: number;
   groundwaterAvailabilityPct: number;
   irrigationEfficiency: number | null;
   pipelineLossPct: number | null;
@@ -60,6 +119,7 @@ export const BASELINE: Scenario = {
   rainfallChangePct: 0,
   temperatureChangeC: 0,
   demandChangePct: 0,
+  agriculturalDemandChangePct: 0,
   groundwaterAvailabilityPct: 0,
   irrigationEfficiency: null,
   pipelineLossPct: null,

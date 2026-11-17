@@ -3,6 +3,7 @@
     Rainfall change %        -> local runoff (surface supply) and effective rainfall in FAO-56
     Temperature change C     -> ET0 x (Tmean + dT + 17.8) / (Tmean + 17.8)   (Hargreaves temperature term)
     Demand change %          -> domestic and industrial demand
+    Agricultural demand %    -> gross agricultural (irrigation) demand
     Groundwater availability -> groundwater supply
     Irrigation efficiency    -> GIR = NIR / efficiency
     Pipeline loss %          -> loss_rate in the water balance and the flow-simulation baseline
@@ -27,10 +28,12 @@ def apply_climate(clim: DivisionClimate, rainfall_change_pct: float, temperature
 
 
 def apply_config(cfg: BalanceConfig, demand_change_pct: float, groundwater_availability_pct: float,
-                 irrigation_efficiency: float | None, pipeline_loss_pct: float | None) -> BalanceConfig:
+                 irrigation_efficiency: float | None, pipeline_loss_pct: float | None,
+                 agricultural_demand_change_pct: float = 0.0) -> BalanceConfig:
     return replace(
         cfg,
         demand_multiplier=1.0 + demand_change_pct / 100.0,
+        agri_multiplier=1.0 + agricultural_demand_change_pct / 100.0,
         groundwater_multiplier=1.0 + groundwater_availability_pct / 100.0,
         irrigation_efficiency=irrigation_efficiency if irrigation_efficiency is not None else cfg.irrigation_efficiency,
         loss_rate=(pipeline_loss_pct / 100.0) if pipeline_loss_pct is not None else cfg.loss_rate,
@@ -41,5 +44,6 @@ def apply(clim: DivisionClimate, cfg: BalanceConfig, p) -> tuple[DivisionClimate
     """p: ScenarioParams (duck-typed so the engine does not import the API schema)."""
     return (
         apply_climate(clim, p.rainfallChangePct, p.temperatureChangeC),
-        apply_config(cfg, p.demandChangePct, p.groundwaterAvailabilityPct, p.irrigationEfficiency, p.pipelineLossPct),
+        apply_config(cfg, p.demandChangePct, p.groundwaterAvailabilityPct, p.irrigationEfficiency, p.pipelineLossPct,
+                     getattr(p, "agriculturalDemandChangePct", 0.0)),
     )

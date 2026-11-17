@@ -1,10 +1,12 @@
-# AquaGuard — AI-Powered Water Intelligence, Prediction & Resource Optimization Platform
+# BlueSense — AI-Powered Water Intelligence, Prediction & Resource Optimization Platform
 
-**Predict Water Risks. Optimize Water Resources. Protect Every Drop.**
+**Predict water risk, protect every drop**
 
-AquaGuard is a software-only decision-support prototype for Bangladesh (national, 8 divisions, 64 districts). It combines public datasets (ERA5 reanalysis via Open-Meteo, FAO AQUASTAT, GRACE/GRACE-FO, GloFAS, geoBoundaries, HDX, World Bank) with a shared water-balance engine, FAO-56 irrigation maths, a hydraulic simulation and time-split machine learning. Flow: **Predict → Analyze → Visualize → Optimize → Recommend.**
+See the [repository README](../README.md) for the current project overview, methods, model-card summary, demo walkthrough and submission status. The `aquaguard/` directory and internal `AQUAGUARD_*` settings are retained for compatibility.
 
-Every number on screen is a `Measure` labelled **Observed, Historical, Predicted, Estimated or Simulated** (plus a **Sample** tag when it comes from the offline snapshot). AquaGuard has no IoT sensors, no real-time pipe pressure and no pump/valve control, and it does not replace field monitoring, laboratory testing or government water systems.
+BlueSense is a software-only decision-support prototype for Bangladesh (national, 8 divisions, 64 districts). It combines public datasets (ERA5 reanalysis via Open-Meteo, FAO AQUASTAT, GRACE/GRACE-FO, GloFAS, geoBoundaries, HDX, World Bank) with a shared water-balance engine, FAO-56 irrigation maths, a hydraulic simulation and time-split machine learning. Flow: **Predict → Analyze → Visualize → Optimize → Recommend.**
+
+API measures distinguish observations, historical data, predictions, estimates and simulations, with source, date, spatial level and freshness where applicable. Runtime views read the database; there is no sample fallback. BlueSense has no IoT sensors, no real-time pipe pressure and no pump/valve control, and it does not replace field monitoring, laboratory testing or government water systems.
 
 ![Command Center](docs/screenshots/command-center.png)
 
@@ -15,10 +17,12 @@ Every number on screen is a `Measure` labelled **Observed, Historical, Predicted
 | AI Prediction Lab | `/prediction-lab` | P − ET0 forecasts (1/3/6 mo) with intervals, test-period accuracy vs baselines, SHAP, demand projection, GRACE trend |
 | 3D Water Flow | `/water-flow` | R3F network, Hazen–Williams + pressure-dependent leakage, pressure-management optimization |
 | Water Budget Sankey | `/water-budget` | D3 Sankey, balance check (0.01 MCM), LP allocation optimizer, custom shares |
-| What-if Simulator | `/what-if` | Six levers, presets, baseline vs simulated, "Apply across platform" |
+| What-if Simulator | `/what-if` | Seven levers, presets, baseline vs simulated, "Apply across platform" |
 | Smart Irrigation | `/irrigation` | FAO-56 with Open-Meteo forecast: requirement, timing, quantity, assumptions |
-| AI Copilot | `/copilot` + floating panel | Answers only from platform data; LLM mode with number checking, rule-based fallback |
-| Data Sources | `/data-sources` | Licences, retrieval times, every parameter and its source, limitations |
+| AI Copilot | `/copilot` + floating panel | Gemini by default, optional Anthropic, read-only BlueSense tools, streamed answers and number checks; `not_configured` without a server-side key |
+| Settings | `/settings` | Region, units, motion and transparency preferences |
+
+The former `/data-sources` screen is disabled. See [DATA_SOURCES](docs/DATA_SOURCES.md) and `GET /api/sources` for attribution and parameters. The Command Center also includes the historical Water Rhythm timeline described below.
 
 More screenshots: [explorer](docs/screenshots/explorer.png) · [prediction lab](docs/screenshots/prediction-lab.png) · [water flow](docs/screenshots/water-flow.png) · [water budget](docs/screenshots/water-budget.png) · [what-if](docs/screenshots/what-if.png) · [irrigation](docs/screenshots/irrigation.png)
 
@@ -44,23 +48,65 @@ cd aquaguard
 python -m venv .venv
 .venv/Scripts/python -m pip install -r requirements-dev.txt      # Windows (use .venv/bin/python on macOS/Linux)
 cd frontend && npm install && cd ..
-cp .env.example backend/.env    # optional; set LLM_API_KEY to enable Copilot LLM mode
+cp .env.example backend/.env    # optional; set GEMINI_API_KEY to enable Copilot LLM mode
 ```
+
+The backend automatically loads `backend/.env` at startup, regardless of the working directory. Set
+`GEMINI_API_KEY` there with `LLM_PROVIDER=gemini`; no terminal environment commands are needed. Existing process
+environment variables take precedence. Restart the backend after editing `.env`. Keys stay server-side; never put
+them in frontend environment files or commit them to git.
+
+Copilot waits up to `LLM_CALL_TIMEOUT_S=60` seconds for Gemini headers or the next streamed chunk, with a
+`COPILOT_DEADLINE_S=240` second budget across tool rounds and retries. Gemini retries a transient failure once
+before any answer text is delivered. Configure `LLM_MAX_RETRIES` (0–3, default 1) and `LLM_RETRY_BACKOFF_S`
+(default 1 second) for exponential backoff. A quota response is retried only when Gemini supplies `Retry-After`
+or `RetryInfo.retryDelay` within `LLM_RETRY_AFTER_MAX_S` (default 60 seconds) and the remaining question deadline.
+Set `LLM_RETRY_AFTER_MAX_S=0` to disable quota retries. Exhausted retries return the existing timeout/quota error;
+no provider switch occurs. `OPENAI_API_KEY` is not used: supported providers are Gemini and Anthropic.
+The browser stream sends keepalives every 15 seconds while waiting; Stop
+still cancels the browser request.
 
 ### Data and models
 
-The repository ships the cleaned data (`data/processed`), the sample snapshot (`data/sample`) and trained model artifacts (`ml/artifacts`). To build the database from them:
+The repository ships the cleaned data (`data/processed`) and trained model artifacts (`ml/artifacts`). To build the database from them (the API also does this at startup when the database is missing):
 
 ```bash
-make db            # = python ml/build_db.py --sample
+make db            # = python ml/build_db.py  (idempotent: never replaces or shrinks the database)
+make migrate       # apply pending schema migrations (backend/app/db/migrations), verified backup first
+make migrate-status
 ```
+
+The database schema is managed by versioned SQL migrations (`backend/app/db/migrate.py`); the API also applies
+pending migrations at startup (`AQUAGUARD_MIGRATE_ON_STARTUP=1`). Backups go to `data/backups/` (git-ignored).
+SQLite runs in WAL mode with `foreign_keys = ON` and `busy_timeout = 5000`. See `docs/aquaguard-plan.md`.
+
+### Live data sync (P2)
+
+Adapters in `backend/app/sync/` keep the database current: Open-Meteo forecast + current (hourly) and archive
+top-up (daily), FAO AQUASTAT (weekly) and GRACE CSR RL06.3 (daily HEAD check; the ~110 MB file is downloaded only
+when it changes). Re-runs are idempotent; missing values never overwrite stored ones; every run is logged in `sync_runs`.
+
+```bash
+make sync          # = cd backend && python -m app.sync.run all   (skips jobs that ran recently; --force to override)
+make sync-status   # fresh / stale / unavailable / not_configured per source
+cd backend && ../.venv/Scripts/python -m app.sync.run alerts   # re-evaluate config/alert_rules.yaml
+```
+
+The P3 API (`/api/weather/*`, `/api/water/*`, `/api/groundwater/trends`, `/api/dashboard/summary`, `/api/predictions`,
+`/api/water-budget`, `POST /api/whatif`, `/api/alerts`, `/api/search`, `/api/data/*`, `POST /api/refresh`,
+`POST /api/sync/{source}` with `ADMIN_TOKEN`) returns `{data, meta}`; see `docs/aquaguard-plan.md` §7.1 and
+`/api/docs`.
+
+Set `AQUAGUARD_SCHEDULER_ENABLED=1` to run the jobs inside the API (APScheduler; intervals `SYNC_*`, DB lease lock so
+several workers never run the same job). Data shows `stale` when the last successful sync is older than
+`SYNC_STALE_FACTOR` × the cadence (e.g. while free hosting sleeps).
 
 To rebuild everything from the original sources (downloads ~125 MB incl. GRACE; the Open-Meteo archive takes ~12 minutes because of rate limits):
 
 ```bash
 make data          # fetch → process → db   (GRACE: place the CSR NetCDF in data/raw/grace/ if the download is blocked)
 make ml            # features → train → evaluate → predict → SHAP → demand projection → model card → db
-make mocks         # OpenAPI spec + Phase-0 mock JSON + regenerated TypeScript types
+make mocks         # OpenAPI spec + regenerated TypeScript types
 ```
 
 ### Run
@@ -72,20 +118,42 @@ make dev-frontend  # Next.js on http://localhost:3000  (frontend/.env.local: NEX
 
 Without `make`: `cd backend && ../.venv/Scripts/python -m uvicorn app.main:app --port 8001` and `cd frontend && npm run dev`.
 
-Offline / resilience switches: `AQUAGUARD_OFFLINE=1` (no outbound calls), `AQUAGUARD_FORCE_SAMPLE=1` (serve the snapshot), `NEXT_PUBLIC_API_MODE=mock` (frontend without backend).
+Offline switch: `AQUAGUARD_OFFLINE=1` (no outbound calls; scheduled sync skipped). There is no sample or mock mode: the backend serves the database only (P2) and the frontend talks only to the API (P4); captured Phase-0 responses live in `frontend/tests/fixtures/mocks/` as test fixtures.
+
+### Water Rhythm
+
+Open `http://localhost:3000/command-center`. Water Rhythm appears immediately below the page heading and shares
+the existing geography/date filters and weather-history request with the monthly analysis charts. Play/Pause,
+previous/next, the month slider, and 0.5×/1×/2× playback inspect stored observations; playback skips missing values
+and stops at the end. Selecting a month highlights only the two monthly weather charts.
+
+Rainfall shows monthly reanalysis minus the stored 1991–2020 normal (mm). Water Balance shows raw P − ET0 (mm),
+not its anomaly. Dryness uses the existing three-month normal z-score with sample standard deviation and at least
+25 complete reference windows. Reference windows start in 1991–2020; cross-year windows can end in 2021, matching
+the existing indicator. National dryness is the area-weighted mean of all eight representative point z-scores.
+This is not gamma-fitted SPI. The existing `/api/weather/history` supports `dryness=true` for monthly history;
+it reads existing tables without migrations or writes. Missing months/baselines remain unavailable, with gaps.
+
+The default window is the latest approximately 24 months of stored monthly history; the date filter can request
+the archive from 1991 onward. Actual availability depends on the local database and each indicator's prerequisites.
+No forecasts, annual AQUASTAT figures, or current scarcity-map values are reinterpreted as historical months.
+Decorative motion pauses offscreen, and reduced-motion preferences disable the glow/transition animation.
 
 ### Test and lint
 
 ```bash
-make test          # pytest: 128 tests (engines, mass balance, API contract, consistency, Copilot grounding, offline mode) + vitest
+make test          # pytest (engines, API contract, migrations, sync adapters, scheduler, security, Copilot grounding) + vitest
 make lint          # ruff, eslint, tsc
+cd frontend && npm run e2e   # Playwright + axe: builds into .next-e2e, starts an offline backend on an isolated recorded-fixture DB (port 8013)
 ```
+
+First e2e run only: `cd frontend && npx playwright install chromium`.
 
 ## Deploy
 
-- **Backend**: Docker (`backend/Dockerfile`, build context `aquaguard/`) on Render (Blueprint `render.yaml` at the repository root), Railway or Fly.io. Set `CORS_ORIGINS` to the frontend URL; optionally `LLM_API_KEY`, `LLM_MODEL`. Health check `/api/health`.
+- **Backend**: Docker (`backend/Dockerfile`, build context `aquaguard/`) on Render (Blueprint `render.yaml` at the repository root), Railway or Fly.io. Set `CORS_ORIGINS` to the frontend URL. Copilot: `GEMINI_API_KEY` as a secret in the host's dashboard (never in the repository or the frontend); `LLM_PROVIDER=gemini`, `LLM_MODEL`, and the `COPILOT_*` limits are in `render.yaml`. The container runs uvicorn with `--proxy-headers`, so per-visitor limits see the real client address. Health check `/api/health`.
 - **Frontend**: Vercel, root directory `aquaguard/frontend`, env `NEXT_PUBLIC_API_URL=https://<backend>`.
-- **Keep warm** for the demo: `deploy/keep-warm.yml` (GitHub Actions cron pinging `/api/health`).
+- **Keep warm** for the demo: `deploy/keep-warm.yml` is a GitHub Actions template for pinging `/api/health`; it is not active in its current location.
 
 ## Documentation
 
