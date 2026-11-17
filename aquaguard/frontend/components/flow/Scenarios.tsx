@@ -2,6 +2,7 @@
 /** Scenarios tab: eight conceptual presets and a comparison with normal operation (the baseline), with the reason. */
 import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 import { balanceStatus, delta, fmt, num } from "@/lib/flow/derive";
+import { displayUnit, fmtNumber, volumeValue } from "@/lib/format";
 import { DEST_LABEL, type DestId } from "@/lib/flow/network";
 import { SCENARIOS, scenarioById } from "@/lib/flow/scenarios";
 import { useFlowStore } from "@/lib/flow/store";
@@ -10,10 +11,13 @@ import { StatusText } from "./Status";
 
 function Change({ now, base, digits = 0, unit = "" }: { now: number | null; base: number | null; digits?: number; unit?: string }) {
   const d = delta(now, base, digits);
+  const volume = unit === "m³/day";
+  const text = volume && now !== null && base !== null && now !== base
+    ? `${now > base ? "+" : "−"}${fmtNumber(volumeValue(Math.abs(now - base), unit)!)}` : d.text;
   const Icon = d.dir === "up" ? ArrowUpRight : d.dir === "down" ? ArrowDownRight : Minus;
   return (
     <span className="inline-flex items-center justify-end gap-0.5 tabular-nums">
-      <Icon size={12} aria-hidden className="text-muted" />{d.text}{d.dir !== "same" && unit ? ` ${unit}` : ""}
+      <Icon size={12} aria-hidden className="text-muted" />{text}{d.dir !== "same" && unit ? ` ${displayUnit(unit)}` : ""}
     </span>
   );
 }
@@ -67,9 +71,9 @@ export function ScenariosPanel({ state, baseline }: { state: FlowState; baseline
                 {rows.map((r) => (
                   <tr key={r.label} className="border-b border-border/60">
                     <th scope="row" className="py-1 text-left font-normal">{r.label}</th>
-                    <td className="text-right tabular-nums">{fmt(r.base, r.digits ?? 0)}{r.unit === "pp" ? " %" : ""}</td>
-                    <td className="text-right tabular-nums">{fmt(r.now, r.digits ?? 0)}{r.unit === "pp" ? " %" : ""}</td>
-                    <td className="text-right"><Change now={r.now} base={r.base} digits={r.digits} unit={r.unit === "pp" ? "pp" : ""} /></td>
+                    <td className="text-right tabular-nums">{r.unit === "pp" ? `${fmt(r.base, r.digits ?? 0)} %` : r.base === null ? "—" : fmtNumber(volumeValue(r.base, r.unit)!)}</td>
+                    <td className="text-right tabular-nums">{r.unit === "pp" ? `${fmt(r.now, r.digits ?? 0)} %` : r.now === null ? "—" : fmtNumber(volumeValue(r.now, r.unit)!)}</td>
+                    <td className="text-right"><Change now={r.now} base={r.base} digits={r.digits} unit={r.unit} /></td>
                   </tr>
                 ))}
                 <tr>
@@ -79,7 +83,7 @@ export function ScenariosPanel({ state, baseline }: { state: FlowState; baseline
                 </tr>
               </tbody>
             </table>
-            <p className="mt-1 text-[11.5px] text-muted">Volumes in m³/day; pp = percentage points. Scenarios are conceptual illustrations, not measured events.</p>
+            <p className="mt-1 text-[11.5px] text-muted">Volumes in {displayUnit("m³/day")}; pp = percentage points. Scenarios are conceptual illustrations, not measured events.</p>
           </>
         )}
       </section>

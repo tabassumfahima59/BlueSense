@@ -12,7 +12,8 @@ from fastapi import APIRouter, Depends, Query
 from ..errors import ApiError
 from ..schemas.explorer import ExplorerOverview, ExplorerSeries, PeriodComparison, RegionIntel
 from ..schemas.v2 import Envelope
-from ..services import catalog, spatial_intel as si, store
+from ..services import catalog, store
+from ..services import spatial_intel as si
 from .data_api import db
 
 router = APIRouter(tags=["3D Water Explorer"])

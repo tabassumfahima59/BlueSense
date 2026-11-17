@@ -3957,6 +3957,7 @@ export interface operations {
                 end?: string | null;
                 step?: "daily" | "monthly";
                 normals?: boolean;
+                dryness?: boolean;
             };
             header?: never;
             path?: never;

@@ -1,5 +1,5 @@
 /**
- * Typed API client. The browser talks only to the AquaGuard backend (NEXT_PUBLIC_API_URL). There is no mock or
+ * Typed API client. The browser talks only to the BlueSense backend (NEXT_PUBLIC_API_URL). There is no mock or
  * sample mode (decision 5): when the API is unavailable, views show their error state.
  */
 import { scenarioQuery } from "../store/scenario";
@@ -24,7 +24,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   try {
     res = await fetch(`${API_BASE}/api${path}`, init);
   } catch {
-    throw new ApiError(0, "Cannot reach the AquaGuard API. Check that the backend is running and reachable.", "network");
+    throw new ApiError(0, "Cannot reach the BlueSense API. Check that the backend is running and reachable.", "network");
   }
   if (!res.ok) {
     let detail = `Request failed (${res.status})`;
@@ -99,11 +99,11 @@ export const api = {
   divisions: () => request<Envelope<DivisionIndicators>>("/water/scarcity/divisions"),
   waterHistory: (codes: number[], region = "bd") =>
     request<Envelope<StatHistory>>(`/water/history?${new URLSearchParams({ codes: codes.join(","), region })}`),
-  weatherHistory: (region: string, opts: { start?: string; end?: string; step?: "daily" | "monthly"; normals?: boolean } = {}) =>
+  weatherHistory: (region: string, opts: { start?: string; end?: string; step?: "daily" | "monthly"; normals?: boolean; dryness?: boolean } = {}) =>
     request<Envelope<WeatherSeries>>(`/weather/history?${new URLSearchParams({
       region, step: opts.step ?? "monthly",
       ...(opts.start ? { start: opts.start } : {}), ...(opts.end ? { end: opts.end } : {}),
-      ...(opts.normals ? { normals: "true" } : {}) })}`),
+      ...(opts.normals ? { normals: "true" } : {}), ...(opts.dryness ? { dryness: "true" } : {}) })}`),
   groundwaterTrends: (region: string, start?: string, cells = false) =>
     request<Envelope<GroundwaterTrends>>(`/groundwater/trends?${new URLSearchParams({ region, ...(start ? { start } : {}), ...(cells ? { cells: "true" } : {}) })}`),
   geo: (level: "divisions" | "districts") => request<GeoJSON.FeatureCollection>(`/geo/${level}`),

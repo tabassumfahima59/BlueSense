@@ -1,11 +1,14 @@
+"use client";
 import type { ReactNode } from "react";
 import { displayUnit, fmtInterval, fmtMeasure } from "@/lib/format";
+import { useVolumeUnit } from "@/lib/store/hooks";
 import type { Measure } from "@/lib/types/contract";
 import { DataStatusBadge, fromMeasure } from "./DataStatus";
 import { MeasureBadge } from "./Provenance";
 
 /** Inline value with its provenance badge. */
 export function MeasureText({ m, digits, signed, badge = true }: { m: Measure | null | undefined; digits?: number; signed?: boolean; badge?: boolean }) {
+  useVolumeUnit();
   return (
     <span className="inline-flex flex-wrap items-center gap-1.5">
       <span className="font-medium tabular-nums">{fmtMeasure(m, { digits, signed })}</span>
@@ -14,7 +17,7 @@ export function MeasureText({ m, digits, signed, badge = true }: { m: Measure | 
   );
 }
 
-export function KpiCard({ label, m, hint, digits, children, accent, icon, intervalLabel = "Interval", onOpen }: {
+export function KpiCard({ label, m, hint, digits, children, accent, icon, intervalLabel = "Interval", onOpen, badge = true }: {
   label: string;
   m?: Measure | null;
   hint?: ReactNode;
@@ -25,7 +28,9 @@ export function KpiCard({ label, m, hint, digits, children, accent, icon, interv
   intervalLabel?: string;
   /** Opens the KPI's DetailDrawer (chart, formula, sources). */
   onOpen?: () => void;
+  badge?: boolean;
 }) {
+  useVolumeUnit();
   const interval = fmtInterval(m, digits);
   const status = m ? fromMeasure(m) : null;
   return (
@@ -45,7 +50,7 @@ export function KpiCard({ label, m, hint, digits, children, accent, icon, interv
       )}
       {interval && <div className="text-[12px] text-muted">{intervalLabel} {interval} {m ? displayUnit(m.unit) : ""}</div>}
       <div className="relative z-10 mt-auto flex flex-wrap items-center gap-1.5 text-[12px] text-muted">
-        {status ? <DataStatusBadge info={status} compact /> : m && <MeasureBadge m={m} small />}
+        {badge && (status ? <DataStatusBadge info={status} compact /> : m && <MeasureBadge m={m} small />)}
         {hint}
       </div>
     </div>

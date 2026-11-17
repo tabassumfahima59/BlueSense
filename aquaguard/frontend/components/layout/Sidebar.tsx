@@ -10,7 +10,7 @@ import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { focusables } from "@/components/ui/Overlay";
 import { useAppStore } from "@/lib/store";
-import { DATA_SOURCES, MODULES, SETTINGS } from "./nav";
+import { MODULES, SETTINGS } from "./nav";
 import { useShareQuery } from "./UrlSync";
 
 function NavItem({ href, label, Icon, active, collapsed, onNavigate }: {
@@ -34,40 +34,45 @@ function NavItem({ href, label, Icon, active, collapsed, onNavigate }: {
   );
 }
 
-export function SidebarContent({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
+export function SidebarContent({ collapsed, onNavigate, onToggle }: {
+  collapsed: boolean; onNavigate?: () => void; onToggle?: () => void;
+}) {
   const pathname = usePathname();
   const qs = useShareQuery();
   return (
-    <div className="on-blue flex h-full flex-col">
-      <Link href={`/command-center${qs}`} onClick={onNavigate}
-            className={`flex items-center gap-2.5 px-4 py-4 ${collapsed ? "justify-center px-0" : ""}`}>
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-primary shadow-sm">
-          <Droplets size={19} aria-hidden />
-        </span>
-        {collapsed && <span className="sr-only">AquaGuard</span>}
-        {!collapsed && (
-          <span className="leading-tight">
-            <span className="block text-[15px] font-semibold text-white">AquaGuard</span>
-            <span className="block text-[11.5px] text-white/90">Water intelligence · Bangladesh</span>
+    <div className="sidebar-content on-blue flex h-full flex-col">
+      <div className={`flex shrink-0 gap-2 px-3 py-4 ${collapsed ? "flex-col items-center" : "items-center"} ${onToggle ? "" : "pr-10"}`}>
+        <Link href={`/command-center${qs}`} onClick={onNavigate} aria-label="BlueSense home" title="BlueSense home"
+              className={`flex min-w-0 items-center gap-2.5 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${collapsed ? "justify-center" : "flex-1"}`}>
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-primary shadow-sm">
+            <Droplets size={19} aria-hidden />
           </span>
+          {collapsed && <span className="sr-only">BlueSense</span>}
+          {!collapsed && (
+            <span className="min-w-0 leading-tight">
+              <span className="block truncate text-[15px] font-semibold text-white">BlueSense</span>
+              <span className="block truncate text-[11.5px] text-white/90">Water intelligence · Bangladesh</span>
+            </span>
+          )}
+        </Link>
+        {onToggle && (
+          <button type="button" onClick={onToggle} aria-expanded={!collapsed}
+                  aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                  title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                  className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-white/90 transition-colors hover:bg-white/15 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+            {collapsed ? <ChevronsRight size={18} aria-hidden /> : <ChevronsLeft size={18} aria-hidden />}
+          </button>
         )}
-      </Link>
+      </div>
       <nav aria-label="Modules" className="flex-1 space-y-1 overflow-y-auto px-2.5">
-        {MODULES.map((m) => (
+        {MODULES.filter((m) => m.href !== "/copilot").map((m) => (
           <NavItem key={m.href} href={`${m.href}${qs}`} label={m.label} Icon={m.icon} active={pathname.startsWith(m.href)}
                    collapsed={collapsed} onNavigate={onNavigate} />
         ))}
         <div className="my-2 border-t border-white/20" />
         <NavItem href={`${SETTINGS.href}${qs}`} label={SETTINGS.label} Icon={SETTINGS.icon} active={pathname.startsWith(SETTINGS.href)}
                  collapsed={collapsed} onNavigate={onNavigate} />
-        <NavItem href={`${DATA_SOURCES.href}${qs}`} label={DATA_SOURCES.label} Icon={DATA_SOURCES.icon}
-                 active={pathname.startsWith(DATA_SOURCES.href)} collapsed={collapsed} onNavigate={onNavigate} />
       </nav>
-      {!collapsed && (
-        <p className="px-4 pb-4 pt-3 text-[11.5px] leading-snug text-white/90">
-          Decision support prototype. Not a replacement for field monitoring, lab testing or government systems.
-        </p>
-      )}
     </div>
   );
 }
@@ -76,15 +81,10 @@ export function Sidebar() {
   const collapsed = useAppStore((s) => s.sidebarCollapsed);
   const setCollapsed = useAppStore((s) => s.setSidebarCollapsed);
   return (
-    <aside className={`sidebar-blue sticky top-0 hidden h-screen shrink-0 transition-[width] md:flex md:flex-col ${collapsed ? "w-[76px]" : "w-[244px]"}`}>
+    <aside className={`sidebar-blue sticky top-0 hidden h-screen shrink-0 transition-[width] duration-200 ease-in-out motion-reduce:transition-none md:flex md:flex-col ${collapsed ? "w-[76px]" : "w-[244px]"}`}>
       <div className="min-h-0 flex-1">
-        <SidebarContent collapsed={collapsed} />
+        <SidebarContent collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
       </div>
-      <button onClick={() => setCollapsed(!collapsed)} aria-expanded={!collapsed}
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-              className="on-blue m-2.5 flex items-center justify-center gap-2 rounded-xl border border-white/30 py-1.5 text-[12.5px] font-medium text-white transition hover:bg-white/15">
-        {collapsed ? <ChevronsRight size={16} aria-hidden /> : <><ChevronsLeft size={16} aria-hidden /> Collapse</>}
-      </button>
     </aside>
   );
 }

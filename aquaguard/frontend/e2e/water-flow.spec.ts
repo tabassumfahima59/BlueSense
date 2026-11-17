@@ -13,7 +13,7 @@ async function open(page: Page, errors?: string[]) {
     page.on("pageerror", (e) => errors.push(e.message));
   }
   await page.goto("/water-flow");
-  await expect(page.getByRole("heading", { name: "What is real here?" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "3D Water Flow", exact: true })).toBeVisible();
   await expect(page.getByTestId("kpi-inflow")).toContainText("m³/day");
 }
 
@@ -32,15 +32,12 @@ async function clickObject(page: Page, kind: "node" | "pipe", id: string) {
 
 const scene = (page: Page) => page.getByTestId("flow-scene");
 
-test("labelled as a conceptual simulation, real parts marked, no console errors", async ({ page }) => {
+test("3D simulation label remains without the removed note and real-parts card, no console errors", async ({ page }) => {
   const errors: string[] = [];
   await open3d(page, errors);
-  await expect(page.getByRole("status").filter({ hasText: "Conceptual Simulation — Not Live Infrastructure Measurements" })).toBeVisible();
+  await expect(page.getByText(/no IoT sensors, no real-time pipe pressure/)).toHaveCount(0);
   await expect(scene(page).getByText("Conceptual simulation")).toBeVisible();
-  await expect(page.getByTestId("real-parts")).toHaveText("none");
-  await expect(page.getByText("Real national magnitudes (for scale)")).toBeVisible();
-  await expect(page.getByRole("button", { name: /Data status: .*Reference year \d{4}/ }).first()).toBeVisible();
-  await expect(page.getByText(/For scale: the conceptual network delivers .* m³\/day, about .*% of/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "What is real here?", exact: true })).toHaveCount(0);
   // every facility and zone is drawn and labelled in 3D
   for (const id of ["reservoir", "treatment", "pump", "junction", "residential", "agricultural", "industrial", "other"]) {
     await expect(page.locator(`[data-flow-label="${id}"]`)).toBeVisible();

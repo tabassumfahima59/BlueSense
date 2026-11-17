@@ -1,12 +1,12 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
 
-async function open(page: Page, path = "/water-budget") {
+async function open(page: Page, path = "/water-budget?view=national") {
   await page.goto(path);
-  await expect(page.getByRole("heading", { name: "National water budget" })).toBeVisible();
+  await expect(page.locator("header.glass-bar").getByText("Water Budget", { exact: true })).toBeVisible();
 }
 
-test("the national AQUASTAT budget is the default and shows values, units and reference years", async ({ page }) => {
+test("the explicit national AQUASTAT view shows values, units and reference years", async ({ page }) => {
   await open(page);
   await expect(page.getByRole("radio", { name: "National statistics (AQUASTAT)" })).toHaveAttribute("aria-checked", "true");
   const sankey = page.getByRole("img", { name: /National water budget Sankey/ });

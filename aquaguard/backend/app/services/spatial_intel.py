@@ -24,7 +24,8 @@ from scipy import stats
 
 from ..config.params import pentry
 from ..schemas.common import Measure
-from . import catalog, indicators, ml_artifacts as mla, regional, store
+from . import catalog, indicators, regional, store
+from . import ml_artifacts as mla
 from .catalog import mv
 
 NORMAL = "1991–2020"
@@ -33,9 +34,9 @@ DRY_SEASON_NOTE = "dry season = the engine's dry-season months"
 LIMITS_COMMON = [
     "Weather values come from one representative Open-Meteo point per division (ERA5 reanalysis), not from "
     "weather stations or division averages.",
-    "GRACE resolves about 300 km: AquaGuard uses only the national series; it is total water storage, not a "
+    "GRACE resolves about 300 km: BlueSense uses only the national series; it is total water storage, not a "
     "groundwater level.",
-    "JRC surface-water occurrence (1984–2021) is a historical map layer; AquaGuard stores no per-division "
+    "JRC surface-water occurrence (1984–2021) is a historical map layer; BlueSense stores no per-division "
     "statistic, so no surface-water number is given.",
     "The scarcity risk is an estimate (engine stress ratio with area-based splits of national data, combined with "
     "an ML dryness class); it is not a measured quantity.",
@@ -330,7 +331,8 @@ def build(conn: sqlite3.Connection, region_id: str, db_key: str = "main") -> dic
         "risk", "Estimated scarcity risk",
         f"Estimated scarcity risk is {rk['label']}, {driver_txt}. Rule: the higher of the two levels.", "derived",
         [_ev("Dry-season stress ratio (engine estimate)", mv(rk["dryStressRatio"], "ratio", "derived",
-                                                             "aquaguard_engine", "division" if level == "division" else "national",
+                                                             "aquaguard_engine",
+                                                             "division" if level == "division" else "national",
                                                              digits=3, note=DRY_SEASON_NOTE)),
          _ev("Predicted dryness z (next month)", mv(rk["z"], "z-score", "prediction", "aquaguard_ml",
                                                     "division" if level == "division" else "national",
@@ -354,14 +356,14 @@ def build(conn: sqlite3.Connection, region_id: str, db_key: str = "main") -> dic
 
     findings.append(_finding(
         "surface", "Surface water (JRC)",
-        "Historical surface-water occurrence (1984–2021, JRC Global Surface Water) is shown on the map. AquaGuard "
+        "Historical surface-water occurrence (1984–2021, JRC Global Surface Water) is shown on the map. BlueSense "
         "stores no per-region statistic for it, so no surface-water percentage is reported.", "satellite_historical", []))
 
     # monitoring suggestions (rule-based, stated as suggestions)
     suggestions = []
     if l12 and l12["rainDeparturePct"] is not None and l12["rainDeparturePct"] <= -15:
         suggestions.append("Rainfall has been well below normal: compare with river gauge and groundwater well "
-                           "records (not available in AquaGuard) before drawing conclusions.")
+                           "records (not available in BlueSense) before drawing conclusions.")
     if dz and dz[0] is not None and dz[0] <= -1:
         suggestions.append("Seasonal dryness is at least moderately dry: watch the next months' rainfall and the "
                            "predicted dryness class.")
@@ -453,7 +455,8 @@ def overview(conn: sqlite3.Connection, db_key: str = "main") -> list[dict]:
                                               + (" AND parent_id = ?" if sc.level == "division" else ""),
                                               ((rid,) if sc.level == "division" else ())).fetchone()[0],
                     "last12": l12, "risk": rk, "drynessZ": dz[0] if dz else None, "drynessAt": dz[1] if dz else None,
-                    "drynessClass": (indicators.classify("dryness_3m", dz[0]) or {}).get("label") if dz and dz[0] is not None else None,
+                    "drynessClass": ((indicators.classify("dryness_3m", dz[0]) or {}).get("label")
+                                     if dz and dz[0] is not None else None),
                     "tempNow": cur.get("value"), "tempNowAt": cur.get("observed")})
     return out
 

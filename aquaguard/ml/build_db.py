@@ -228,15 +228,15 @@ def export_sample() -> None:
         df["is_sample"] = 1
         df.to_csv(SAMPLE / f"{name}.csv", index=False)
     write_json(SAMPLE / "README.json", {
-        "what": "Frozen snapshot of AquaGuard's processed real datasets, used only when the database and "
-                "live APIs are unavailable. Every record is flagged is_sample = 1 and shown with a 'Sample' tag.",
+        "what": "Legacy frozen snapshot of BlueSense's processed real datasets. Not used by the runtime API or "
+                "frontend; bootstrap uses data/processed. Records are flagged is_sample = 1.",
         "sources_retrieved": retrieved(),
     })
     print(f"sample snapshot written: {SAMPLE}")
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Idempotent AquaGuard bootstrap importer")
+    parser = argparse.ArgumentParser(description="Idempotent BlueSense bootstrap importer")
     parser.add_argument("--db", type=Path, default=DB_PATH)
     parser.add_argument("--no-backup", action="store_true")
     parser.add_argument("--sample", action="store_true", help="also refresh data/sample snapshot")

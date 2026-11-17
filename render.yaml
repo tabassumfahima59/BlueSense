@@ -1,4 +1,4 @@
-# Render Blueprint for the AquaGuard API (Render reads this file from the repository root).
+# Render Blueprint for the BlueSense API (Render reads this file from the repository root).
 # The frontend deploys separately to Vercel with root directory `aquaguard/frontend`.
 services:
   - type: web

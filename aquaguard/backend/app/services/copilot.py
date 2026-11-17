@@ -1,4 +1,4 @@
-"""AquaGuard Copilot: a language model with read-only tools over AquaGuard's own backend functions.
+"""BlueSense Copilot: a language model with read-only tools over BlueSense's own backend functions.
 
 * Provider-independent: ``LLM_PROVIDER`` = ``gemini`` (default; ``GEMINI_API_KEY``) or ``anthropic``
   (``ANTHROPIC_API_KEY``), ``LLM_MODEL`` optional. Adapters live in ``services/llm``. There is never an automatic
@@ -36,15 +36,15 @@ log = logging.getLogger("aquaguard.copilot")
 MAX_TOOL_RESULT_CHARS = 24000
 HISTORY_TURNS = 6
 
-SYSTEM_PROMPT = """You are the AquaGuard Copilot, the assistant of a water decision-support prototype for Bangladesh.
+SYSTEM_PROMPT = """You are the BlueSense Copilot, the assistant of a water decision-support prototype for Bangladesh.
 
 How to answer
-- Use the tools to look up AquaGuard's data before answering any question about water, weather, risk, statistics, \
+- Use the tools to look up BlueSense's data before answering any question about water, weather, risk, statistics, \
 predictions, irrigation or scenarios. Answer only from what the tools return in this conversation.
 - Copy numbers exactly as the tools return them, with their units. Do not invent, estimate or extrapolate numbers. \
 If you combine or convert values, say that you did and show the inputs.
-- If no tool provides what is asked, say plainly that AquaGuard does not have that data and name the module or \
-dataset that would be needed. AquaGuard has no real-time sensors, no well depths or groundwater levels and no \
+- If no tool provides what is asked, say plainly that BlueSense does not have that data and name the module or \
+dataset that would be needed. BlueSense has no real-time sensors, no well depths or groundwater levels and no \
 water-quality data.
 - Say what kind of data each number is, using the tool's data_kind and status. Call a value "live" only when its \
 data_kind is model_current and its status is fresh; when the status is stale, say it is the last stored value and give \
@@ -52,12 +52,12 @@ its time. Other kinds: forecast, reanalysis, satellite (GRACE is a regional stor
 resolution, never a well level), statistic (give the AQUASTAT reference year), derived, prediction, scenario. \
 National AQUASTAT statistics are never split into divisions; national weather is the area-weighted mean of eight \
 divisional points.
-- Mention the AquaGuard module a value comes from in brackets, using the "aquaguardModule" field of the tool result \
+- Mention the BlueSense module a value comes from in brackets, using the "aquaguardModule" field of the tool result \
 that provided it, e.g. [Command Center], [Prediction Lab], [Water Budget], [What-if], [Smart Irrigation], \
 [Water Explorer].
 - For questions about a region on the map, or comparisons of divisions or time periods, use the Water Explorer \
 tools (get_regional_intelligence, compare_divisions, compare_periods). Districts have no water data in \
-AquaGuard: say so and offer the parent division. Never present a pattern or correlation as a cause.
+BlueSense: say so and offer the parent division. Never present a pattern or correlation as a cause.
 - Be concise (normally under 180 words). Give practical, clearly hedged recommendations when asked.
 - Write plain text for a chat window: short paragraphs and simple "- " lists. No Markdown headings, no bold or italic \
 markers, no tables and no LaTeX; write formulas in words or plain characters (for example P - ET0).
@@ -114,7 +114,9 @@ def make_provider(cfg: CopilotConfig):  # replaced in tests; never called withou
         from .llm.gemini import GeminiProvider
 
         return GeminiProvider(s.gemini_api_key.get_secret_value(), cfg.model, s.gemini_thinking_level,
-                              s.llm_call_timeout_s)
+                              s.llm_call_timeout_s, deadline_s=s.copilot_deadline_s,
+                              max_retries=s.llm_max_retries, retry_backoff_s=s.llm_retry_backoff_s,
+                              retry_after_max_s=s.llm_retry_after_max_s)
     import anthropic
 
     from .llm.anthropic import AnthropicProvider
@@ -393,7 +395,7 @@ def run_tool(conn, name: str, raw_input: Any, client: str = "-") -> tuple[str, b
     summary["input"] = args.model_dump(exclude_none=True)
     try:
         data = tool.run(conn, args)
-        # tell the model which AquaGuard module the data belongs to, so it cites the right one
+        # tell the model which BlueSense module the data belongs to, so it cites the right one
         text = json.dumps({"aquaguardModule": tool.module, **data}, ensure_ascii=False, separators=(",", ":"))
         if len(text) > MAX_TOOL_RESULT_CHARS:
             raise ValueError("result too large")
@@ -474,7 +476,7 @@ def stream_answer(question: str, history: list[dict], conn, client_key: str = "-
     tag = client_tag(client_key)
     provider = make_provider(cfg)
     # the region id is validated by the router; it is app context, separate from the user's own words
-    context = f"App context (set by AquaGuard, not by the user): selected region = {region}"
+    context = f"App context (set by BlueSense, not by the user): selected region = {region}"
     if map_context:  # validated by CopilotMapContext (fixed kinds, restricted characters, 80 chars)
         context += (f"; page = 3D Water Explorer; selected map feature = {map_context['name']} "
                     f"({map_context['kind'].replace('_', ' ')})")

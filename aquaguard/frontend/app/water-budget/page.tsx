@@ -1,7 +1,7 @@
 "use client";
 /**
- * M4 Water Budget. Default tab: the national AQUASTAT budget (statistics, each with its own reference year).
- * Second tab: the monthly water-balance model (derived, national only, decision 8). The tab is kept in the URL.
+ * M4 Water Budget. Default tab: the monthly water-balance model (derived, national only, decision 8).
+ * The national AQUASTAT statistics remain available as a separate view. The tab is kept in the URL.
  */
 import { CheckCircle2, Sparkles, TriangleAlert, XCircle } from "lucide-react";
 import Link from "next/link";
@@ -9,7 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 import { DataTable, Plot } from "@/components/charts/Plot";
 import { type FlowLink, type FlowNode, Sankey, SankeyChart } from "@/components/charts/Sankey";
 import { axisTitle, baseLayout, FLOW_COLOR, NEUTRAL, SECTOR_COLOR, SERIES } from "@/components/charts/theme";
-import { Button, Card, Note, PageHeader, Segmented } from "@/components/ui/Card";
+import { Button, Card, Note, Segmented } from "@/components/ui/Card";
 import { DATA_KIND_LABEL, DataStatusBadge, fromMeasure, fromMeta } from "@/components/ui/DataStatus";
 import { KpiCard } from "@/components/ui/MeasureView";
 import { DetailDrawer } from "@/components/ui/Overlay";
@@ -17,9 +17,10 @@ import { MeasureBadge } from "@/components/ui/Provenance";
 import { Async, EmptyState, ErrorCard } from "@/components/ui/States";
 import { api } from "@/lib/api/client";
 import { useApi } from "@/lib/api/useApi";
-import { fmtMeasure, fmtNumber, MONTHS } from "@/lib/format";
+import { displayUnit, fmtMeasure, fmtNumber, fmtVolume, MONTHS, volumeValue } from "@/lib/format";
 import { rebalance } from "@/lib/format/shares";
 import { useAppStore } from "@/lib/store";
+import { useVolumeUnit } from "@/lib/store/hooks";
 import { describeScenario, isBaseline, scenarioQuery } from "@/lib/store/scenario";
 import type { BudgetHistory, BudgetNode, BudgetResponse, BudgetState, Meta, NationalBudget, OptimizeResponse } from "@/lib/types/contract";
 
@@ -30,26 +31,26 @@ const VIEWS: { value: View; label: string }[] = [
 ];
 
 function readView(): View {
-  if (typeof window === "undefined") return "national";
-  return new URLSearchParams(window.location.search).get("view") === "model" ? "model" : "national";
+  if (typeof window === "undefined") return "model";
+  return new URLSearchParams(window.location.search).get("view") === "national" ? "national" : "model";
 }
 
 export default function WaterBudget() {
-  const [view, setViewState] = useState<View>("national");
+  useVolumeUnit();
+  const [view, setViewState] = useState<View>("model");
   useEffect(() => setViewState(readView()), []);
   const setView = (v: View) => {
     setViewState(v);
     const p = new URLSearchParams(window.location.search);
-    if (v === "model") p.set("view", "model"); else p.delete("view");
+    p.set("view", v);
     const qs = p.toString();
     window.history.replaceState(window.history.state, "", `${window.location.pathname}${qs ? `?${qs}` : ""}`);
   };
   return (
     <div className="space-y-5">
-      <PageHeader title="Water Budget"
-                  description="Where Bangladesh's water comes from and where it goes. The national AQUASTAT statistics are the default; the monthly water-balance model is a separate, derived view.">
+      <div className="flex flex-wrap items-center gap-2">
         <Segmented label="Budget view" value={view} onChange={setView} options={VIEWS} />
-      </PageHeader>
+      </div>
       {view === "national" ? <NationalView /> : <ModelView />}
     </div>
   );
@@ -62,18 +63,26 @@ const refLabel = (n: BudgetNode) => (n.value.referenceYear ? `ref. ${n.value.ref
 
 function NationalView() {
   const region = useAppStore((s) => s.selectedRegion) || "bd";
-  const b = useApi(`water-budget|national|${region}`, () => api.waterBudget("national", { region }));
+  const b = useApi("water-budget|national|bd", () => api.waterBudget("national", { region: "bd" }));
   return (
-    <Async state={b} rows={3} label="Loading the national water budget">
-      {(env) => env.data.national && env.data.national.nodes.length > 0
-        ? <NationalBody nb={env.data.national} meta={env.meta} />
-        : (
-          <EmptyState title="No national budget data stored">
-            No genuine AQUASTAT values for total renewable water resources are stored yet. Run the AQUASTAT sync from
-            Data Sources; nothing is estimated in their place.
-          </EmptyState>
-        )}
-    </Async>
+    <>
+      {region !== "bd" && (
+        <Note>
+          <strong>National water budget · Bangladesh.</strong> AQUASTAT water budget statistics apply at the national
+          level. This view stays focused on Bangladesh when a division is selected.
+        </Note>
+      )}
+      <Async state={b} rows={3} label="Loading the national water budget">
+        {(env) => env.data.national && env.data.national.nodes.length > 0
+          ? <NationalBody nb={env.data.national} meta={env.meta} />
+          : region !== "bd" ? null : (
+            <EmptyState title="No national budget data stored">
+              No genuine AQUASTAT values for total renewable water resources are stored yet. The existing AQUASTAT sync
+              can load published values; nothing is estimated in their place.
+            </EmptyState>
+          )}
+      </Async>
+    </>
   );
 }
 
@@ -125,7 +134,7 @@ function NationalBody({ nb, meta }: { nb: NationalBudget; meta: Meta }) {
                           hint={n.code ? `AQUASTAT variable ${n.code}` : n.value.dataKind === "derived" ? "Derived from the parts" : "No data"} />;
         })}
       </div>
-      <Card title="National water budget" subtitle={`Renewable resources by origin → uses · ${unit} and % of total renewable resources`}
+      <Card title="National water budget" subtitle={`Renewable resources by origin → uses · ${displayUnit(unit)} and % of total renewable resources`}
             actions={trwr ? <MeasureBadge m={trwr.value} small /> : undefined}>
         <Sankey nodes={flowNodes} links={flowLinks} unit={unit} total={total} totalLabel="total renewable resources" height={400}
                 filename="water-budget-national-aquastat" caption="National water budget flows (AQUASTAT)" onNodeClick={setOpen}
@@ -150,7 +159,7 @@ function NodeDetail({ n, nb, total }: { n: BudgetNode; nb: NationalBudget; total
   const h = nb.history.find((x) => x.id === n.id);
   const v = n.value.value;
   const rows: [string, string][] = [
-    ["Value", v === null ? "No data" : `${fmtNumber(v)} ${n.value.unit}`],
+    ["Value", v === null ? "No data" : fmtVolume(v, n.value.unit)],
     ["Share of total renewable resources", v !== null && total ? `${((v / total) * 100).toFixed(1)}%` : "—"],
     ["Reference year", n.value.referenceYear ? String(n.value.referenceYear) : n.value.dataKind === "derived" ? "Mixed (derived)" : "—"],
     ["Data kind", n.value.dataKind ? DATA_KIND_LABEL[n.value.dataKind] : "—"],
@@ -181,8 +190,8 @@ function NodeDetail({ n, nb, total }: { n: BudgetNode; nb: NationalBudget; total
       {h ? (
         <div>
           <h3 className="mb-1 text-[12.5px] font-semibold">Genuine reference years</h3>
-          <DataTable caption={`${n.label}: genuine AQUASTAT reference years`} head={["Year", h.unit]} maxHeight={260}
-                     rows={[...h.points].reverse().map((p) => [p.referenceYear ?? "—", p.value ?? null])} />
+          <DataTable caption={`${n.label}: genuine AQUASTAT reference years`} head={["Year", displayUnit(h.unit)]} maxHeight={260}
+                     rows={[...h.points].reverse().map((p) => [p.referenceYear ?? "—", volumeValue(p.value, h.unit)])} />
           <p className="mt-1 text-[12px] text-muted">Imputed values are excluded; years are never interpolated.</p>
         </div>
       ) : n.kind !== "remainder" && <p className="text-[12.5px] text-muted">No genuine AQUASTAT values are stored for this part.</p>}
@@ -237,8 +246,8 @@ function YearComparison({ nb, onOpen }: { nb: NationalBudget; onOpen: (id: strin
           <thead className="text-left text-[12px] text-muted">
             <tr className="border-b border-border">
               <th className="py-1.5 font-medium">Part</th>
-              <th className="text-right font-medium">Latest ({unit})</th>
-              <th className="text-right font-medium">{year} ({unit})</th>
+              <th className="text-right font-medium">Latest ({displayUnit(unit)})</th>
+              <th className="text-right font-medium">{year} ({displayUnit(unit)})</th>
               <th className="text-right font-medium">Change</th>
             </tr>
           </thead>
@@ -250,12 +259,12 @@ function YearComparison({ nb, onOpen }: { nb: NationalBudget; onOpen: (id: strin
                     <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: NODE_COLOR(n) }} aria-hidden />{n.label}
                   </button>
                 </td>
-                <td className="text-right tabular-nums">{now === null ? "No data" : `${fmtNumber(now)} (${n.value.referenceYear})`}</td>
-                <td className="text-right tabular-nums">{then === null ? "No data" : fmtNumber(then)}</td>
+                <td className="text-right tabular-nums">{now === null ? "No data" : `${fmtNumber(volumeValue(now, unit)!)} (${n.value.referenceYear})`}</td>
+                <td className="text-right tabular-nums">{then === null ? "No data" : fmtNumber(volumeValue(then, unit)!)}</td>
                 <td className="text-right tabular-nums">
                   {same ? <span className="text-muted">same year</span>
                     : change === null ? <span className="text-muted">—</span>
-                      : `${change > 0 ? "+" : change < 0 ? "−" : "±"}${fmtNumber(Math.abs(change))}${then ? ` (${change >= 0 ? "+" : "−"}${Math.abs((change / then) * 100).toFixed(1)}%)` : ""}`}
+                      : `${change > 0 ? "+" : change < 0 ? "−" : "±"}${fmtNumber(volumeValue(Math.abs(change), unit)!)}${then ? ` (${change >= 0 ? "+" : "−"}${Math.abs((change / then) * 100).toFixed(1)}%)` : ""}`}
                 </td>
               </tr>
             ))}
@@ -274,11 +283,11 @@ const LABEL: Record<string, string> = { agriculture: "Agriculture", domestic: "D
 function BalanceIndicator({ s }: { s: BudgetState }) {
   return s.balanced ? (
     <span className="inline-flex items-center gap-1 rounded-full border border-success/50 bg-[#e8f8f2] px-2 py-0.5 text-[12px] font-medium text-[#0f7a55]">
-      <CheckCircle2 size={13} aria-hidden /> Balanced: input = output (|error| {Math.abs(s.balanceError.value ?? 0).toFixed(4)} MCM)
+      <CheckCircle2 size={13} aria-hidden /> Balanced: input = output (|error| {fmtVolume(Math.abs(s.balanceError.value ?? 0), "MCM")})
     </span>
   ) : (
     <span className="inline-flex items-center gap-1 rounded-full border border-risk/50 bg-[#fdeeee] px-2 py-0.5 text-[12px] font-medium text-[#b42318]">
-      <XCircle size={13} aria-hidden /> Not balanced (|error| {Math.abs(s.balanceError.value ?? 0).toFixed(4)} MCM)
+      <XCircle size={13} aria-hidden /> Not balanced (|error| {fmtVolume(Math.abs(s.balanceError.value ?? 0), "MCM")})
     </span>
   );
 }
@@ -346,7 +355,7 @@ function Optimizer({ period, base }: { period: string; base: BudgetState }) {
         </div>
         <div>
           {err && <ErrorCard error={err} />}
-          {!res && !err && <p className="text-[13px] text-muted">Results appear here. Each proposal is re-balanced by the same engine and must pass the 0.01 MCM balance check.</p>}
+          {!res && !err && <p className="text-[13px] text-muted">Results appear here. Each proposal is re-balanced by the same engine and must pass the {fmtVolume(0.01, "MCM")} balance check.</p>}
           {res && (
             <div className="space-y-3">
               <div className="grid gap-2 sm:grid-cols-4">
@@ -357,7 +366,7 @@ function Optimizer({ period, base }: { period: string; base: BudgetState }) {
                   </div>
                 ))}
               </div>
-              <Plot filename="allocation-current-vs-proposed" ariaLabel="Delivered water by sector, current versus proposed" height={260}
+              <Plot filename="allocation-current-vs-proposed" volumeUnit="MCM" ariaLabel="Delivered water by sector, current versus proposed" height={260}
                 data={[
                   { type: "bar", name: "Current", x: SECTORS.map((k) => LABEL[k]), y: res.current.sectors.map((r) => r.delivered.value), marker: { color: SERIES[1] }, hovertemplate: "%{y:,.0f} MCM" },
                   { type: "bar", name: res.method.startsWith("Linear") ? "Optimized" : "Custom shares", x: SECTORS.map((k) => LABEL[k]), y: res.proposed.sectors.map((r) => r.delivered.value), marker: { color: SERIES[0] }, hovertemplate: "%{y:,.0f} MCM" },
@@ -387,14 +396,14 @@ function ModelNodeDetail({ id, s }: { id: string; s: BudgetState }) {
   return (
     <div className="space-y-3 text-[13px]">
       <DataStatusBadge info={fromMeasure(inflow[0]?.value ?? outflow[0]?.value ?? s.supply)} />
-      <DataTable caption={`${label(id)} flows (MCM)`} head={["Flow", "MCM"]} rows={rows} />
+      <DataTable caption={`${label(id)} flows (${displayUnit("MCM")})`} head={["Flow", displayUnit("MCM")]}
+                 rows={rows.map(([label, value]) => [label, typeof value === "number" ? volumeValue(value, "MCM") : value])} />
       <p className="text-[12px] text-muted">Monthly water-balance model (derived). National totals; not observed allocation data.</p>
     </div>
   );
 }
 
 function ModelView() {
-  const region = useAppStore((s) => s.selectedRegion) || "bd";
   const scenario = useAppStore((s) => s.activeScenario);
   const [period, setPeriod] = useState("dry");
   const [open, setOpen] = useState<string | null>(null);
@@ -410,7 +419,6 @@ function ModelView() {
           </select>
         )}
       </div>
-      {region !== "bd" && <Note>The monthly model runs for Bangladesh as a whole; the division selected in the header does not change it.</Note>}
       {!isBaseline(scenario) && (
         <Note tone="warn">Scenario applied: {describeScenario(scenario)}. Change or reset the levers on the <Link href="/what-if" className="font-medium text-primary underline">What-if</Link> page.</Note>
       )}
@@ -430,17 +438,16 @@ function ModelView() {
                 <KpiCard label="Unmet demand" m={d.current.unmetTotal} />
                 <KpiCard label="Balance check">
                   <div className="py-2"><BalanceIndicator s={d.current} /></div>
-                  <p className="text-[12px] text-muted">Supply = Σ delivered + losses + storage change, tolerance 0.01 MCM.</p>
+                  <p className="text-[12px] text-muted">Supply = Σ delivered + losses + storage change, tolerance {fmtVolume(0.01, "MCM")}.</p>
                 </KpiCard>
               </div>
-              <Card title={`Model water budget — ${d.periodLabel}`} subtitle="Bangladesh · MCM and % of total available · derived" actions={<MeasureBadge m={d.current.supply} small />}>
+              <Card title={`Model water budget — ${d.periodLabel}`} subtitle={`Bangladesh · ${displayUnit("MCM")} and % of total available · derived`} actions={<MeasureBadge m={d.current.supply} small />}>
                 <SankeyChart state={d.current} filename={`sankey-model-${period}`} onNodeClick={setOpen} />
               </Card>
               <Card title="Sector detail" subtitle="'Current' is a pro-rata proxy of current practice, not observed allocation data">
                 <SectorTable s={d.current} />
               </Card>
               <Optimizer key={`${period}|${scenarioQuery(scenario)}`} period={period} base={d.current} />
-              <Note>{d.notes.join(" ")}</Note>
               <DetailDrawer open={!!open} onClose={() => setOpen(null)} title={d.current.nodes.find((n) => n.id === open)?.label ?? ""} subtitle={`Monthly model · ${d.periodLabel}`}>
                 {open && <ModelNodeDetail id={open} s={d.current} />}
               </DetailDrawer>

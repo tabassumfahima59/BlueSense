@@ -1,4 +1,4 @@
-# AquaGuard — Progress Log
+# BlueSense — Progress Log
 
 Updated after every verified phase or module. A task is **done** only when a check was run and passed.
 
@@ -39,13 +39,13 @@ phone bottom sheet). Remaining warning in the console: `THREE.Clock` deprecation
 | Quota protection | done | per visitor (IP and browser id): 5 / min, 30 / day; site-wide 200 model calls / provider day (midnight Pacific); 2 concurrent questions (slots expire after 5 min if a visitor disconnects); 4 model calls, 4,096 output tokens and 90 s per question; in memory (documented limitation on free hosting) |
 | Real visitor addresses | done | Docker CMD runs uvicorn with `--proxy-headers --forwarded-allow-ips='*'` (before: every visitor behind Render's proxy shared one limit) |
 | Errors | done | quota used up (429 / RESOURCE_EXHAUSTED, no retry, reset time shown), unavailable (one retry), timeout, key rejected, unknown model, blocked by provider filters, malformed tool call, site / visitor limits, busy — each a clear message (tests) |
-| Disclosure | done | `/copilot/status` returns the provider's data-use disclosure and terms link; shown above the chat (page and panel): Google may use free-tier questions to improve its products, human reviewers may read them, no personal or sensitive data, 18+, not for the EEA / UK / Switzerland on the free tier |
+| Disclosure | done | `/copilot/status` returns the provider's data-use disclosure and terms link; the top chat banner has since been removed by request; processing terms remain documented in LIMITATIONS.md: Google may use free-tier questions to improve its products, human reviewers may read them, no personal or sensitive data, 18+, not for the EEA / UK / Switzerland on the free tier |
 | Tests | done | backend `test_copilot_gemini.py` 15 (httpx MockTransport, no Google call) + `test_copilot.py` 17 on the Anthropic adapter; full **342 passed**; vitest 38; e2e `copilot.spec.ts` 4 (keyless server + axe; recorded Gemini stream; quota error); full Playwright **66 passed** |
 | Layout fix | done | `responsive.spec` caught Data Sources scrolling sideways at 768 px once a source turned stale (the longer "Stale · updated …" badge in a ~230 px column next to the sidebar); two columns now start at 1024 px |
 
 Real Gemini check (local API, free-tier key, 3 questions): answers in 8-34 s, real tool calls (current weather,
 division indicators), 0 unverified numbers. The first real answers led to three fixes: plain-text answers (no Markdown /
-LaTeX, the chat shows plain text), each tool result names its AquaGuard module (Gemini had cited the wrong module), and
+LaTeX, the chat shows plain text), each tool result names its BlueSense module (Gemini had cited the wrong module), and
 "live" only for fresh model_current values (stale data is now described as the last stored value with its time).
 Google's per-account free limits are shown in AI Studio; set `COPILOT_DAILY_MODEL_CALLS` below them.
 
@@ -100,7 +100,7 @@ Note: the configured path was verified with a fake client and recorded streams o
 | Phase | Task | Status | Evidence (2026-11-14) |
 |---|---|---|---|
 | M6 | Layers | done | division boundaries, districts (reference layer only: a district click selects its division, decision 6), rivers, JRC surface water, **GRACE grid cells** (206 x 0.25° cells of the latest month from `/api/groundwater/trends?cells=true`, labelled "~300 km effective resolution, not a well level"; replaces the single national colour), **weather points** (new `GET /api/weather/points`: the eight representative points with current conditions, `model_current`, "not weather stations"), scarcity risk, terrain |
-| M6 | GRACE colours | done | diverging display bins (-20/-10/-3/+3/+10/+20 cm) on the validated tone palette, boundary value in the class farther from neutral, labelled "AquaGuard display bins (not an official classification)"; MapLibre `case` expression and the 2D colours agree for every value (vitest) |
+| M6 | GRACE colours | done | diverging display bins (-20/-10/-3/+3/+10/+20 cm) on the validated tone palette, boundary value in the class farther from neutral, labelled "BlueSense display bins (not an official classification)"; MapLibre `case` expression and the 2D colours agree for every value (vitest) |
 | M6 | Interaction | done | zoom / rotate / pan (MapLibre controls, reset view), cell popup with value and month, click on division / district / weather point → info panel filled from the backend: current weather (`/weather/current`), indicators with classes (`/water/scarcity/divisions`), stored 1-month prediction (`/predictions`), scarcity risk; keyboard path via "Select a division" buttons |
 | M6 | 2D fallback | done | SVG map (d3 planar projection, longitude x cos 23.7°) with the same layers that do not need tiles; used when WebGL is unavailable (says so; "Show 3D map" disabled with the reason; 3D-only layers disabled with "Needs the 3D map") and by default on screens < 768 px (can switch to 3D) |
 | M6 | Lazy loading | done | both maps are `next/dynamic` client-only chunks; GRACE cells are requested only when the layer is switched on (e2e counts the requests) |

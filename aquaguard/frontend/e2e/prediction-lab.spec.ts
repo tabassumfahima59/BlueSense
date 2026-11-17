@@ -29,12 +29,14 @@ test("horizon is selectable, requested and kept in the URL", async ({ page }) =>
   await expect(page.getByRole("radio", { name: "3 mo" })).toHaveAttribute("aria-checked", "true");
 });
 
-test("only the working model's category can be chosen, the others say why", async ({ page }) => {
+test("only the working model's category can be chosen without the removed explanatory text", async ({ page }) => {
   await open(page);
   const select = page.getByLabel("Category");
   await expect(select.locator("option", { hasText: "Climatic water balance" })).not.toHaveAttribute("disabled", /.*/);
   await expect(select.locator("option", { hasText: "Rainfall" })).toHaveAttribute("disabled", /.*/);
-  await expect(page.getByText(/Rainfall: No rainfall model is trained/)).toBeVisible();
+  await expect(page.getByText(/Rainfall: No rainfall model is trained/)).toHaveCount(0);
+  await expect(page.getByText(/Groundwater storage: No ML model/)).toHaveCount(0);
+  await expect(page.getByText(/^Limitations\./)).toHaveCount(0);
 });
 
 test("a division shows the exact stored model inputs", async ({ page }) => {

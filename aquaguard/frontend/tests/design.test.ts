@@ -107,7 +107,8 @@ describe("date range", () => {
 describe("palette and status", () => {
   it("matches modules locally", () => {
     expect(matchLocal("irrig").map((i) => i.href)).toEqual(["/irrigation"]);
-    expect(matchLocal("").length).toBeGreaterThanOrEqual(10);
+    expect(matchLocal("").length).toBe(9);
+    expect(matchLocal("").some((item) => item.href === "/data-sources")).toBe(false);
   });
   it("labels time honestly per data kind", () => {
     expect(timeLabel({ status: "fresh", kind: "forecast" })).toBe("Live");

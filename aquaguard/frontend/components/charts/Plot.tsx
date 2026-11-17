@@ -8,6 +8,9 @@ import { BarChart3, Table2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { fmtNumber } from "@/lib/format";
 import { tracesToTable } from "@/lib/charts/table";
+import { volumeLabel, volumePlot } from "@/lib/charts/volume";
+import { convertVolume } from "@/lib/format";
+import { useVolumeUnit } from "@/lib/store/hooks";
 import { Skeleton } from "../ui/States";
 
 const Plotly = dynamic(
@@ -45,16 +48,29 @@ export function DataTable({ head, rows, caption, maxHeight = 320 }: {
   );
 }
 
-export function Plot({ data, layout, height = 300, filename, ariaLabel, tableKeyLabel }: {
+export function Plot({ data, layout, height = 300, filename, ariaLabel, tableKeyLabel, volumeUnit }: {
   data: unknown[];
   layout: Record<string, unknown>;
   height?: number;
   filename: string;
   ariaLabel: string;
   tableKeyLabel?: string;
+  /** Source unit of the numeric trace axis (never apply to rainfall, pressure, ratios or temperatures). */
+  volumeUnit?: string;
 }) {
+  const preference = useVolumeUnit();
   const [asTable, setAsTable] = useState(false);
-  const table = useMemo(() => tracesToTable(data, tableKeyLabel), [data, tableKeyLabel]);
+  const display = useMemo(() => volumeUnit ? volumePlot(data, layout, volumeUnit, preference) : { data, layout },
+    [data, layout, volumeUnit, preference]);
+  const label = volumeUnit ? volumeLabel(ariaLabel, volumeUnit, preference) : ariaLabel;
+  const table = useMemo(() => {
+    const result = tracesToTable(display.data, tableKeyLabel);
+    if (result && volumeUnit) {
+      const unit = convertVolume(1, volumeUnit, preference).unit;
+      result.head = result.head.map((h, i) => i === 0 ? h : `${h} (${unit})`);
+    }
+    return result;
+  }, [display.data, tableKeyLabel, volumeUnit, preference]);
   return (
     <div className="w-full">
       {table && (
@@ -67,12 +83,12 @@ export function Plot({ data, layout, height = 300, filename, ariaLabel, tableKey
         </div>
       )}
       {asTable && table ? (
-        <DataTable head={table.head} rows={table.rows} caption={ariaLabel} maxHeight={Math.max(height, 240)} />
+        <DataTable head={table.head} rows={table.rows} caption={label} maxHeight={Math.max(height, 240)} />
       ) : (
-        <div role="figure" aria-label={ariaLabel} style={{ height }} className="w-full">
+        <div role="figure" aria-label={label} style={{ height }} className="w-full">
           <Plotly
-            data={data as never}
-            layout={{ ...layout, height } as never}
+            data={display.data as never}
+            layout={{ ...display.layout, height } as never}
             useResizeHandler
             style={{ width: "100%", height: "100%" }}
             config={{

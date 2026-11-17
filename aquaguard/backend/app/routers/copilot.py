@@ -1,4 +1,4 @@
-"""AquaGuard Copilot endpoints (provider-independent).
+"""BlueSense Copilot endpoints (provider-independent).
 
 GET  /copilot/status  configuration state (never a key), provider, model, data-use disclosure, tools, limits
 POST /copilot/stream  streamed answer (server-sent events: tool, delta, done | error)
@@ -12,8 +12,10 @@ returned as errors; there is no switch to another provider.
 from __future__ import annotations
 
 import json
-from collections.abc import Iterator
+from collections.abc import AsyncIterator, Iterator
+from threading import Event
 
+import anyio
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 
@@ -99,19 +101,52 @@ def status() -> CopilotStatus:
                              maxModelCallsPerQuestion=s.copilot_max_model_calls, resetsAt=RESET_NOTE))
 
 
+async def _sse(events: Iterator[dict], heartbeat_s: float = 15.0) -> AsyncIterator[str]:
+    """Keep the connection active while synchronous provider I/O runs in a worker thread."""
+    send, receive = anyio.create_memory_object_stream[str](1)
+    stopped = Event()
+
+    def produce() -> None:
+        try:
+            for ev in events:
+                if stopped.is_set():
+                    break
+                chunk = f"event: {ev['type']}\ndata: {json.dumps(ev, ensure_ascii=False)}\n\n"
+                anyio.from_thread.run(send.send, chunk)
+        except (anyio.BrokenResourceError, anyio.ClosedResourceError):
+            pass
+        finally:
+            events.close()
+            anyio.from_thread.run(send.aclose)
+
+    async def worker() -> None:
+        # On disconnect the event loop stays responsive; the bounded HTTP call finishes and releases its resources.
+        await anyio.to_thread.run_sync(produce, abandon_on_cancel=True)
+
+    async with anyio.create_task_group() as group:
+        group.start_soon(worker)
+        try:
+            yield ": connected\n\n"
+            async with receive:
+                while True:
+                    try:
+                        with anyio.move_on_after(heartbeat_s) as scope:
+                            chunk = await receive.receive()
+                    except anyio.EndOfStream:
+                        break
+                    if scope.cancel_called:
+                        yield ": keepalive\n\n"
+                    else:
+                        yield chunk
+        finally:
+            stopped.set()
+            group.cancel_scope.cancel()
+
+
 @router.post("/copilot/stream", responses={200: {"content": {"text/event-stream": {}}}})
 def stream(req: CopilotRequest, request: Request) -> StreamingResponse:
     client_key, slot = _prepare(req, request)
-
-    def sse() -> Iterator[str]:
-        events = _events(req, client_key, slot)
-        try:
-            for ev in events:
-                yield f"event: {ev['type']}\ndata: {json.dumps(ev, ensure_ascii=False)}\n\n"
-        finally:
-            events.close()
-
-    return StreamingResponse(sse(), media_type="text/event-stream",
+    return StreamingResponse(_sse(_events(req, client_key, slot)), media_type="text/event-stream",
                              headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
 
 
@@ -132,6 +167,6 @@ def chat(req: CopilotRequest, request: Request) -> CopilotResponse:
     finally:
         events.close()
     tools = [CopilotToolCall(**t) for t in (done or {}).get("tools", [])]
-    refs = [CopilotReference(module=t.module or "AquaGuard", label=t.name) for t in tools if t.status == "done"]
+    refs = [CopilotReference(module=t.module or "BlueSense", label=t.name) for t in tools if t.status == "done"]
     return CopilotResponse(answer="".join(parts).strip(), mode="llm", references=refs, intent="tools",
                            tools=tools, unverifiedNumbers=(done or {}).get("unverifiedNumbers", []))

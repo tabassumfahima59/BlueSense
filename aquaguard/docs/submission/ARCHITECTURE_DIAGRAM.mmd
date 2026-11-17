@@ -1,0 +1,14 @@
+flowchart TB
+  U[Planner or agricultural adviser] --> WEB[Next.js BlueSense interface]
+  WEB --> API[FastAPI typed API]
+  SOURCES[Open-Meteo / AQUASTAT / CSR GRACE] --> INGEST[Validated ingestion and sync logs]
+  INGEST --> DB[(SQLite with provenance)]
+  SEED[Committed processed seed data] --> DB
+  API --> DB
+  API --> ENGINES[Shared water balance / FAO-56 / scenario / allocation engines]
+  ML[Offline time-split RF and XGBoost training] --> ART[Stored metrics / predictions / SHAP]
+  ART --> API
+  WEB --> COPILOT[Server-side read-only Copilot tool loop]
+  COPILOT --> API
+  COPILOT --> CLOUD[Configured Gemini or Anthropic provider]
+  API --> LIMITS[Source dates / uncertainty / missing-data states]

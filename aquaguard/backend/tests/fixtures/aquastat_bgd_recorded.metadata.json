@@ -1,0 +1,12 @@
+{
+  "source": "FAO AQUASTAT dissemination API",
+  "url": "https://api.data.apps.fao.org/api/v2/bigquery",
+  "recorded_at": "2026-11-17T14:30:28.177391+00:00",
+  "recording_clock": "UTC filesystem save time immediately after the successful HTTP response",
+  "sha256": "7f2405660db5e85b38e80d0e369e2437b1d3d4908c990190ec4777b6d950c599",
+  "rows": 706,
+  "genuine_rows": 403,
+  "indicators": 25,
+  "license": "CC BY-NC-SA 4.0",
+  "scope": "Bangladesh, platform indicator codes, 1990-2026 query; includes imputed rows which the store excludes"
+}

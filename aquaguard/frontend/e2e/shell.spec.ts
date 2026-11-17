@@ -4,7 +4,8 @@ const API = "http://127.0.0.1:8013/api";
 
 async function ready(page: Page, path: string) {
   await page.goto(path);
-  await expect(page.locator("main h1").first()).toBeVisible();
+  await expect(page.locator("header.glass-bar").getByText("Welcome to BlueSense", { exact: true })).toBeVisible();
+  await expect(page.locator("main > div").first()).toBeVisible();
 }
 
 test("sidebar collapses and the state survives a reload", async ({ page }) => {
@@ -138,19 +139,9 @@ test("charts offer a table view", async ({ page }) => {
   await page.getByRole("button", { name: "View as chart" }).first().click();
 });
 
-test("profile menu: keyboard navigation and working items only", async ({ page }) => {
+test("profile menu is removed and settings remain available in the sidebar", async ({ page }) => {
   await ready(page, "/command-center");
-  const trigger = page.getByRole("button", { name: "Profile and settings menu" });
-  await trigger.click();
-  const menu = page.getByRole("menu", { name: "Profile and settings menu" });
-  await expect(menu.getByRole("menuitem")).toHaveText([/Settings/, /Data sources/, /Keyboard shortcuts/]);
-  await expect(menu.getByRole("menuitem").first()).toBeFocused();
-  await page.keyboard.press("ArrowDown");
-  await page.keyboard.press("ArrowDown");
-  await expect(menu.getByRole("menuitem", { name: /Keyboard shortcuts/ })).toBeFocused();
-  await page.keyboard.press("Enter");
-  const dialog = page.getByRole("dialog", { name: "Keyboard shortcuts" });
-  await expect(dialog).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(dialog).toBeHidden();
+  await expect(page.getByRole("button", { name: "Profile and settings menu" })).toHaveCount(0);
+  await page.getByRole("link", { name: "Settings", exact: true }).click();
+  await expect(page.locator("header.glass-bar").getByText("Settings", { exact: true })).toBeVisible();
 });

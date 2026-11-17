@@ -1,8 +1,9 @@
-# AquaGuard backend (API). Exact pins; see docs/aquaguard-plan.md §8 for the dependency policy.
+# BlueSense backend (API). Exact pins; see docs/aquaguard-plan.md §8 for the dependency policy.
 # The joblib model files must be loaded with the same scikit-learn/numpy versions they were trained with.
 fastapi==0.162.5
 uvicorn[standard]==0.54.0
 pydantic==2.14.3
+python-dotenv==1.2.4
 pandas==3.1.1
 numpy==2.5.4
 scipy==1.18.1

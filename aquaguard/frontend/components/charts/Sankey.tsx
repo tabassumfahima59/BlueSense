@@ -7,7 +7,8 @@
 import { sankey, sankeyLinkHorizontal, type SankeyGraph } from "d3-sankey";
 import { BarChart3, Download, Table2 } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
-import { fmtNumber } from "@/lib/format";
+import { convertVolume, fmtNumber } from "@/lib/format";
+import { useVolumeUnit } from "@/lib/store/hooks";
 import type { BudgetState } from "@/lib/types/contract";
 import { DataTable } from "./Plot";
 import { FLOW_COLOR, NEUTRAL, SECTOR_COLOR } from "./theme";
@@ -42,6 +43,8 @@ export function Sankey({ nodes, links, unit, total, totalLabel, height = 380, fi
   labelSpace?: number;
   leftSpace?: number;
 }) {
+  const preference = useVolumeUnit();
+  const displayUnit = convertVolume(1, unit, preference).unit;
   const width = 1040;
   const svgRef = useRef<SVGSVGElement>(null);
   const [hover, setHover] = useState<{ x: number; y: number; text: string; key: string } | null>(null);
@@ -65,7 +68,7 @@ export function Sankey({ nodes, links, unit, total, totalLabel, height = 380, fi
   }, [nodes, links, height, labelSpace, leftSpace]);
 
   const pct = (v: number) => (total && total > 0 ? `${((v / total) * 100).toFixed(1)}%` : "—");
-  const qty = (v: number) => `${fmtNumber(v)} ${unit}`;
+  const qty = (v: number) => `${fmtNumber(convertVolume(v, unit, preference).v)} ${displayUnit}`;
   const linkColor = (s: FlowNode, t: FlowNode) => (t.pool ? s.color : t.color);
   const shown = graph.nodes as unknown as Required<N>[];
   const lastDepth = Math.max(0, ...shown.map((n) => n.depth));
@@ -116,10 +119,11 @@ export function Sankey({ nodes, links, unit, total, totalLabel, height = 380, fi
         )}
       </div>
       {asTable ? (
-        <DataTable caption={caption} head={["From", "To", unit, `Share of ${totalLabel}`, ...(hasDetail ? ["Reference"] : [])]}
+        <DataTable caption={caption} head={["From", "To", displayUnit, `Share of ${totalLabel}`, ...(hasDetail ? ["Reference"] : [])]}
                    rows={links.map((l) => {
                      const v = l.value ?? null;
-                     return [lab(l.source), lab(l.target), v, v === null ? null : pct(v), ...(hasDetail ? [byId.get(l.target)?.detail ?? null] : [])];
+                     return [lab(l.source), lab(l.target), v === null ? null : convertVolume(v, unit, preference).v,
+                       v === null ? null : pct(v), ...(hasDetail ? [byId.get(l.target)?.detail ?? null] : [])];
                    })} />
       ) : (
         <div className="overflow-x-auto" tabIndex={0} role="region" aria-label={`${caption} (scrollable)`}>

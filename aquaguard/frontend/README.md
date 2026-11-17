@@ -1,6 +1,6 @@
-# AquaGuard frontend
+# BlueSense frontend
 
-Next.js 15 (App Router) client for the AquaGuard API. See the project README (`../README.md`) for full setup.
+Next.js 15 (App Router) client for the BlueSense API. See the project README (`../README.md`) for full setup.
 
 ```bash
 npm install

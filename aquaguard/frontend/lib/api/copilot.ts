@@ -40,7 +40,7 @@ export async function streamCopilot(body: CopilotRequest, onEvent: (e: CopilotEv
     });
   } catch (e) {
     if ((e as Error).name === "AbortError") throw e;
-    throw new ApiError(0, "Cannot reach the AquaGuard API. Check that the backend is running and reachable.", "network");
+    throw new ApiError(0, "Cannot reach the BlueSense API. Check that the backend is running and reachable.", "network");
   }
   if (!res.ok || !res.body) {
     let detail = `Request failed (${res.status})`;

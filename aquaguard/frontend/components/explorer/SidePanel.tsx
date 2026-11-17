@@ -68,14 +68,14 @@ export function LayersCard({ layerMeta, mapKind, graceLoading, graceEmpty }: {
           options={[{ value: "division", label: "Divisions" }, { value: "district", label: "Districts (reference)" }]} />
         {layers.level === "district" && <p className="mt-1 text-[11.5px] text-muted">District boundaries are a reference layer: no district water values exist; panels show the parent division.</p>}
       </div>
-      <ul className="space-y-2.5">
+      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {TOGGLES.map((t) => {
           const meta = t.layerId ? layerMeta[t.layerId] : undefined;
           const off = (mapKind === "svg" && t.needsGl) || (mapKind !== "3d" && t.only3d);
           const desc = t.description ?? meta?.description;
           const checked = t.key === "wetlands" ? layers.wetlands !== false : t.key === "labels" ? layers.labels !== false : layers[t.key];
           return (
-            <li key={t.key}>
+            <li key={t.key} className="min-w-0 rounded-lg border border-border bg-white/50 p-3">
               <label className={`flex items-center gap-2 text-[13px] ${off ? "text-muted" : ""}`}>
                 <input type="checkbox" checked={!!checked && !off} disabled={off}
                        onChange={(e) => setLayers({ ...layers, [t.key]: e.target.checked })} className="h-4 w-4 accent-[#0868CC]" />
@@ -87,7 +87,7 @@ export function LayersCard({ layerMeta, mapKind, graceLoading, graceEmpty }: {
                 <label className="mt-1 flex items-center gap-2 pl-6 text-[12px] text-muted">
                   Opacity
                   <input type="range" min={0.1} max={1} step={0.05} value={layers.opacity[t.opacity]} aria-label={`${t.label === "Scarcity risk (estimated)" ? "Scarcity risk" : t.label} opacity`}
-                    onChange={(e) => setLayers({ ...layers, opacity: { ...layers.opacity, [t.opacity!]: Number(e.target.value) } })} className="flex-1" />
+                    onChange={(e) => setLayers({ ...layers, opacity: { ...layers.opacity, [t.opacity!]: Number(e.target.value) } })} className="min-w-0 flex-1" />
                   <span className="w-9 text-right tabular-nums">{Math.round(layers.opacity[t.opacity] * 100)}%</span>
                 </label>
               )}
@@ -108,7 +108,7 @@ export function LayersCard({ layerMeta, mapKind, graceLoading, graceEmpty }: {
         })}
       </ul>
       {mapKind === "3d" && (
-        <div className="mt-3 space-y-2 border-t border-border pt-3">
+        <div className="mt-4 grid gap-4 border-t border-border pt-4 sm:grid-cols-2">
           <div>
             <label htmlFor="terrain-exaggeration" className="flex justify-between text-[12.5px]">
               <span>Terrain vertical exaggeration</span><span className="tabular-nums text-muted">×{exaggeration}</span>
@@ -169,7 +169,7 @@ export function LegendCard({ cellsPeriod, graceNote, graceTrend, pointsStatus, s
                 <li key={b.label} className="flex items-center gap-2"><span className="h-3 w-5 rounded-sm" style={{ background: TONE_COLOR[b.tone] }} aria-hidden />{b.label}</li>
               ))}
             </ul>
-            <p className="mt-1 text-muted">AquaGuard display bins (not an official classification). {graceNote}</p>
+            <p className="mt-1 text-muted">BlueSense display bins (not an official classification). {graceNote}</p>
           </div>
         )}
         <div>
@@ -186,7 +186,7 @@ export function LegendCard({ cellsPeriod, graceNote, graceTrend, pointsStatus, s
         )}
         <div className="flex items-center gap-2"><span className="h-3 w-3 rounded-full border-2 border-[#F59E0B]" aria-hidden />Selected feature (amber outline)</div>
         <p className="flex items-start gap-1 text-[11.5px] text-muted">
-          <Info size={12} className="mt-0.5 shrink-0" aria-hidden /> No groundwater depths, river discharge or real-time water levels are shown: AquaGuard has no such measurements.
+          <Info size={12} className="mt-0.5 shrink-0" aria-hidden /> No groundwater depths, river discharge or real-time water levels are shown: BlueSense has no such measurements.
         </p>
       </div>
     </Card>

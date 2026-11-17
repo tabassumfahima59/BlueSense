@@ -22,13 +22,14 @@ test("choosing a growth stage changes the stage and Kc", async ({ page }) => {
   await expect(page.getByTestId("crop-stage")).toHaveText("initial");
 });
 
-test("division change uses that division's weather point and every input shows its age", async ({ page }) => {
+test("division change uses that division's weather point and input metrics omit source notes", async ({ page }) => {
   await open(page);
   await page.getByLabel("Division (weather point)").selectOption("khulna");
   await expect(page.getByText("Khulna representative point (one of eight divisional points)")).toBeVisible();
   const why = page.getByRole("region", { name: "Why this estimate" });
   await expect(why.getByText("Reference ET0")).toBeVisible();
-  await expect(why.getByText(/retrieved .* ago/).first()).toBeVisible();
+  await expect(why.getByText(/retrieved .* ago/)).toHaveCount(0);
+  await expect(why.getByText("Forecast", { exact: true })).toHaveCount(0);
   // the forecast badge reflects the API status (Live when fresh, Stale otherwise)
   await expect(page.getByRole("button", { name: /^Data status: (Fresh|Stale|Unavailable)/ }).first()).toBeVisible();
 });

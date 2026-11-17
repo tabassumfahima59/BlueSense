@@ -5,31 +5,27 @@
  * Time Series, Data Table, Analysis and Spatial Intelligence. Layers: divisions and districts (reference), OpenStreetMap
  * rivers / canals / water bodies / wetlands, JRC surface water (1984–2021), GRACE grid cells (~300 km), the eight
  * representative weather points, estimated scarcity risk and exaggerated terrain. Every value comes from the backend
- * with its source and data kind; nothing is invented, districts carry no water values, and the map assistant is the
- * existing provider-independent Copilot with read-only tools.
+ * with its source and data kind; nothing is invented and districts carry no water values.
  */
 import dynamic from "next/dynamic";
-import { Bot, Compass, Map as MapIcon, Mountain, RotateCcw, RotateCw, X } from "lucide-react";
+import { Compass, Map as MapIcon, Mountain, RotateCcw, RotateCw, X } from "lucide-react";
 import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { AnalysisView } from "@/components/explorer/AnalysisView";
 import { IntelView } from "@/components/explorer/IntelView";
 import { KpiStrip } from "@/components/explorer/KpiStrip";
-import { MapAssistant } from "@/components/explorer/MapAssistant";
 import { RegionPanel } from "@/components/explorer/RegionPanel";
 import { SeriesView } from "@/components/explorer/SeriesView";
-import { DivisionSelect, LayersCard, LegendCard } from "@/components/explorer/SidePanel";
+import { LayersCard } from "@/components/explorer/SidePanel";
 import { TableView } from "@/components/explorer/TableView";
 import type { FeatureHit } from "@/components/maps/BangladeshMap";
 import { cellsToGeoJSON, hasWebGL, pointsToGeoJSON } from "@/components/maps/overlays";
-import { Card, Note, PageHeader } from "@/components/ui/Card";
-import { fromMeta } from "@/components/ui/DataStatus";
 import { Async, Skeleton } from "@/components/ui/States";
 import { api } from "@/lib/api/client";
 import { useApi } from "@/lib/api/useApi";
 import { analysisRegion, type ExplorerView, type MapSelection, useExplorer, VIEWS } from "@/lib/explorer/store";
 import { riskColor } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
-import { useRegionScenario } from "@/lib/store/hooks";
+import { useRegionScenario, useVolumeUnit } from "@/lib/store/hooks";
 import type { MapLayersResponse } from "@/lib/types/contract";
 
 const BangladeshMap = dynamic(() => import("@/components/maps/BangladeshMap").then((m) => m.BangladeshMap), {
@@ -82,14 +78,17 @@ function MapButtons({ threeD }: { threeD: boolean }) {
           <button type="button" onClick={() => cameraCommand("north")} className={b} aria-label="Face north"><Compass size={13} aria-hidden /></button>
         </>
       )}
-      <button type="button" onClick={() => setLite(!lite)} aria-pressed={lite} className={b}>
-        <Mountain size={13} aria-hidden /> {lite ? "Lite mode on" : "Lite mode"}
+      <button type="button" onClick={() => setLite(!lite)} aria-pressed={lite}
+              title={lite ? "Switch to standard map rendering" : "Use lower-resolution rendering with terrain and hillshade off"}
+              className={`${b} aria-pressed:border-primary aria-pressed:bg-primary-soft aria-pressed:font-semibold aria-pressed:text-primary-dark`}>
+        <Mountain size={13} aria-hidden /> {lite ? "Lite mode on" : "Lite mode off"}
       </button>
     </div>
   );
 }
 
 export default function Explorer() {
+  useVolumeUnit();
   const { scenario, key } = useRegionScenario();
   const region = useAppStore((s) => s.selectedRegion);
   const setRegion = useAppStore((s) => s.setRegion);
@@ -141,7 +140,6 @@ export default function Explorer() {
                                                    geometry: { type: "Point", coordinates: d.centroid } })),
   } : undefined), [regions.data]);
   const cellsPeriod = grace.data?.data.cellsPeriod ?? null;
-  const divisionIds = useMemo(() => Object.values(values ?? {}).filter((v) => v.level === "division").map((v) => v.regionId).sort(), [values]);
   const names = useMemo(() => Object.fromEntries(Object.entries(values ?? {}).map(([id, v]) => [id, v.name])), [values]);
 
   const divisionSelection = (id: string): MapSelection => ({ kind: "division", id, name: `${names[id] ?? id} Division`, divisionId: id });
@@ -209,37 +207,25 @@ export default function Explorer() {
   const modeText = webgl === null ? "Checking WebGL…" : webgl === false
     ? "2D map — WebGL is not available in this browser, so the 3D map cannot run"
     : view === "2d" ? `2D map (MapLibre, flat)${small ? " — chosen for this small screen" : ""}` : "3D map (MapLibre, WebGL)";
-  const askAssistant = () => {
-    const el = document.getElementById("explorer-assistant-input") as HTMLInputElement | null;
-    el?.scrollIntoView({ behavior: "smooth", block: "center" });
-    el?.focus();
-  };
   const panel = (cls: string, id: string) => selection && panelOpen && (
     <RegionPanel sel={selection} values={values} cellsPeriod={cellsPeriod} headingId={id} className={cls}
-                 onClose={() => setPanelOpen(false)} onIntel={() => setView("intel")} onAsk={askAssistant}
+                 onClose={() => setPanelOpen(false)} onIntel={() => setView("intel")}
                  onSelectDivision={(d) => choose(divisionSelection(d))} />
   );
 
   return (
     <div className="space-y-4">
-      <PageHeader title="3D Bangladesh Water Explorer"
-        description="Terrain, rivers, historical surface water, GRACE storage cells, the eight weather points and estimated scarcity risk — with regional analysis, history and an AI assistant grounded in AquaGuard data." />
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <ViewTabs view={view} setView={setView} />
-        <span className="rounded-full border border-primary/30 bg-primary-soft px-2.5 py-1 text-[12px] font-medium text-primary" title="Every value comes from stored data with its source and data kind">
-          Hydrological digital twin · source-backed data
-        </span>
-      </div>
+      <ViewTabs view={view} setView={setView} />
       <Async state={state} rows={3} label="Loading map layers">
         {(d) => (
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="grid w-full min-w-0 gap-4">
             <div id="explorer-panel" role="tabpanel" aria-labelledby={`explorer-tab-${view}`} className="min-w-0 space-y-3">
               <div className={isMapView ? "space-y-2" : "hidden"}>
                 <div className="flex flex-wrap items-center gap-2 text-[12.5px]">
                   <MapIcon size={14} className="text-muted" aria-hidden />
                   <span className="text-muted" data-testid="map-mode">{modeText}</span>
                 </div>
-                <div className="card relative h-[460px] overflow-hidden p-0 sm:h-[540px] lg:h-[calc(100vh-290px)] lg:min-h-[560px]" data-testid="explorer-map"
+                <div className="card relative h-[460px] w-full overflow-hidden p-0 sm:h-[540px] lg:h-[calc(100vh-290px)] lg:min-h-[560px]" data-testid="explorer-map"
                      data-view={view} data-selection={selection ? `${selection.kind}:${selection.id}` : ""}>
                   {webgl && (
                     <BangladeshMap explorer mode={view === "2d" ? "2d" : "3d"} divisions={d.divisions as unknown as GeoJSON.FeatureCollection}
@@ -278,34 +264,17 @@ export default function Explorer() {
                 </p>
               )}
             </div>
-            <div className="min-w-0 space-y-4">
-              <DivisionSelect ids={divisionIds} names={names} value={selection?.divisionId ?? "bd"} onChange={chooseDivision} />
-              {isMapView && (
+            {isMapView && (
+              <div className="min-w-0 space-y-4">
                 <LayersCard layerMeta={layerMeta} mapKind={mapKind} graceLoading={grace.loading}
                             graceEmpty={!!grace.data && !grace.data.data.cells.length} />
-              )}
-              {view !== "intel" && (
-                <Card title="Map assistant" subtitle="AI answers grounded in AquaGuard's read-only data tools" id="map-assistant-card">
-                  <MapAssistant sel={selection} region={aRegion} regionName={aName} divisionName={divisionName} idPrefix="explorer-assistant" />
-                </Card>
-              )}
-              {isMapView && (
-                <LegendCard cellsPeriod={cellsPeriod} graceNote={grace.data?.data.resolutionNote} graceTrend={d.graceTrend}
-                            pointsStatus={pts.data ? fromMeta(pts.data.meta) : null} scenarioActive={d.context.scenarioActive} />
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
       </Async>
       {isMapView && !desktop && panel("fixed inset-x-0 bottom-0 z-40 flex max-h-[60vh] rounded-t-2xl pb-[calc(env(safe-area-inset-bottom)+3.5rem)]", "region-panel-sheet")}
       <KpiStrip />
-      <Note>
-        <Bot size={13} className="mr-1 inline" aria-hidden />
-        Sources: Open-Meteo (ERA5 reanalysis and forecast, one representative point per division), GRACE / GRACE-FO CSR RL06.3
-        (regional, ~300 km), JRC Global Surface Water (1984–2021, map only), FAO AQUASTAT (national), OpenStreetMap via CARTO (rivers,
-        water bodies), geoBoundaries and HDX (boundaries, population), AWS Terrain Tiles (elevation, exaggerated). Scarcity risk is an
-        AquaGuard estimate. No groundwater levels, river discharge or real-time water levels exist in AquaGuard.
-      </Note>
     </div>
   );
 }

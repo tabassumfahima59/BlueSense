@@ -1,4 +1,4 @@
-"""Runtime settings from environment variables (secrets never live in code or git).
+"""Runtime settings from backend/.env and environment variables (secrets never live in code or git).
 
 Secrets are ``SecretStr``: they are masked in ``repr``/logs and must be read with ``.get_secret_value()`` at the
 single point of use. Every variable is documented in ``aquaguard/.env.example``.
@@ -9,9 +9,12 @@ import os
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import BaseModel, SecretStr
+from dotenv import load_dotenv
+from pydantic import BaseModel, Field, SecretStr
 
 ROOT = Path(__file__).resolve().parents[2]  # aquaguard/
+# Resolve from this module so Uvicorn works from any working directory. Deployment environment values win.
+load_dotenv(ROOT / "backend" / ".env", override=False, encoding="utf-8-sig")
 
 
 class Settings(BaseModel):
@@ -67,7 +70,10 @@ class Settings(BaseModel):
     llm_model: str | None = None                    # default depends on the provider
     llm_provider: str = "gemini"                    # gemini | anthropic (no automatic switching between them)
     gemini_thinking_level: str = "low"
-    llm_call_timeout_s: float = 30.0                # one model call (connect / between streamed chunks)
+    llm_call_timeout_s: float = Field(60.0, gt=0, allow_inf_nan=False)
+    llm_max_retries: int = Field(1, ge=0, le=3)     # Gemini: retries before any answer text is delivered
+    llm_retry_backoff_s: float = Field(1.0, gt=0, le=60, allow_inf_nan=False)
+    llm_retry_after_max_s: float = Field(60.0, ge=0, le=120, allow_inf_nan=False)
     # Copilot usage limits (protect the provider's free quota; all counters are in memory, single worker)
     copilot_rate_per_min: int = 5                   # questions per minute per IP and per browser client
     copilot_daily_per_client: int = 30              # questions per day per IP and per browser client
@@ -75,7 +81,7 @@ class Settings(BaseModel):
     copilot_max_concurrent: int = 2                 # questions answered at the same time
     copilot_max_model_calls: int = 4                # model calls per question (tool rounds + answer)
     copilot_max_output_tokens: int = 4096
-    copilot_deadline_s: float = 90.0                # whole question
+    copilot_deadline_s: float = Field(240.0, gt=0, allow_inf_nan=False)  # whole question, including retries
     forecast_ttl_s: int = 3 * 3600
 
 
@@ -134,14 +140,17 @@ def get_settings() -> Settings:
         llm_model=os.getenv("LLM_MODEL") or None,
         llm_provider=(os.getenv("LLM_PROVIDER") or "gemini").strip().lower(),
         gemini_thinking_level=(os.getenv("GEMINI_THINKING_LEVEL") or "low").strip().lower(),
-        llm_call_timeout_s=_num("LLM_CALL_TIMEOUT_S", 30.0),
+        llm_call_timeout_s=_num("LLM_CALL_TIMEOUT_S", 60.0),
+        llm_max_retries=_num("LLM_MAX_RETRIES", 1, int),
+        llm_retry_backoff_s=_num("LLM_RETRY_BACKOFF_S", 1.0),
+        llm_retry_after_max_s=_num("LLM_RETRY_AFTER_MAX_S", 60.0),
         copilot_rate_per_min=_num("COPILOT_RATE_PER_MIN", 5, int),
         copilot_daily_per_client=_num("COPILOT_DAILY_PER_CLIENT", 30, int),
         copilot_daily_model_calls=_num("COPILOT_DAILY_MODEL_CALLS", 200, int),
         copilot_max_concurrent=_num("COPILOT_MAX_CONCURRENT", 2, int),
         copilot_max_model_calls=_num("COPILOT_MAX_MODEL_CALLS", 4, int),
         copilot_max_output_tokens=_num("COPILOT_MAX_OUTPUT_TOKENS", 4096, int),
-        copilot_deadline_s=_num("COPILOT_DEADLINE_S", 90.0),
+        copilot_deadline_s=_num("COPILOT_DEADLINE_S", 240.0),
     )
     for env, attr in (("OPENMETEO_FORECAST_URL", "openmeteo_forecast_url"),
                       ("OPENMETEO_ARCHIVE_URL", "openmeteo_archive_url"),

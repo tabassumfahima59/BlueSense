@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { Plot } from "@/components/charts/Plot";
 import { axisTitle, baseLayout, SERIES } from "@/components/charts/theme";
-import { fmtMeasure } from "@/lib/format";
+import { displayUnit, fmtMeasure, fmtNumber, fmtVolume, volumeValue } from "@/lib/format";
 import { accounting, balanceStatus, DEST_STATUS, fmt, LIMIT_TEXT, num } from "@/lib/flow/derive";
 import { DEST_LABEL, type DestId } from "@/lib/flow/network";
 import type { FlowResponse, FlowState } from "@/lib/types/contract";
@@ -31,16 +31,16 @@ export function KpiBar({ state }: { state: FlowState }) {
   const gap = num(state.supplyBalanceDaily);
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6" aria-label="Key results (conceptual simulation)" role="group">
-      <Kpi label="Total inflow" value={`${fmt(a.inflow)} m³/day`} sub="pumped into the network" testId="kpi-inflow" />
-      <Kpi label="Delivered (outflow)" value={`${fmt(a.delivered)} m³/day`} sub="reaching the four zones" testId="kpi-delivered" />
-      <Kpi label="Leakage" value={`${fmt(a.leakage)} m³/day`} sub={leakPct === null ? "no flow" : `${fmt(leakPct, 1)} % of inflow`} testId="kpi-leakage" />
+      <Kpi label="Total inflow" value={`${fmtVolume(a.inflow, "m³/day")}`} sub="pumped into the network" testId="kpi-inflow" />
+      <Kpi label="Delivered (outflow)" value={`${fmtVolume(a.delivered, "m³/day")}`} sub="reaching the four zones" testId="kpi-delivered" />
+      <Kpi label="Leakage" value={`${fmtVolume(a.leakage, "m³/day")}`} sub={leakPct === null ? "no flow" : `${fmt(leakPct, 1)} % of inflow`} testId="kpi-leakage" />
       <Kpi label="Water balance" value={<StatusText status={bal} />} testId="kpi-balance"
-           sub={gap === null ? "supply vs demand" : `${gap >= 0 ? "+" : "−"}${fmt(Math.abs(gap))} m³/day vs demand`} />
+           sub={gap === null ? "supply vs demand" : `${gap >= 0 ? "+" : "−"}${fmtVolume(Math.abs(gap), "m³/day")} vs demand`} />
       <Kpi label="Efficiency" value={num(state.efficiency) === null ? "—" : `${fmt(num(state.efficiency), 1)} %`} sub="delivered ÷ inflow" testId="kpi-efficiency" />
       <Kpi label="Pump utilization" value={`${fmt(num(state.pumpUtilization), 1)} %`} sub="flow ÷ capacity" testId="kpi-pump" />
       <p className="col-span-full text-[11.5px] text-muted">
-        Supply vs demand: {gap === null ? "—" : gap >= 0 ? `${fmt(gap)} m³/day above` : `${fmt(-gap)} m³/day below`} the
-        hypothetical demand of {fmt(num(state.demandDaily))} m³/day. {state.limitingFactor ? LIMIT_TEXT[state.limitingFactor] : ""}
+        Supply vs demand: {gap === null ? "—" : gap >= 0 ? `${fmtVolume(gap, "m³/day")} above` : `${fmtVolume(-gap, "m³/day")} below`} the
+        hypothetical demand of {fmtVolume(num(state.demandDaily), "m³/day")}. {state.limitingFactor ? LIMIT_TEXT[state.limitingFactor] : ""}
         {" "}All values: conceptual simulation (data kind “conceptual”), not measurements.
       </p>
     </div>
@@ -110,11 +110,11 @@ export function ResultsPanel({ state, res }: { state: FlowState; res: FlowRespon
         <h3 id="flow-identity" className="mb-1.5 text-[13px] font-semibold text-ink">Water balance (network boundary)</h3>
         <table className="w-full text-[12.5px]">
           <tbody>
-            <tr className="border-b border-border/60"><th scope="row" className="py-1 text-left font-medium">Total inflow (pump)</th><td className="text-right tabular-nums">{fmt(a.inflow)} m³/day</td></tr>
-            <tr className="border-b border-border/60"><th scope="row" className="py-1 text-left font-normal">= Delivered to zones</th><td className="text-right tabular-nums">{fmt(a.delivered)} m³/day</td></tr>
-            <tr className="border-b border-border/60"><th scope="row" className="py-1 text-left font-normal">+ Leakage</th><td className="text-right tabular-nums">{fmt(a.leakage)} m³/day</td></tr>
+            <tr className="border-b border-border/60"><th scope="row" className="py-1 text-left font-medium">Total inflow (pump)</th><td className="text-right tabular-nums">{fmtVolume(a.inflow, "m³/day")}</td></tr>
+            <tr className="border-b border-border/60"><th scope="row" className="py-1 text-left font-normal">= Delivered to zones</th><td className="text-right tabular-nums">{fmtVolume(a.delivered, "m³/day")}</td></tr>
+            <tr className="border-b border-border/60"><th scope="row" className="py-1 text-left font-normal">+ Leakage</th><td className="text-right tabular-nums">{fmtVolume(a.leakage, "m³/day")}</td></tr>
             <tr className="border-b border-border/60"><th scope="row" className="py-1 text-left font-normal">+ Storage change</th><td className="text-right text-muted">Not modelled (steady state)</td></tr>
-            <tr><th scope="row" className="py-1 text-left font-normal">+ Other / unaccounted</th><td className="text-right tabular-nums">{a.residual === null ? "—" : `${fmt(Math.abs(a.residual) < 0.5 ? 0 : a.residual)} m³/day`}</td></tr>
+            <tr><th scope="row" className="py-1 text-left font-normal">+ Other / unaccounted</th><td className="text-right tabular-nums">{a.residual === null ? "—" : `${fmtVolume(Math.abs(a.residual) < 0.5 ? 0 : a.residual, "m³/day")}`}</td></tr>
           </tbody>
         </table>
         <div className="mt-2 flex flex-wrap items-center gap-2 text-[12px]">
@@ -133,10 +133,10 @@ export function ResultsPanel({ state, res }: { state: FlowState; res: FlowRespon
                 <StatusText status={DEST_STATUS[d.status] ?? { label: d.status, tone: "off" }} className="text-[12px]" />
               </div>
               <div className="text-[12px] text-muted">
-                Delivered <span className="tabular-nums text-ink">{fmt(num(d.deliveredDaily))}</span> of{" "}
-                <span className="tabular-nums">{fmt(num(d.demandDaily))}</span> m³/day demand
+                Delivered <span className="tabular-nums text-ink">{num(d.deliveredDaily) === null ? "—" : fmtNumber(volumeValue(num(d.deliveredDaily), "m³/day")!)}</span> of{" "}
+                <span className="tabular-nums">{num(d.demandDaily) === null ? "—" : fmtNumber(volumeValue(num(d.demandDaily), "m³/day")!)}</span> {displayUnit("m³/day")} demand
                 {num(d.supply) !== null && <> ({fmt(num(d.supply), 1)} %)</>} · share {fmt(num(d.share), 1)} %
-                (<span className="tabular-nums">{fmt(num(d.allocatedDaily))}</span> m³/day allocated)
+                (<span className="tabular-nums">{num(d.allocatedDaily) === null ? "—" : fmtNumber(volumeValue(num(d.allocatedDaily), "m³/day")!)}</span> {displayUnit("m³/day")} allocated)
               </div>
             </li>
           ))}
@@ -144,7 +144,7 @@ export function ResultsPanel({ state, res }: { state: FlowState; res: FlowRespon
         <p className="mt-1 text-[11.5px] text-muted">Demand is hypothetical; supply = delivered ÷ demand.</p>
       </section>
 
-      <Plot filename="flow-zones" ariaLabel="Hypothetical demand and simulated delivery per zone" height={230}
+      <Plot filename="flow-zones" volumeUnit="m³/day" ariaLabel="Hypothetical demand and simulated delivery per zone" height={230}
         data={[
           { type: "bar", name: "Demand (hypothetical)", x: ids.map((i) => DEST_LABEL[i]), y: state.destinations.map((d) => num(d.demandDaily)), marker: { color: SERIES[1] }, hovertemplate: "%{y:,.0f} m³/day<extra>Demand</extra>" },
           { type: "bar", name: "Delivered (simulated)", x: ids.map((i) => DEST_LABEL[i]), y: state.destinations.map((d) => num(d.deliveredDaily)), marker: { color: SERIES[0] }, hovertemplate: "%{y:,.0f} m³/day<extra>Delivered</extra>" },

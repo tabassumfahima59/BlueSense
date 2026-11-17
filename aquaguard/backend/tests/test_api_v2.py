@@ -229,6 +229,9 @@ def test_data_sources_status(client):
     rows = {r["id"]: r for r in client.get("/api/data/sources").json()["data"]}
     assert len(rows) == 13 and rows["grace_jpl"]["status"] == "not_configured"
     assert all(r["status"] in STATUSES for r in rows.values())
+    assert rows["aquaguard_engine"]["name"] == "BlueSense engines"
+    assert rows["aquaguard_ml"]["name"] == "BlueSense ML pipeline"
+    assert rows["aquaguard_engine"]["attribution"] == "BlueSense"
     lu = client.get("/api/data/last-updated").json()["data"]
     assert {r["id"] for r in lu["sources"]} == {"openmeteo_forecast", "openmeteo_archive", "fao_aquastat", "grace_csr"}
     assert lu["overallStatus"] in STATUSES

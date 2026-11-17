@@ -11,12 +11,12 @@ import { Modal } from "@/components/ui/Overlay";
 import { api } from "@/lib/api/client";
 import { useAppStore } from "@/lib/store";
 import type { SearchItem } from "@/lib/types/contract";
-import { DATA_SOURCES, MODULES, SETTINGS } from "./nav";
+import { MODULES, SETTINGS } from "./nav";
 
 const ICONS: Record<SearchItem["type"], typeof Search> = {
   region: MapPin, module: SquareStack, indicator: Gauge, source: Database, alert: Bell,
 };
-const LOCAL: SearchItem[] = [...MODULES, SETTINGS, DATA_SOURCES].map((m) => ({
+const LOCAL: SearchItem[] = [...MODULES, SETTINGS].map((m) => ({
   type: "module", id: m.href.slice(1), label: m.label, description: "desc" in m ? String(m.desc) : "", href: m.href,
 }));
 
@@ -65,7 +65,10 @@ export function CommandPalette() {
     setStatus("loading");
     const t = setTimeout(() => {
       api.search(term, 12)
-        .then((r) => { setRemote(r.data.items); setStatus("idle"); })
+        .then((r) => {
+          setRemote(r.data.items.filter((item) => !/^\/data-sources(?:[/?#]|$)/.test(item.href)));
+          setStatus("idle");
+        })
         .catch(() => { setRemote([]); setStatus("error"); });
     }, 200);
     return () => clearTimeout(t);
@@ -100,7 +103,7 @@ export function CommandPalette() {
   };
 
   return (
-    <Modal open={open} onClose={() => setOpen(false)} title="Search AquaGuard" size="lg" initialFocus={input}
+    <Modal open={open} onClose={() => setOpen(false)} title="Search BlueSense" size="lg" initialFocus={input}
            description="Regions, modules, indicators, data sources and alerts. Use the arrow keys and Enter.">
       <div className="flex items-center gap-2 rounded-lg border border-control bg-white px-3 py-2">
         <Search size={16} aria-hidden className="text-muted" />

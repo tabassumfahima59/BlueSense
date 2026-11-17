@@ -22,7 +22,7 @@ from .jobs import JOBS, run_job
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="python -m app.sync.run", description="AquaGuard data sync")
+    parser = argparse.ArgumentParser(prog="python -m app.sync.run", description="BlueSense data sync")
     parser.add_argument("job", choices=[*JOBS, "all", "status", "alerts", "predict"])
     parser.add_argument("--db", type=Path, help="database path (default: AQUAGUARD_DB_PATH or data/aquaguard.db)")
     parser.add_argument("--force", action="store_true", help="ignore the min-interval check")

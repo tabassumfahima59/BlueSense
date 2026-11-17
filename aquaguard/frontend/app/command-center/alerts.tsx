@@ -99,21 +99,25 @@ export function AlertsPanel({ region }: { region: string }) {
 
 export function Insights({ items }: { items: Insight[] }) {
   return (
-    <Card title="Key insights" subtitle="Rule-based sentences from stored values; each shows its source status and date">
-      {!items.length && <p className="text-[13px] text-muted">No insight can be formed: the underlying data is unavailable.</p>}
-      <ul className="space-y-2.5">
+    <section aria-labelledby="key-insights-heading" className="space-y-3">
+      <div>
+        <h2 id="key-insights-heading" className="text-[15px] font-semibold text-ink">Key insights</h2>
+        <p className="mt-1 text-[13px] text-muted">Rule-based sentences from stored values; each shows its source status and date</p>
+      </div>
+      {!items.length && <p className="card p-4 text-[13px] text-muted">No insight can be formed: the underlying data is unavailable.</p>}
+      <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {items.map((i) => (
-          <li key={i.key} className="flex items-start gap-2.5">
-            <Lightbulb size={16} aria-hidden className="mt-0.5 shrink-0 text-primary" />
-            <div className="min-w-0">
-              <p className="text-[13px] leading-relaxed text-ink">{i.text}</p>
-              <div className="mt-1">
-                <DataStatusBadge compact info={{ status: i.status, kind: i.dataKind, observedAt: i.observedAt, sources: i.sources }} />
-              </div>
+          <li key={i.key} className="card flex min-w-0 flex-col gap-3 p-4 sm:p-5">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary">
+              <Lightbulb size={17} aria-hidden />
+            </span>
+            <p className="flex-1 text-[13px] leading-relaxed text-ink">{i.text}</p>
+            <div className="border-t border-border pt-3">
+              <DataStatusBadge compact info={{ status: i.status, kind: i.dataKind, observedAt: i.observedAt, sources: i.sources }} />
             </div>
           </li>
         ))}
       </ul>
-    </Card>
+    </section>
   );
 }

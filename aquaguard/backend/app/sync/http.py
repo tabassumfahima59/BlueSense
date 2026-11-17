@@ -32,7 +32,7 @@ for _name in ("httpx", "httpcore"):
 RETRYABLE_STATUS = frozenset({408, 425, 429, 500, 502, 503, 504})
 RETRYABLE_EXCEPTIONS = (httpx.TimeoutException, httpx.NetworkError, httpx.RemoteProtocolError)
 SENSITIVE_KEYS = ("key", "token", "secret", "password", "signature", "auth", "apikey", "api_key", "credential")
-USER_AGENT = "AquaGuard/0.2 (water decision-support prototype)"
+USER_AGENT = "BlueSense/0.2 (water decision-support prototype)"
 
 
 class HttpError(RuntimeError):

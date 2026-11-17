@@ -1,8 +1,7 @@
 "use client";
 /**
  * 3D Water Flow: an interactive conceptual simulation of a hypothetical water-distribution network (reservoir →
- * treatment → pump → trunk main → junction → four consumer zones). Every value has data kind "conceptual"; real
- * national AQUASTAT magnitudes appear separately, marked as real, for scale only.
+ * treatment → pump → trunk main → junction → four consumer zones). Every value has data kind "conceptual".
  *
  * One store (lib/flow/store) holds the inputs, the selection, the view, the layers and the playback; one engine answer
  * (POST /api/flow/simulate) feeds the 3D view, the schematic, the data table, the KPIs and the panels, so they always
@@ -10,7 +9,7 @@
  */
 import dynamic from "next/dynamic";
 import {
-  Crosshair, FlaskConical, Home, Layers, Pause, Play, RotateCcw, RotateCw, ZoomIn, ZoomOut,
+  Crosshair, Home, Layers, Pause, Play, RotateCcw, RotateCw, ZoomIn, ZoomOut,
 } from "lucide-react";
 import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { DataTable } from "@/components/flow/DataTable";
@@ -22,16 +21,16 @@ import { Schematic } from "@/components/flow/Schematic";
 import { Plot } from "@/components/charts/Plot";
 import { axisTitle, baseLayout, SERIES } from "@/components/charts/theme";
 import { hasWebGL } from "@/components/maps/overlays";
-import { Button, Card, Note, PageHeader, Segmented } from "@/components/ui/Card";
-import { DataStatusBadge, fromMeasure } from "@/components/ui/DataStatus";
+import { Button, Card, Segmented } from "@/components/ui/Card";
 import { Popover } from "@/components/ui/Popover";
 import { ErrorCard, Skeleton } from "@/components/ui/States";
 import { api } from "@/lib/api/client";
-import { fmtMeasure, fmtNumber } from "@/lib/format";
+import { displayUnit } from "@/lib/format";
 import { NODES, PIPE_DEFS } from "@/lib/flow/network";
 import { DEFAULT_INPUTS, toRequest } from "@/lib/flow/scenarios";
 import { ALL_LAYERS, LAYER_LABEL, type LayerKey, type Selection, useFlowStore, type ViewMode } from "@/lib/flow/store";
 import { useAppStore } from "@/lib/store";
+import { useVolumeUnit } from "@/lib/store/hooks";
 import type { FlowResponse, FlowState } from "@/lib/types/contract";
 
 const SPEEDS = [0.25, 0.5, 1, 1.5, 2, 3];
@@ -46,50 +45,6 @@ const FlowScene = dynamic(() => import("@/components/three/FlowScene").then((m) 
   ssr: false,
   loading: () => <Skeleton className="h-full w-full" />,
 });
-
-/** km³/yr -> m³/day */
-const perDay = (km3yr: number) => (km3yr * 1e9) / 365;
-
-function RealParts({ res }: { res: FlowResponse }) {
-  const scale = res.scaleContext ?? [];
-  const realParts = res.realPartsUsed ?? [];
-  const municipal = scale.find((x) => x.key === "municipal");
-  const delivered = res.state.deliveredTotal.value;
-  const share = municipal?.value.value && delivered ? (delivered * 86400) / perDay(municipal.value.value) * 100 : null;
-  return (
-    <Card title="What is real here?" subtitle="The network is conceptual; real numbers are marked as real">
-      <dl className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1.5 text-[12.5px]">
-        <dt className="text-muted">Network values</dt>
-        <dd>{fromMeasure(res.state.lossPct) ? <DataStatusBadge info={fromMeasure(res.state.lossPct)} compact /> : "Conceptual"}</dd>
-        <dt className="text-muted">Real data used by the network</dt>
-        <dd data-testid="real-parts">{realParts.length ? realParts.join(", ") : "none"}</dd>
-        <dt className="text-muted">Background loss rate</dt>
-        <dd>{fmtMeasure(res.backgroundLossRate)} (assumption)</dd>
-        <dt className="text-muted">Reservoir capacity</dt>
-        <dd>{res.reservoirCapacity ? `${fmtNumber(res.reservoirCapacity.value ?? 0)} m³ (illustrative)` : "—"}</dd>
-      </dl>
-      {scale.length > 0 && (
-        <div className="mt-3 border-t border-border pt-2">
-          <h3 className="mb-1 text-[12px] font-semibold uppercase tracking-wide text-muted">Real national magnitudes (for scale)</h3>
-          <ul className="space-y-1.5 text-[12.5px]">
-            {scale.map((x) => (
-              <li key={x.key} className="flex flex-wrap items-center justify-between gap-x-2">
-                <span>{x.label}</span>
-                <span className="inline-flex items-center gap-1.5 tabular-nums">{fmtMeasure(x.value)} {fromMeasure(x.value) && <DataStatusBadge info={fromMeasure(x.value)} compact />}</span>
-              </li>
-            ))}
-          </ul>
-          {share !== null && municipal && (
-            <p className="mt-2 text-[12px] text-muted">
-              For scale: the conceptual network delivers {fmtNumber((delivered ?? 0) * 86400)} m³/day, about {share < 0.1 ? share.toFixed(2) : share.toFixed(1)}% of
-              Bangladesh&apos;s municipal withdrawal ({fmtNumber(perDay(municipal.value.value ?? 0))} m³/day, AQUASTAT reference year {municipal.value.referenceYear}).
-            </p>
-          )}
-        </div>
-      )}
-    </Card>
-  );
-}
 
 function CameraButtons({ hasSelection }: { hasSelection: boolean }) {
   const cameraCommand = useFlowStore((s) => s.cameraCommand);
@@ -190,6 +145,7 @@ function PanelTabs({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
 }
 
 export default function WaterFlow() {
+  useVolumeUnit();
   const scenarioLoss = useAppStore((s) => s.activeScenario.pipelineLossPct);
   const inputs = useFlowStore((s) => s.inputs);
   const optimize = useFlowStore((s) => s.optimize);
@@ -255,13 +211,7 @@ export default function WaterFlow() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="3D Water Flow"
-        description="A hypothetical network from reservoir to four consumer zones: change the pump, pressure, leaks, valves and allocation and see the flows, pressures and water balance respond." />
-      <div role="status" className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-dashed border-primary bg-primary-soft px-3 py-2 text-[13px] text-primary">
-        <FlaskConical size={16} aria-hidden className="shrink-0" />
-        <strong className="font-semibold">Conceptual Simulation — Not Live Infrastructure Measurements.</strong>
-        <span className="text-ink">The network is hypothetical: no IoT sensors, no real-time pipe pressure, no pump or valve control; AquaGuard does not detect physical leaks.</span>
-      </div>
+
       {err && <ErrorCard error={err} onRetry={() => setNonce((n) => n + 1)} title="The simulation could not run" />}
 
       <div className="card relative z-20 flex flex-wrap items-center gap-2 p-2.5">
@@ -363,24 +313,16 @@ export default function WaterFlow() {
                    className="fixed inset-x-0 bottom-0 z-40 flex max-h-[55vh] rounded-t-2xl pb-[calc(env(safe-area-inset-bottom)+3.5rem)] lg:hidden" />
       )}
 
-      <div className="grid gap-4 xl:grid-cols-2">
-        {res && <RealParts res={res} />}
-        {res?.optimized && (
-          <Card title="Before vs after optimization" subtitle="Delivered volume per destination and leakage (m³/day)">
-            <Plot filename="flow-before-after" ariaLabel="Delivered volumes and leakage before and after optimization" height={280}
-              data={[
-                { type: "bar", name: "Current", x: [...res.state.destinations.map((d) => d.id), "leakage"], y: [...res.state.destinations.map((d) => d.deliveredDaily.value), (res.state.leakTotal.value ?? 0) * 86400], marker: { color: SERIES[1] }, hovertemplate: "%{y:,.0f} m³/day" },
-                { type: "bar", name: "Optimized", x: [...res.optimized.destinations.map((d) => d.id), "leakage"], y: [...res.optimized.destinations.map((d) => d.deliveredDaily.value), (res.optimized.leakTotal.value ?? 0) * 86400], marker: { color: SERIES[0] }, hovertemplate: "%{y:,.0f} m³/day" },
-              ]}
-              layout={baseLayout({ barmode: "group", bargap: 0.3, bargroupgap: 0.08, yaxis: { ...(baseLayout().yaxis as object), title: axisTitle("m³/day") } })} />
-          </Card>
-        )}
-      </div>
-      <Note>
-        {res?.disclaimer ?? "All network values are conceptual."} Head loss: Hazen–Williams (C from config). Leakage: Q = k·P^N1 (FAVAD).
-        Water balance at the network boundary (pump outlet → delivery points): inflow = delivered + leakage (+ storage change, not
-        modelled: steady state); the identity is checked on every run. Allocation splits the junction flow; demand is hypothetical.
-      </Note>
+      {res?.optimized && (
+        <Card title="Before vs after optimization" subtitle={`Delivered volume per destination and leakage (${displayUnit("m³/day")})`}>
+          <Plot filename="flow-before-after" volumeUnit="m³/day" ariaLabel="Delivered volumes and leakage before and after optimization" height={280}
+            data={[
+              { type: "bar", name: "Current", x: [...res.state.destinations.map((d) => d.id), "leakage"], y: [...res.state.destinations.map((d) => d.deliveredDaily.value), (res.state.leakTotal.value ?? 0) * 86400], marker: { color: SERIES[1] }, hovertemplate: "%{y:,.0f} m³/day" },
+              { type: "bar", name: "Optimized", x: [...res.optimized.destinations.map((d) => d.id), "leakage"], y: [...res.optimized.destinations.map((d) => d.deliveredDaily.value), (res.optimized.leakTotal.value ?? 0) * 86400], marker: { color: SERIES[0] }, hovertemplate: "%{y:,.0f} m³/day" },
+            ]}
+            layout={baseLayout({ barmode: "group", bargap: 0.3, bargroupgap: 0.08, yaxis: { ...(baseLayout().yaxis as object), title: axisTitle("m³/day") } })} />
+        </Card>
+      )}
     </div>
   );
 }

@@ -9,7 +9,7 @@ import type { GridCell, WeatherPoint } from "@/lib/types/contract";
 export const GRACE_CELL_DEG = 0.25;
 
 /**
- * Display bins for the terrestrial water storage anomaly (cm). AquaGuard display choice, not an official
+ * Display bins for the terrestrial water storage anomaly (cm). BlueSense display choice, not an official
  * classification. As for the other indicator classes, a boundary value belongs to the class farther from neutral
  * (-20 is in the lowest class, +3 in the first wet class); MapLibre's `case` expression mirrors `graceTone`.
  */

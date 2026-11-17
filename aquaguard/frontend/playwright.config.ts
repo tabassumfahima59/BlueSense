@@ -3,7 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 /**
  * End-to-end tests (P4): shell, drawer, command palette, keyboard, settings, notifications and axe scans.
  * `npm run e2e` builds the app into .next-e2e with the e2e API URL, then runs these tests against
- * a backend on a copy of the database (backend/scripts/e2e_server.py, offline, no scheduler).
+ * a backend on an isolated fixture database (backend/scripts/e2e_server.py, offline, no scheduler).
  */
 const PY = process.platform === "win32" ? "..\\.venv\\Scripts\\python.exe" : "../.venv/bin/python";
 

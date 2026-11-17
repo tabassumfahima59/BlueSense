@@ -5,7 +5,7 @@
  * the motion / transparency preferences to <html>.
  */
 import { useEffect, useRef } from "react";
-import { hydrateSaved, useAppStore } from "@/lib/store";
+import { hydrateSaved, loadPrefs, PREFS_KEY, useAppStore } from "@/lib/store";
 import { scenarioFromParams, scenarioToParams } from "@/lib/store/scenario";
 
 const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -34,6 +34,11 @@ export function UrlSync() {
     st.setScenario(scenarioFromParams(p));
     st.setDateRange(parseRange(p));
     hydrated.current = true;
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === PREFS_KEY || event.key === null) useAppStore.getState().setPrefs(loadPrefs());
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   useEffect(() => {
@@ -46,11 +51,13 @@ export function UrlSync() {
 
   useEffect(() => {
     if (!hydrated.current) return;
-    const p = scenarioToParams(scenario, new URLSearchParams(window.location.search));
-    if (region && region !== "bd") p.set("region", region);
+    // Initial hydration updates the store before this effect's first captured render has caught up.
+    const current = useAppStore.getState();
+    const p = scenarioToParams(current.activeScenario, new URLSearchParams(window.location.search));
+    if (current.selectedRegion && current.selectedRegion !== "bd") p.set("region", current.selectedRegion);
     else p.delete("region");
     for (const k of ["from", "to"] as const) {
-      if (range[k]) p.set(k, range[k] as string);
+      if (current.dateRange[k]) p.set(k, current.dateRange[k] as string);
       else p.delete(k);
     }
     const qs = p.toString();

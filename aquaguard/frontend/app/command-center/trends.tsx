@@ -5,8 +5,7 @@
  * - Monthly weather anomalies against the 1991-2020 normal, following the global date filter over the whole archive.
  * - Model checks (legacy national engine vs AQUASTAT), loaded only when expanded.
  */
-import { useState } from "react";
-import { effectiveRange, useDateBounds } from "@/components/layout/DateFilter";
+import { useMemo, useState } from "react";
 import { Plot } from "@/components/charts/Plot";
 import { axisTitle, baseLayout, SERIES } from "@/components/charts/theme";
 import { Card } from "@/components/ui/Card";
@@ -16,8 +15,9 @@ import { ErrorCard, Skeleton } from "@/components/ui/States";
 import { api } from "@/lib/api/client";
 import { useApi } from "@/lib/api/useApi";
 import { monthLabel } from "@/lib/format/time";
-import { useAppStore } from "@/lib/store";
 import { BASELINE } from "@/lib/types/contract";
+import { rhythmPoints } from "@/lib/weather/rhythm";
+import { useCommandWeatherState } from "./weather-history";
 
 export function AvailabilityDemand({ national }: { national: boolean }) {
   const h = useApi("water-history|4188,4253", () => api.waterHistory([4188, 4253]));
@@ -28,7 +28,7 @@ export function AvailabilityDemand({ national }: { national: boolean }) {
       {!h.data && !h.error && <Skeleton className="h-[280px] w-full" />}
       {h.data && (
         <>
-          <Plot height={280} filename="availability-vs-demand" ariaLabel="Renewable water resources and total withdrawal by reference year"
+          <Plot height={280} filename="availability-vs-demand" volumeUnit="km³/yr" ariaLabel="Renewable water resources and total withdrawal by reference year"
                 tableKeyLabel="Reference year"
                 data={h.data.data.series.map((s, i) => {
                   const pts = s.points.filter((p) => p.value !== null);
@@ -51,29 +51,17 @@ export function AvailabilityDemand({ national }: { national: boolean }) {
 
 const ANOMALY_VARS: [string, string][] = [["precip_mm", "Rainfall"], ["d_mm", "Climatic water balance P − ET0"]];
 
-export function WeatherTrends({ region }: { region: string }) {
-  const probe = useApi(`wh-probe|${region}`, () => api.weatherHistory(region, { normals: true }));
-  // the last month that actually has data (the requested end can be the current, incomplete month)
-  const first = probe.data?.data.series.find((x) => x.t.length)?.t[0] ?? null;
-  const latest = probe.data?.data.series.find((x) => x.t.length)?.t.at(-1) ?? null;
-  // the archive starts in January 1991 (Deviation D3); by default the last ~24 months are shown
-  const bounds = latest ? { min: "1991-01", max: latest.slice(0, 7), label: "Weather trends",
-                            defaultFrom: first?.slice(0, 7), defaultTo: latest.slice(0, 7) } : null;
-  useDateBounds(bounds);
-  const dateRange = useAppStore((s) => s.dateRange);
-  const custom = Boolean(dateRange.from || dateRange.to);
-  const eff = effectiveRange(dateRange, bounds);
-  const ranged = useApi(custom && eff.from ? `wh-range|${region}|${eff.from}|${eff.to}` : null,
-                        () => api.weatherHistory(region, { start: eff.from!, end: eff.to!, normals: true }));
-  const src = custom ? ranged : probe;
+export function WeatherTrends() {
+  const { weather: src, selectedMonth } = useCommandWeatherState();
   const d = src.data?.data;
+  const points = useMemo(() => d ? rhythmPoints(d) : [], [d]);
   return (
-    <div className="grid gap-5 lg:grid-cols-2">
+    <section className="space-y-5" aria-label="Monthly water intelligence">
+      <div id="weather-analysis" className="grid scroll-mt-24 gap-5 lg:grid-cols-2">
       {ANOMALY_VARS.map(([key, label]) => {
-        const s = d?.series.find((x) => x.variable === key);
-        const n = d?.normals?.find((x) => x.variable === key);
-        const anom = s && n ? s.v.map((v, i) => (v === null || n.v[i] === null || n.v[i] === undefined ? null : v - (n.v[i] as number))) : [];
-        const months = s?.t ?? [];
+        const anom = points.map((p) => key === "precip_mm" ? p.rainfallAnomaly
+          : p.balance === null || p.balanceNormal === null ? null : p.balance - p.balanceNormal);
+        const months = points.map((p) => p.month);
         return (
           <Card key={key} title={`${label} vs 1991–2020 normal`}
                 subtitle={months.length ? `${months.length} months · ${monthLabel(months[0])} to ${monthLabel(months.at(-1))} · use the date filter to change the period` : "No data in this range"}
@@ -85,13 +73,17 @@ export function WeatherTrends({ region }: { region: string }) {
                     data={[{ type: "bar", name: `${label} anomaly`, x: months, y: anom,
                              marker: { color: anom.map((v) => ((v ?? 0) >= 0 ? SERIES[0] : SERIES[1])) },
                              hovertemplate: "%{x}: %{y:+.0f} mm vs normal<extra></extra>" }]}
-                    layout={baseLayout({ showlegend: false, yaxis: { ...baseLayout().yaxis as object, title: axisTitle("mm vs 1991–2020 normal") } })} />
+                    layout={baseLayout({ showlegend: false,
+                      shapes: selectedMonth ? [{ type: "line", x0: selectedMonth, x1: selectedMonth,
+                        y0: 0, y1: 1, xref: "x", yref: "paper", line: { color: "#0868cc", width: 2, dash: "dot" } }] : [],
+                      yaxis: { ...baseLayout().yaxis as object, title: axisTitle("mm vs 1991–2020 normal") } })} />
             ) : <p className="text-[13px] text-muted">No data in this range.</p>)}
             <p className="mt-1 text-[12px] text-muted">Blue: above the normal; orange: below. ERA5 reanalysis; complete months only.</p>
           </Card>
         );
       })}
-    </div>
+      </div>
+    </section>
   );
 }
 
@@ -110,7 +102,7 @@ export function ModelChecks() {
             <li key={v.label}>
               <div className="font-medium">{v.label}</div>
               <div className="flex flex-wrap gap-x-4 gap-y-1">
-                <span>AquaGuard: <MeasureText m={v.model} /></span>
+                <span>BlueSense: <MeasureText m={v.model} /></span>
                 <span>Reference: <MeasureText m={v.reference} /></span>
               </div>
               <p className="text-[12px] text-muted">{v.note}</p>

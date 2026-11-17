@@ -14,6 +14,7 @@ from app.services import copilot
 from app.services import copilot_limits as cl
 from app.services.copilot_limits import LIMITS, LimitError
 from app.services.llm import gemini as gem
+from app.services.llm.base import LLMError
 from app.settings import get_settings
 
 KEY = "test-gemini-key-0123456789"
@@ -73,7 +74,7 @@ def gemini(monkeypatch):
 
 def events_of(r) -> list[dict]:
     return [json.loads(dict(ln.split(": ", 1) for ln in c.splitlines() if ": " in ln)["data"])
-            for c in r.text.strip().split("\n\n")]
+            for c in r.text.strip().split("\n\n") if "data: " in c]
 
 
 def settings(monkeypatch, **kw):
@@ -105,7 +106,7 @@ def test_tool_loop_sends_the_key_only_in_a_header_and_returns_model_parts_unchan
     assert {d["name"] for d in decls} == {t.name for t in copilot.TOOLS}
     assert all(d["parametersJsonSchema"]["additionalProperties"] is False for d in decls)
     assert b0["generationConfig"]["thinkingConfig"] == {"thinkingLevel": "low"}
-    assert b0["contents"][-1]["parts"][0]["text"].startswith("App context (set by AquaGuard")
+    assert b0["contents"][-1]["parts"][0]["text"].startswith("App context (set by BlueSense")
     b1 = script.body(1)
     model_turn, tool_turn = b1["contents"][-2], b1["contents"][-1]
     assert model_turn == {"role": "model", "parts": [CALL_PART]}  # exactly as received, signature included
@@ -122,7 +123,8 @@ def test_quota_exhausted_is_an_error_without_retry_or_provider_switch(client, ge
     real = copilot.make_provider
     monkeypatch.setattr(copilot, "make_provider", lambda cfg: switched.append(cfg.provider) or real(cfg))
     ev = events_of(client.post("/api/copilot/stream", json={"message": "q"}))
-    assert ev == [{"type": "error", "code": "quota_exhausted", "detail": gem.QUOTA_DETAIL}]
+    assert ev == [{"type": "error", "code": "quota_exhausted",
+                   "detail": f"Gemini HTTP 429 RESOURCE_EXHAUSTED: Quota exceeded\n{gem.QUOTA_DETAIL}"}]
     assert len(script.requests) == 1 and switched == ["gemini"]
     script.responses.append((429, {"error": {"code": 429, "status": "RESOURCE_EXHAUSTED"}}))
     r = client.post("/api/copilot/chat", json={"message": "q"})
@@ -142,6 +144,9 @@ def test_provider_errors_are_reported_clearly(client, gemini, response, code):
     gemini([response])
     ev = events_of(client.post("/api/copilot/stream", json={"message": "q"}))
     assert len(ev) == 1 and ev[0]["type"] == "error" and ev[0]["code"] == code and KEY not in ev[0]["detail"]
+    if response[0] >= 400:
+        assert f"Gemini HTTP {response[0]}" in ev[0]["detail"]
+        assert response[1]["error"]["message"] in ev[0]["detail"]
 
 
 def test_unavailable_is_retried_once_then_reported(client, gemini):
@@ -151,7 +156,7 @@ def test_unavailable_is_retried_once_then_reported(client, gemini):
     gemini([(503, {"error": {"code": 503}}), (503, {"error": {"code": 503}})])
     ev = events_of(client.post("/api/copilot/stream", json={"message": "q"}))
     assert ev == [{"type": "error", "code": "llm_unavailable",
-                   "detail": "The AI service is temporarily unavailable. Try again shortly."}]
+                   "detail": "Gemini HTTP 503\nThe AI service is temporarily unavailable. Try again shortly."}]
 
 
 def test_timeout_is_reported(client, gemini):
@@ -163,7 +168,159 @@ def test_timeout_is_reported(client, gemini):
     assert r.status_code == 504 and r.json()["code"] == "llm_timeout"
 
 
+def test_connection_failures_are_logged_without_secret_details(client, gemini, caplog, monkeypatch):
+    monkeypatch.setattr(gem.time, "sleep", lambda _: None)
+    script = gemini([httpx.ConnectError(f"connection failed with key {KEY}") for _ in range(2)])
+    with caplog.at_level(logging.WARNING):
+        r = client.post("/api/copilot/stream", json={"message": "q"})
+    assert events_of(r)[0]["code"] == "llm_unavailable"
+    assert len(script.requests) == 2
+    assert "ConnectError" in caplog.text and "attempt 2/2" in caplog.text
+    assert KEY not in caplog.text and KEY not in r.text
+
+
+def test_provider_error_logs_redact_the_key(client, gemini, caplog):
+    gemini([(403, {"error": {"status": "PERMISSION_DENIED", "message": f"Rejected key {KEY}"}})])
+    with caplog.at_level(logging.WARNING):
+        r = client.post("/api/copilot/stream", json={"message": "q"})
+    assert events_of(r)[0]["code"] == "llm_auth"
+    assert "[redacted]" in caplog.text and KEY not in caplog.text
+
+
+@pytest.mark.parametrize("partial", [False, True])
+def test_read_timeout_retries_only_before_text_is_delivered(monkeypatch, partial):
+    monkeypatch.setattr(gem.time, "sleep", lambda _: None)
+
+    class InterruptedStream(httpx.SyncByteStream):
+        closed = False
+
+        def __iter__(self):
+            if partial:
+                yield sse_body([text_chunk("Partial answer")])
+            raise httpx.ReadTimeout("first streamed content stalled")
+
+        def close(self):
+            self.closed = True
+
+    interrupted = InterruptedStream()
+    requests = []
+
+    def respond(request):
+        requests.append(request)
+        if len(requests) == 1:
+            return httpx.Response(200, stream=interrupted)
+        return httpx.Response(200, content=sse_body([text_chunk("Recovered", "STOP")]))
+
+    provider = gem.GeminiProvider(KEY, READY.model, transport=httpx.MockTransport(respond))
+    try:
+        stream = provider.stream_turn("system", [], [], 128)
+        if partial:
+            assert next(stream) == "Partial answer"
+            with pytest.raises(LLMError, match="stopped responding"):
+                next(stream)
+            assert len(requests) == 1
+        else:
+            items = list(stream)
+            assert items[0] == "Recovered" and items[-1].stop == "end"
+            assert len(requests) == 2
+        assert interrupted.closed
+    finally:
+        provider.close()
+
+
+def test_retry_timeout_is_capped_by_whole_answer_deadline(monkeypatch):
+    clock = [100.0]
+    monkeypatch.setattr(gem.time, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(gem.time, "sleep", lambda seconds: clock.__setitem__(0, clock[0] + seconds))
+    timeouts = []
+
+    def respond(request):
+        timeouts.append(request.extensions["timeout"])
+        clock[0] += 3
+        raise httpx.ReadTimeout("slow")
+
+    provider = gem.GeminiProvider(KEY, READY.model, timeout_s=60, deadline_s=5,
+                                transport=httpx.MockTransport(respond))
+    try:
+        with pytest.raises(LLMError):
+            list(provider.stream_turn("system", [], [], 128))
+        assert [t["read"] for t in timeouts] == [5, 1]
+        assert all(t["connect"] <= t["read"] for t in timeouts)
+    finally:
+        provider.close()
+
+
 # ---------------------------------------------------------------- usage limits
+
+@pytest.mark.parametrize("header,info,expected", [
+    ("2", None, 2),
+    (None, "3.5s", 3.5),
+    ("2", "4s", 4),
+    ("invalid", "invalid", None),
+    (None, "NaNs", None),
+    (None, "-1s", None),
+])
+def test_quota_retry_uses_provider_delay(monkeypatch, header, info, expected):
+    sleeps = []
+    monkeypatch.setattr(gem.time, "sleep", sleeps.append)
+    requests = []
+
+    def respond(request):
+        requests.append(request)
+        if len(requests) > 1:
+            return httpx.Response(200, content=sse_body([text_chunk("Recovered", "STOP")]))
+        details = [{"@type": "type.googleapis.com/google.rpc.RetryInfo", "retryDelay": info}] if info else []
+        return httpx.Response(429, headers={"Retry-After": header} if header else {},
+                              json={"error": {"status": "RESOURCE_EXHAUSTED", "details": details}})
+
+    provider = gem.GeminiProvider(KEY, READY.model, transport=httpx.MockTransport(respond))
+    try:
+        if expected is None:
+            with pytest.raises(LLMError) as error:
+                list(provider.stream_turn("system", [], [], 128))
+            assert error.value.code == "quota_exhausted"
+            assert sleeps == [] and len(requests) == 1
+        else:
+            assert list(provider.stream_turn("system", [], [], 128))[0] == "Recovered"
+            assert sleeps == [expected] and len(requests) == 2
+    finally:
+        provider.close()
+
+
+@pytest.mark.parametrize("max_wait,deadline,delay", [(0, 240, "0"), (5, 240, "6"), (60, 3, "3")])
+def test_quota_wait_is_bounded(monkeypatch, max_wait, deadline, delay):
+    sleeps = []
+    monkeypatch.setattr(gem.time, "sleep", sleeps.append)
+    transport = httpx.MockTransport(lambda request: httpx.Response(
+        429, headers={"Retry-After": delay}, json={"error": {"status": "RESOURCE_EXHAUSTED"}}))
+    provider = gem.GeminiProvider(KEY, READY.model, transport=transport, deadline_s=deadline,
+                                retry_after_max_s=max_wait)
+    try:
+        with pytest.raises(LLMError) as error:
+            list(provider.stream_turn("system", [], [], 128))
+        assert error.value.code == "quota_exhausted" and sleeps == []
+    finally:
+        provider.close()
+
+
+@pytest.mark.parametrize("max_retries,expected_sleeps", [(0, []), (3, [2, 4, 8])])
+def test_configurable_retry_budget_and_exponential_backoff(monkeypatch, max_retries, expected_sleeps):
+    sleeps, requests = [], []
+    monkeypatch.setattr(gem.time, "sleep", sleeps.append)
+
+    def respond(request):
+        requests.append(request)
+        return httpx.Response(503, json={"error": {"status": "UNAVAILABLE"}})
+
+    provider = gem.GeminiProvider(KEY, READY.model, transport=httpx.MockTransport(respond),
+                                max_retries=max_retries, retry_backoff_s=2)
+    try:
+        with pytest.raises(LLMError):
+            list(provider.stream_turn("system", [], [], 128))
+        assert sleeps == expected_sleeps and len(requests) == max_retries + 1
+    finally:
+        provider.close()
+
 
 def test_site_daily_model_call_budget(client, gemini, monkeypatch):
     settings(monkeypatch, copilot_daily_model_calls=1)

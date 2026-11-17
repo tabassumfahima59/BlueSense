@@ -348,6 +348,15 @@ export function BangladeshMap({ divisions, districts, values, layers, selected, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Pixel ratio is also a runtime setting: the constructor only applies the initial preference.
+  // Update the existing canvas so 2D Lite mode takes effect without resetting the camera or selection.
+  useEffect(() => {
+    const m = map.current;
+    if (!m) return;
+    const ratio = Math.min(window.devicePixelRatio, lite ? 1 : 2);
+    if (m.getPixelRatio() !== ratio) m.setPixelRatio(ratio);
+  }, [lite]);
+
   // apply layer state + values
   useEffect(() => {
     const m = map.current;
@@ -411,7 +420,7 @@ export function BangladeshMap({ divisions, districts, values, layers, selected, 
         m.setFilter("weather-points-selected", h?.kind === "weather_point" ? ["==", ["get", "id"], h.id] : NONE);
         m.setFilter("grace-cells-selected", h?.kind === "grace_cell" ? ["==", ["get", "id"], h.id] : NONE);
       }
-      m.setLayoutProperty("hillshade", "visibility", vis(layers.terrain && !isFlat));
+      m.setLayoutProperty("hillshade", "visibility", vis(layers.terrain && !isFlat && !lite));
       m.setTerrain(layers.terrain && !isFlat && !lite ? { source: "dem", exaggeration } : null);
       m.setFilter(`${lvl}-selected`, ["==", ["get", "id"], selected ?? ""]);
     };

@@ -11,14 +11,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Plot } from "@/components/charts/Plot";
 import { axisTitle, baseLayout, NEUTRAL, SERIES } from "@/components/charts/theme";
 import { DEFAULT_LAYERS } from "@/components/maps/layers";
-import { Button, Card, Note, PageHeader } from "@/components/ui/Card";
-import { DataStatusBadge, DATA_KIND_LABEL } from "@/components/ui/DataStatus";
+import { Button, Card } from "@/components/ui/Card";
 import { KpiCard, MeasureText } from "@/components/ui/MeasureView";
 import { ErrorCard, LoadingCard, Skeleton } from "@/components/ui/States";
 import { api } from "@/lib/api/client";
 import { useApi } from "@/lib/api/useApi";
 import { fmtMeasure } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
+import { useVolumeUnit } from "@/lib/store/hooks";
 import type { IrrigationRequest, IrrigationResponse } from "@/lib/types/contract";
 
 const BangladeshMap = dynamic(() => import("@/components/maps/BangladeshMap").then((m) => m.BangladeshMap), { ssr: false, loading: () => <Skeleton className="h-[220px] w-full" /> });
@@ -36,18 +36,12 @@ const field = "w-full rounded-lg border bg-white px-2.5 py-1.5 text-[13px]";
 
 function Why({ r }: { r: IrrigationResponse }) {
   return (
-    <Card title="Why this estimate" subtitle="Every input, where it comes from and how old it is">
-      <ul className="divide-y divide-border">
+    <Card title="Why this estimate" className="flex flex-1 flex-col">
+      <ul className="flex flex-1 flex-col divide-y divide-border">
         {(r.why ?? []).map((w) => (
-          <li key={w.label} className="flex flex-wrap items-start justify-between gap-2 py-2">
-            <div className="min-w-0">
-              <p className="text-[13px] font-medium text-ink">{w.label}</p>
-              <p className="text-[13px] text-ink">{w.value}</p>
-              <p className="text-[12px] text-muted">{w.source}{w.age ? ` · retrieved ${w.age}` : ""}</p>
-            </div>
-            {w.status ? (
-              <DataStatusBadge compact info={{ status: w.status, kind: w.dataKind, observedAt: w.observedAt, retrievedAt: w.retrievedAt, sources: [w.source] }} />
-            ) : <span className="text-[11.5px] text-muted">{DATA_KIND_LABEL[w.dataKind]}</span>}
+          <li key={w.label} className="flex min-w-0 flex-1 flex-col justify-center gap-1 py-3">
+            <p className="text-[13px] font-medium text-ink">{w.label}</p>
+            <p className="text-[13px] text-ink">{w.value}</p>
           </li>
         ))}
       </ul>
@@ -63,7 +57,6 @@ function Conditions({ r }: { r: IrrigationResponse }) {
         {r.context.map((c) => (
           <li key={c.label} className="flex flex-wrap items-start justify-between gap-2">
             <span className="text-[13px]"><span className="text-muted">{c.label}: </span><span className="font-medium text-ink">{c.value}</span></span>
-            {c.status && <DataStatusBadge compact info={{ status: c.status, kind: c.dataKind, observedAt: c.observedAt, sources: [c.source] }} />}
           </li>
         ))}
       </ul>
@@ -74,12 +67,12 @@ function Conditions({ r }: { r: IrrigationResponse }) {
 function Outputs({ r }: { r: IrrigationResponse }) {
   const days = Number(r.period.match(/\((\d+) days\)/)?.[1] ?? 7);
   return (
-    <div className="space-y-5">
+    <div className="flex flex-1 flex-col gap-5">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard label={`Gross need · next ${days} days`} m={r.grossRequirementMm} icon={<Droplet size={16} />}
+        <KpiCard badge={false} label={`Gross need · next ${days} days`} m={r.grossRequirementMm} icon={<Droplet size={16} />}
                  hint={<span>{fmtMeasure(r.grossRequirementM3)} · net {fmtMeasure(r.netRequirementMm)}</span>} />
-        <KpiCard label="Crop water use ETc (mean per day)" m={r.etc} icon={<Gauge size={16} />} hint={<span>ET0 {fmtMeasure(r.et0)} × Kc {fmtMeasure(r.kc, { digits: 2 })}</span>} />
-        <KpiCard label="Next irrigation" icon={<CalendarClock size={16} />} m={r.interval}
+        <KpiCard badge={false} label="Crop water use ETc (mean per day)" m={r.etc} icon={<Gauge size={16} />} hint={<span>ET0 {fmtMeasure(r.et0)} × Kc {fmtMeasure(r.kc, { digits: 2 })}</span>} />
+        <KpiCard badge={false} label="Next irrigation" icon={<CalendarClock size={16} />} m={r.interval}
           hint={<span>{fmtMeasure(r.perIrrigationGrossMm)} gross per irrigation ({fmtMeasure(r.perIrrigationGrossM3)})</span>}>
           <div className="text-[22px] font-semibold">{r.nextIrrigationDate ?? "Not within the window"}</div>
           <div className="text-[12.5px] text-muted">interval ≈ {fmtMeasure(r.interval)}</div>
@@ -89,13 +82,9 @@ function Outputs({ r }: { r: IrrigationResponse }) {
           <div className="text-[12.5px] text-muted">Kc today {fmtMeasure(r.kc, { digits: 2 })}</div>
         </KpiCard>
       </div>
-      {r.windowNote && <Note tone="warn">{r.windowNote}</Note>}
-      {(r.missingDays?.length ?? 0) > 0 && <Note tone="warn">No complete forecast for {r.missingDays!.join(", ")}: the estimate covers {r.period} only. Missing days are never assumed to be dry.</Note>}
       <Card title="Recommendations">
         <ul className="list-disc space-y-1 pl-5 text-[13.5px]">{r.recommendations.map((x) => <li key={x}>{x}</li>)}</ul>
       </Card>
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-        <Why r={r} />
         <div className="space-y-5">
           <Conditions r={r} />
           {r.daily.length > 0 && (
@@ -109,9 +98,9 @@ function Outputs({ r }: { r: IrrigationResponse }) {
             </Card>
           )}
         </div>
-      </div>
-      <Card title="Water balance details" subtitle={`${r.cropLabel} · ${r.location.name} · ${r.period}`}>
-        <dl className="grid gap-x-6 gap-y-1.5 text-[13px] sm:grid-cols-2">
+      <Card title="Water balance details" subtitle={`${r.cropLabel} · ${r.location.name} · ${r.period}`}
+            className="flex flex-1 flex-col">
+        <dl className="grid flex-1 auto-rows-fr gap-x-6 gap-y-1.5 text-[13px] sm:grid-cols-2">
           {([
             ["Reference ET0 (mean)", r.et0], ["Crop coefficient Kc (today)", r.kc], ["Crop ET (ETc = Kc × ET0, mean)", r.etc],
             ["Forecast rainfall (window)", r.rainfall], ["Effective rainfall (USDA-SCS)", r.effectiveRainfall], ["Rice land prep + percolation", r.riceExtra],
@@ -124,24 +113,15 @@ function Outputs({ r }: { r: IrrigationResponse }) {
             </div>
           ))}
         </dl>
-        <p className="mt-2 text-[12px] text-muted">Starting depletion basis: {r.startBasis}.</p>
-      </Card>
-      <Card title="Assumptions" subtitle="Every parameter and its source (parameters.yaml)">
-        <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Assumptions table (scrollable)">
-          <table className="w-full min-w-[560px] text-[12.5px]">
-            <thead className="text-left text-muted"><tr className="border-b border-border"><th className="py-1 font-medium">Parameter</th><th className="font-medium">Value</th><th className="font-medium">Source</th><th className="font-medium">Type</th></tr></thead>
-            <tbody>{r.assumptions.map((a) => (
-              <tr key={a.key} className="border-b border-border/60 align-top"><td className="py-1 pr-2">{a.key}</td><td className="pr-2 tabular-nums">{a.value} {a.unit !== "-" ? a.unit : ""}</td><td className="pr-2 text-muted">{a.source}</td><td>{a.assumption ? "Assumption" : "Cited"}</td></tr>
-            ))}</tbody>
-          </table>
-        </div>
       </Card>
     </div>
   );
 }
 
 export default function Irrigation() {
+  useVolumeUnit();
   const region = useAppStore((s) => s.selectedRegion);
+  const setRegion = useAppStore((s) => s.setRegion);
   const [form, setForm] = useState<IrrigationRequest>({ crop: "boro_rice", region: region === "bd" ? "rajshahi" : region, soil: "silty_clay_loam", areaHa: 1, plantingDate: null, stage: null, efficiency: null, temperatureOverrideC: null, rainfallOverrideMm: null });
   const [dateMode, setDateMode] = useState<"default" | "date" | "stage">("default");
   const [res, setRes] = useState<IrrigationResponse | null>(null);
@@ -152,7 +132,11 @@ export default function Irrigation() {
   const seq = useRef(0);
 
   useEffect(() => {
-    if (region !== "bd" && regions.data?.divisions.some((d) => d.id === region)) setForm((f) => ({ ...f, region }));
+    const point = region === "bd" ? "rajshahi" : region;
+    if (regions.data?.divisions.some((d) => d.id === point)) {
+      setForm((f) => f.region === point ? f : { ...f, region: point });
+      setRes(null);
+    }
   }, [region, regions.data]);
 
   const run = useCallback(async () => {
@@ -170,23 +154,21 @@ export default function Irrigation() {
   }, [form, dateMode]);
   useEffect(() => {
     const t = setTimeout(run, 350); // re-estimate when any input changes
-    return () => clearTimeout(t);
+    return () => { clearTimeout(t); seq.current += 1; };
   }, [run]);
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Smart Irrigation Advisor" description="FAO-56 crop water requirement for the next 7 days from the stored Open-Meteo forecast (ET0, rainfall, model soil moisture) at the division's weather point. Estimate — validate locally; not a field prescription.">
-        {res && res.forecastStatus && <DataStatusBadge info={{ status: res.forecastStatus, kind: "forecast", retrievedAt: res.weatherRetrievedAt, sources: ["openmeteo_forecast"], note: `Weather: ${res.weatherMode}` }} />}
-      </PageHeader>
+
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[340px_minmax(0,1fr)]">
-        <div className="space-y-4">
-          <Card title="Inputs">
+        <div className="flex min-w-0 flex-col gap-4">
+          <Card title="Inputs" className="shrink-0">
             <form className="space-y-3 text-[13px]" onSubmit={(e) => { e.preventDefault(); run(); }}>
               <label className="block"><span className="mb-1 block font-medium">Crop</span>
                 <select className={field} value={form.crop} onChange={(e) => setForm({ ...form, crop: e.target.value })}>{CROPS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}</select>
               </label>
               <label className="block"><span className="mb-1 block font-medium">Division (weather point)</span>
-                <select className={field} value={form.region ?? ""} onChange={(e) => setForm({ ...form, region: e.target.value })}>
+                <select className={field} value={form.region ?? ""} onChange={(e) => setRegion(e.target.value)}>
                   {regions.data?.divisions.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
               </label>
@@ -196,7 +178,7 @@ export default function Irrigation() {
                   <BangladeshMap divisions={geo.data} districts={EMPTY} values={{}}
                     colors={Object.fromEntries((regions.data?.divisions ?? []).map((d) => [d.id, d.id === form.region ? "#9CC5EE" : "#EAF5FF"]))}
                     layers={{ ...DEFAULT_LAYERS, scarcity: true, terrain: false, extrude: false, rivers: false }} flat height={220}
-                    selected={form.region ?? undefined} onSelect={(id) => setForm((f) => ({ ...f, region: id }))} />
+                    selected={form.region ?? undefined} onSelect={setRegion} />
                 ) : <Skeleton className="h-[220px] w-full" />}
               </div>
               <label className="block"><span className="mb-1 block font-medium">Soil type</span>
@@ -233,9 +215,9 @@ export default function Irrigation() {
               <Button type="submit" disabled={busy} className="w-full justify-center">{busy ? "Estimating…" : "Estimate now"}</Button>
             </form>
           </Card>
+          {res && <Why r={res} />}
         </div>
-        <div className="space-y-4" aria-live="polite" aria-busy={busy}>
-          <Note tone="warn">Estimate — validate locally. Uses forecast weather and FAO-56 table values; soil moisture is a model estimate, not a field measurement.</Note>
+        <div className="flex min-w-0 flex-col gap-4" aria-live="polite" aria-busy={busy}>
           {err && <ErrorCard error={err} onRetry={run} />}
           {!res && !err && <LoadingCard rows={3} label="Estimating irrigation" />}
           {res && <Outputs r={res} />}

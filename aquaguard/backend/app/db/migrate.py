@@ -1,4 +1,4 @@
-"""Versioned SQL migration runner for AquaGuard's SQLite database.
+"""Versioned SQL migration runner for BlueSense's SQLite database.
 
     python -m app.db.migrate                 # from backend/: apply pending migrations to the configured DB
     python -m app.db.migrate --status        # list applied / pending migrations
@@ -247,7 +247,7 @@ def migrate(db_path: str | Path, migrations_dir: Path = MIGRATIONS_DIR, *, backu
 def main(argv: list[str] | None = None) -> int:
     from ..settings import get_settings
 
-    parser = argparse.ArgumentParser(description="Apply AquaGuard SQLite migrations")
+    parser = argparse.ArgumentParser(description="Apply BlueSense SQLite migrations")
     parser.add_argument("--db", type=Path, default=None, help="database file (default: settings.db_path)")
     parser.add_argument("--status", action="store_true", help="show applied/pending migrations and exit")
     parser.add_argument("--no-backup", action="store_true", help="do not back up before migrating")

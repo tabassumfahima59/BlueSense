@@ -26,7 +26,7 @@ export function suggestionsFor(sel: MapSelection | null, divisionName: string | 
             "How has national water storage changed since 2002?", "Which data sources support this analysis?"];
   }
   if (sel?.kind === "river" || sel?.kind === "water") {
-    return [`What data does AquaGuard have about ${sel.name}?`, "How has historical surface-water occurrence changed?",
+    return [`What data does BlueSense have about ${sel.name}?`, "How has historical surface-water occurrence changed?",
             "Which division has the highest estimated scarcity risk?", "Which data sources support this analysis?"];
   }
   if (divisionName) {
@@ -50,7 +50,7 @@ export function MapAssistant({ sel, region, regionName, divisionName, idPrefix }
     <div className="flex h-[440px] min-h-0 flex-col rounded-xl border border-border bg-white" data-testid="map-assistant">
       <div className="border-b border-border px-3 py-2 text-[12px] text-muted">
         Context sent with your question: <span className="font-medium text-ink">{sel ? sel.name : regionName}</span>.
-        Answers use AquaGuard&apos;s read-only data tools; districts have no water data.
+        Answers use BlueSense&apos;s read-only data tools; districts have no water data.
       </div>
       <div className="min-h-0 flex-1">
         <ChatUI compact idPrefix={idPrefix} region={region} context={mapContext(sel, regionName)}

@@ -8,19 +8,19 @@ import { Database, FileJson, ListTree } from "lucide-react";
 import { useEffect, useState } from "react";
 import { DataTable, Plot } from "@/components/charts/Plot";
 import { axisTitle, baseLayout, NEUTRAL, SECTOR_COLOR, SERIES } from "@/components/charts/theme";
-import { Button, Card, Note, PageHeader, Segmented } from "@/components/ui/Card";
+import { Button, Card, Note, Segmented } from "@/components/ui/Card";
 import { DataStatusBadge, fromMeta } from "@/components/ui/DataStatus";
-import { KpiCard, MeasureText } from "@/components/ui/MeasureView";
+import { KpiCard } from "@/components/ui/MeasureView";
 import { DetailDrawer } from "@/components/ui/Overlay";
 import { MeasureBadge, ProvenanceBadge } from "@/components/ui/Provenance";
 import { Async, EmptyState } from "@/components/ui/States";
 import { api } from "@/lib/api/client";
 import { useApi } from "@/lib/api/useApi";
-import { fmtMeasure } from "@/lib/format";
+import { displayUnit, fmtMeasure } from "@/lib/format";
 import { fmtDateTime } from "@/lib/format/time";
 import { featureRows } from "@/lib/ml/features";
 import { useAppStore } from "@/lib/store";
-import { useRegionScenario } from "@/lib/store/hooks";
+import { useRegionScenario, useVolumeUnit } from "@/lib/store/hooks";
 import {
   BASELINE, type DemandResponse, type GroundwaterResponse, type Meta, type MetricsResponse, type PredictionPoint,
   type Predictions, type ScarcityResponse, type ShapResponse,
@@ -256,9 +256,6 @@ function WaterBalanceForecast({ horizon }: { horizon: number }) {
                 {d.categories.map((c) => <option key={c.id} value={c.id} disabled={!c.available}>{c.label}{c.available ? "" : " — no model"}</option>)}
               </select>
             </label>
-            <ul className="text-[12px] text-muted">
-              {d.categories.filter((c) => !c.available).map((c) => <li key={c.id}>{c.label}: {c.reason}</li>)}
-            </ul>
           </div>
           <StorageLine d={d} meta={meta} />
           {meta.note && <Note>{meta.note}</Note>}
@@ -287,7 +284,6 @@ function WaterBalanceForecast({ horizon }: { horizon: number }) {
           <Async state={legacy} rows={2}>{(x) => (x.available ? <TestPeriodChart s={x} /> : null)}</Async>
           <Async state={met} rows={2}>{(x) => <MetricsPanel m={x} horizon={horizon} />}</Async>
           <Async state={sh} rows={2}>{(x) => <ShapPanel sh={x} />}</Async>
-          <Async state={legacy} rows={1}>{(x) => <Note><strong>Limitations.</strong> {x.limitations.join(" ")}</Note>}</Async>
         </div>
       )}
     </Async>
@@ -305,19 +301,18 @@ function Demand() {
         return (
           <div className="space-y-5">
             <Card title="Water demand projection by sector" subtitle="Transparent projection, not an ML forecast" actions={<MeasureBadge m={d.years[0]?.total} small />}>
-              <Plot filename="demand-projection" ariaLabel="Projected annual water demand by sector" height={320}
+              <Plot filename="demand-projection" volumeUnit="MCM/yr" ariaLabel="Projected annual water demand by sector" height={320}
                 data={sectors.map((k) => ({ type: "bar", name: k[0].toUpperCase() + k.slice(1), x: yrs, y: d.years.map((y) => y[k].value), marker: { color: SECTOR_COLOR[k], line: { color: "#fff", width: 2 } }, hovertemplate: "%{y:,.0f} MCM" }))}
                 layout={baseLayout({ barmode: "stack", yaxis: { ...(baseLayout().yaxis as object), title: axisTitle("MCM per year") }, xaxis: { ...(baseLayout().xaxis as object), title: axisTitle("Year"), type: "category" } })} />
               <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Demand projection table">
                 <table className="mt-2 w-full min-w-[520px] text-[12.5px]">
-                  <thead className="text-left text-muted"><tr className="border-b border-border"><th className="py-1 font-medium">Year</th><th className="text-right font-medium">Population</th><th className="text-right font-medium">Domestic</th><th className="text-right font-medium">Total (MCM)</th></tr></thead>
+                  <thead className="text-left text-muted"><tr className="border-b border-border"><th className="py-1 font-medium">Year</th><th className="text-right font-medium">Population</th><th className="text-right font-medium">Domestic</th><th className="text-right font-medium">Total ({displayUnit("MCM")})</th></tr></thead>
                   <tbody>{d.years.map((y) => (
                     <tr key={y.year} className="border-b border-border/60"><td className="py-1">{y.year}</td><td className="text-right tabular-nums">{fmtMeasure(y.population)}</td><td className="text-right tabular-nums">{fmtMeasure(y.domestic)}</td><td className="text-right tabular-nums">{fmtMeasure(y.total)}</td></tr>
                   ))}</tbody>
                 </table>
               </div>
             </Card>
-            <Note><strong>Method.</strong> {d.method} {d.limitations.join(" ")}</Note>
           </div>
         );
       }}
@@ -334,8 +329,7 @@ function Groundwater() {
         <EmptyState title="GRACE data not loaded">{g.instructions}</EmptyState>
       ) : (
         <div className="space-y-5">
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            <KpiCard label="Storage trend (seasonal cycle removed)" m={g.trend} digits={2} intervalLabel="95% CI" hint={<span>regional, not well depth</span>} />
+          <div className="grid gap-3 sm:grid-cols-2">
             <KpiCard label="Latest monthly anomaly" m={g.series?.points.at(-1)?.v} hint={<span>{g.series?.points.at(-1)?.t}</span>} />
             <KpiCard label="Months of data" hint={<span>{g.series?.points[0]?.t} to {g.series?.points.at(-1)?.t}</span>}>
               <div className="text-[28px] font-semibold tabular-nums">{g.series?.points.length}</div>
@@ -352,9 +346,7 @@ function Groundwater() {
                 { type: "scatter", mode: "lines", name: "12-month projection", x: g.projection!.points.map((p) => p.t), y: g.projection!.points.map((p) => p.v.value), line: { color: SERIES[4], width: 2, dash: "dash" }, hovertemplate: "%{y:.1f} cm" },
               ]}
               layout={baseLayout({ yaxis: { ...(baseLayout().yaxis as object), title: axisTitle("Equivalent water height anomaly (cm)") }, xaxis: { ...(baseLayout().xaxis as object), title: axisTitle("Month (gap 2017–2018 between missions)") } })} />
-            <p className="mt-2 text-[12px] text-muted">{g.method}</p>
           </Card>
-          <Note>Trend: <MeasureText m={g.trend} digits={3} />. {g.note}</Note>
         </div>
       )}
     </Async>
@@ -381,6 +373,7 @@ function writeUrl(tab: Tab, horizon: number) {
 }
 
 export default function PredictionLab() {
+  useVolumeUnit();
   const [tab, setTabState] = useState<Tab>("forecast");
   const [horizon, setHorizonState] = useState(1);
   useEffect(() => {
@@ -392,12 +385,12 @@ export default function PredictionLab() {
   const setHorizon = (h: number) => { setHorizonState(h); writeUrl(tab, h); };
   return (
     <div className="space-y-5">
-      <PageHeader title="AI Water Prediction Lab" description="The climatic water balance D = P − ET0 (a measurable quantity) is predicted 1, 3 and 6 months ahead by models tested on years they never saw and shown beside simple baselines. Predictions are re-issued automatically when new reanalysis months arrive.">
+      <div className="flex flex-wrap items-center gap-2">
         <div className="flex flex-wrap gap-2">
           <Segmented label="Section" value={tab} onChange={setTab} options={[{ value: "forecast", label: "Water balance forecast" }, { value: "demand", label: "Demand projection" }, { value: "groundwater", label: "Groundwater (GRACE)" }]} />
           {tab === "forecast" && <Segmented label="Forecast horizon" value={horizon} onChange={setHorizon} options={HORIZONS.map((h) => ({ value: h, label: `${h} mo` }))} />}
         </div>
-      </PageHeader>
+      </div>
       {tab === "forecast" && <WaterBalanceForecast horizon={horizon} />}
       {tab === "demand" && <Demand />}
       {tab === "groundwater" && <Groundwater />}

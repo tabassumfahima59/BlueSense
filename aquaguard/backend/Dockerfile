@@ -1,4 +1,4 @@
-# AquaGuard API image. Build from the aquaguard/ directory:
+# BlueSense API image. Build from the aquaguard/ directory:
 #   docker build -f backend/Dockerfile -t aquaguard-api .
 FROM python:3.14-slim
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHONIOENCODING=utf-8

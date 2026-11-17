@@ -3,6 +3,7 @@
  *  and row selection is shared with the 3D view and the schematic. */
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { useMemo, useState } from "react";
+import { displayUnit, fmtNumber, volumeValue } from "@/lib/format";
 import { fmt, type TableRow, tableRows } from "@/lib/flow/derive";
 import { sameSel, useFlowStore } from "@/lib/flow/store";
 import type { FlowState } from "@/lib/types/contract";
@@ -80,7 +81,7 @@ export function DataTable({ state }: { state: FlowState }) {
                   <th key={c.key} scope="col" aria-sort={active ? (sort.dir === 1 ? "ascending" : "descending") : "none"}
                       className={`px-3 py-2 font-medium ${c.numeric ? "text-right" : ""}`}>
                     <button type="button" onClick={() => toggleSort(c.key)} className="inline-flex items-center gap-1 whitespace-nowrap hover:text-ink">
-                      {c.label} <Icon size={12} aria-hidden />
+                      {c.key === "flowDaily" ? `Flow (${displayUnit("m³/day")})` : c.key === "leakDaily" ? `Leakage (${displayUnit("m³/day")})` : c.label} <Icon size={12} aria-hidden />
                     </button>
                   </th>
                 );
@@ -100,9 +101,9 @@ export function DataTable({ state }: { state: FlowState }) {
                     {r.name}
                   </th>
                   <td className="whitespace-nowrap px-3 py-1.5 text-muted">{r.type}</td>
-                  <td className="px-3 py-1.5 text-right tabular-nums">{fmt(r.flowDaily)}</td>
+                  <td className="px-3 py-1.5 text-right tabular-nums">{r.flowDaily === null ? "—" : fmtNumber(volumeValue(r.flowDaily, "m³/day")!)}</td>
                   <td className="px-3 py-1.5 text-right tabular-nums">{r.modelled ? fmt(r.pressure, 1) : "Not modelled"}</td>
-                  <td className="px-3 py-1.5 text-right tabular-nums">{r.kind === "pipe" && r.modelled ? fmt(r.leakDaily) : "—"}</td>
+                  <td className="px-3 py-1.5 text-right tabular-nums">{r.kind === "pipe" && r.modelled && r.leakDaily !== null ? fmtNumber(volumeValue(r.leakDaily, "m³/day")!) : "—"}</td>
                   <td className="whitespace-nowrap px-3 py-1.5"><StatusText status={r.status} /></td>
                 </tr>
               );

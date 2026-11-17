@@ -30,6 +30,12 @@ PROVENANCE: dict[str, Provenance] = {
 }
 NATIONAL_WEATHER_NOTE = "National estimate based on eight representative divisional weather points."
 NATIONAL_DATA_NOTE = "National data: this source has no division-level values."
+INTERNAL_SOURCE_NAMES = {"aquaguard_engine": "BlueSense engines", "aquaguard_ml": "BlueSense ML pipeline"}
+
+
+def display_name(source_id: str, stored_name: str) -> str:
+    """Present current branding without rewriting historical migrations or the stored source identifiers."""
+    return INTERNAL_SOURCE_NAMES.get(source_id, stored_name)
 
 
 def _load() -> dict[str, dict]:
@@ -43,6 +49,10 @@ def _load() -> dict[str, dict]:
         cols = ("id", "name", "url", "licence", "attribution", "cadence", "cadence_seconds", "data_kind",
                 "spatial_level", "requires_credentials", "notes")
         registry = {r[0]: dict(zip(cols, r)) for r in rows}
+        for sid, row in registry.items():
+            row["name"] = display_name(sid, row["name"])
+            if sid in INTERNAL_SOURCE_NAMES:
+                row["attribution"] = "BlueSense"
         for st in sync_status.all_statuses(conn, s):
             registry.get(st["source_id"], {}).update(st)
         return registry

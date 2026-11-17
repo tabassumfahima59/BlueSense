@@ -1,4 +1,4 @@
-# AquaGuard — Implementation Plan (Main Rebuild)
+# BlueSense — Implementation Plan (Main Rebuild)
 
 Status: **All phases implemented and verified (P1–P4, M1–M8, P5).** Final report: `aquaguard-final-report.md`. Evidence:
 `aquaguard-progress.md`.
@@ -9,7 +9,7 @@ evolution of the existing repository, not a rebuild: working features, routes, t
 
 ## 1. Project overview
 
-**AquaGuard — AI-Powered Water Intelligence, Prediction & Resource Optimization Platform** for Bangladesh (national
+**BlueSense — AI-Powered Water Intelligence, Prediction & Resource Optimization Platform** for Bangladesh (national
 view plus 8 divisions). It turns weather, hydrological, agricultural, satellite and geographic data into water
 decision support. It does **not** replace field monitoring, laboratory testing, government infrastructure or
 measurements.
@@ -25,7 +25,7 @@ measurements.
 | 5 | Water Budget Sankey | `/water-budget` | D3 Sankey, balance check, LP optimiser |
 | 6 | What-if Scenario Simulator | `/what-if` | Six levers, baseline vs scenario |
 | 7 | Smart Irrigation Advisor | `/irrigation` | FAO-56 with Open-Meteo forecast |
-| 8 | AquaGuard AI Copilot | `/copilot` + panel | Anthropic SDK (to be reworked to tool calling, no fallback) |
+| 8 | BlueSense AI Copilot | `/copilot` + panel | Anthropic SDK (to be reworked to tool calling, no fallback) |
 
 ## 2. Architecture
 
@@ -79,7 +79,7 @@ free tier and AQUASTAT (CC BY-NC-SA 4.0) are **non-commercial**.
 | `satellite_monthly` | GRACE/GRACE-FO |
 | `satellite_historical` | JRC Global Surface Water |
 | `statistic` | AQUASTAT, census, World Bank |
-| `derived` | AquaGuard calculations from the above |
+| `derived` | BlueSense calculations from the above |
 | `prediction` | ML output |
 | `scenario` | What-if results |
 | `conceptual` | illustrative visuals with no measured values (Water Flow) |
@@ -307,7 +307,7 @@ with sources, data kind, observation date and status; left out when its data is 
 
 **Legend classes and their sources:** dryness z (3-month P − ET0) — SPI classes (McKee et al. 1993; WMO-No. 1090);
 30-day rainfall vs 1991–2020 — India Meteorological Department rainfall departure categories (not classified when the
-normal is below 5 mm); next-7-day P − ET0 and 30-day reference-crop irrigation need — AquaGuard display bins, flagged
+normal is below 5 mm); next-7-day P − ET0 and 30-day reference-crop irrigation need — BlueSense display bins, flagged
 as an assumption. A value on a class boundary belongs to the class farther from neutral (SPI convention).
 
 **Page** (`frontend/app/command-center`): five KPI cards (value, unit, date, data kind, status, comparison only with a

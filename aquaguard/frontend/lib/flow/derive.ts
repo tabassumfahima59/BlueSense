@@ -3,6 +3,7 @@
  * short labels. One function per object, so the 3D labels, info panel, schematic and data table agree exactly.
  */
 import type { FlowResponse, FlowState } from "@/lib/types/contract";
+import { fmtVolume } from "@/lib/format";
 import { type AnyPipeId, DEST_PIPE, isDestId, isPipeId, type NodeId, nodeById, NODES, PIPE_DEFS, pipeById } from "./network";
 
 type M = { value?: number | null; unit?: string } | null | undefined;
@@ -16,7 +17,7 @@ export function fmt(v: number | null, digits = 0): string {
   return v === null ? "—" : v.toLocaleString("en-US", { maximumFractionDigits: digits, minimumFractionDigits: digits });
 }
 
-export const perDay = (m: M) => `${fmt(num(m))} m³/day`;
+export const perDay = (m: M) => fmtVolume(num(m), "m³/day");
 
 export const DEST_STATUS: Record<string, { label: string; tone: "good" | "warn" | "bad" | "off" }> = {
   served: { label: "Served", tone: "good" },
@@ -62,7 +63,7 @@ export function nodeInfo(id: NodeId, s: FlowState, r: FlowResponse | null): Info
   if (id === "reservoir") {
     return { title: n.label, category: n.category, modelled: false, rows: [
       { label: "Outflow to treatment / pump", value: inflow },
-      { label: "Capacity (illustrative)", value: r?.reservoirCapacity ? `${fmt(num(r.reservoirCapacity))} m³` : "—" },
+      { label: "Capacity (illustrative)", value: r?.reservoirCapacity ? fmtVolume(num(r.reservoirCapacity), "m³") : "—" },
       { label: "Inflow to the reservoir", value: "Not modelled (steady state: refilled at the rate drawn)" },
       { label: "Storage level", value: "Not modelled (level shown is illustrative)" },
     ] };
@@ -89,7 +90,7 @@ export function nodeInfo(id: NodeId, s: FlowState, r: FlowResponse | null): Info
     const q = trunk ? (num(trunk.flowDaily) ?? 0) : 0;
     return { title: n.label, category: n.category, modelled: true, rows: [
       { label: "Pressure", value: `${fmt(num(trunk?.pressureEnd), 1)} m head` },
-      { label: "Mean trunk flow", value: `${fmt(q)} m³/day` },
+      { label: "Mean trunk flow", value: fmtVolume(q, "m³/day") },
       { label: "Branches", value: "Residential, agricultural, industrial, commercial & public" },
     ] };
   }

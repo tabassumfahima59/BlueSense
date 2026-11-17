@@ -34,7 +34,7 @@ export function comparisonText(k: Kpi): string {
 
 export function KpiGrid({ data, onOpen }: { data: DashboardSummary; onOpen: (k: Kpi) => void }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,200px),1fr))] gap-4">
       {data.kpis.map((k) => (
         <KpiCard key={k.key} label={k.label} m={k.value} icon={ICONS[k.key]} onOpen={() => onOpen(k)}
                  hint={<span>{comparisonText(k)}</span>}>

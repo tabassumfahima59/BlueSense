@@ -141,7 +141,7 @@ export function TableView({ selectedDivision, onSelect, values }: {
               ))}
             </tbody>
           </table>
-          <p className="mt-2 text-[11.5px] text-muted">{districts.length} districts. Reference geography only (geoBoundaries area, HDX population): AquaGuard has no district-level water data.</p>
+          <p className="mt-2 text-[11.5px] text-muted">{districts.length} districts. Reference geography only (geoBoundaries area, HDX population): BlueSense has no district-level water data.</p>
         </div>
       )}
     </Card>

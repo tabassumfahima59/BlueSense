@@ -1,4 +1,4 @@
-# AquaGuard — Final Report (P5)
+# BlueSense — Final Report (P5)
 
 Date: 2026-11-14 · Branch `develop` · Scope: the approved Final Implementation Scope (P1–P4, M1–M8) and the
 master prompt's §7 verification checklist. Evidence for every phase is in `aquaguard-progress.md`.
@@ -30,8 +30,8 @@ Live run on the real database on 2026-11-14 at 08:15 UTC (after a verified backu
 | FAO AQUASTAT | fresh | 7 days | national | reference year 2023 (SDG 6.4.2; withdrawals 2008) | 424 statistics |
 | GRACE CSR RL06.3 mascons | fresh | 1 day (file check) | national series + 0.25° grid (~300 km effective) | 2026-09 | 259 national + 53,354 grid-cell months |
 | GRACE JPL | not_configured | 1 day | — | — | 0 (needs `EARTHDATA_TOKEN`, Deviation D1) |
-| AquaGuard ML (stored predictions) | fresh | after each archive sync | division; national = area-weighted | issued 2026-10 for 2026-11 / 2027-01 / 2027-04 | 24 predictions |
-| AquaGuard engine | fresh | on request | national (divisions computed, national reported) | — | — |
+| BlueSense ML (stored predictions) | fresh | after each archive sync | division; national = area-weighted | issued 2026-10 for 2026-11 / 2027-01 / 2027-04 | 24 predictions |
+| BlueSense engine | fresh | on request | national (divisions computed, national reported) | — | — |
 | geoBoundaries, HDX COD-PS, JRC Global Surface Water | fresh (static reference) | static | divisions / districts; 30 m tiles (JRC) | — | reference files |
 | World Bank population projection | fresh | yearly | national | — | 51 rows |
 | BWDB groundwater importer | not_configured | manual | — | — | 0 (no measured well data supplied) |

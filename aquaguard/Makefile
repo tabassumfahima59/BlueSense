@@ -1,4 +1,4 @@
-# AquaGuard — one-command workflows (GNU make; on Windows use Git Bash or WSL, or run the commands shown).
+# BlueSense — one-command workflows (GNU make; on Windows use Git Bash or WSL, or run the commands shown).
 PY ?= .venv/bin/python
 ifeq ($(OS),Windows_NT)
 PY := .venv/Scripts/python
@@ -21,7 +21,7 @@ process:          ## clean raw data -> data/processed (+ GRACE if the NetCDF fil
 	$(PY) ml/process_weather.py
 	$(PY) ml/grace_trend.py
 
-db:               ## idempotent import into data/aquaguard.db (migrations + verified backup first); refresh sample
+db:               ## idempotent import into data/aquaguard.db (migrations + verified backup first)
 	$(PY) ml/build_db.py
 
 migrate:          ## apply pending versioned SQL migrations (verified backup first)

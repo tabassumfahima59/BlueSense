@@ -1,4 +1,4 @@
-# AquaGuard alert rules (reference data, P3). Evaluated after every sync job and by `python -m app.sync.run alerts`.
+# BlueSense alert rules (reference data, P3). Evaluated after every sync job and by `python -m app.sync.run alerts`.
 # One open alert per rule and location: a firing rule opens or updates it, a rule that no longer fires resolves it,
 # and a rule whose input data is unavailable leaves the alert as it is (no evaluation without data).
 # levels: checked from the first entry; the first matching level sets the severity (info|low|medium|high|critical).

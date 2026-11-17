@@ -1,4 +1,4 @@
-"""AquaGuard API — FastAPI application (modular monolith).
+"""BlueSense API — FastAPI application (modular monolith).
 
 Run:  uvicorn app.main:app --reload --port 8000   (from backend/)
 OpenAPI: /api/openapi.json   Docs: /api/docs
@@ -66,7 +66,7 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(
-    title="AquaGuard API",
+    title="BlueSense API",
     version=health.VERSION,
     description="AI-Powered Water Intelligence, Prediction & Resource Optimization Platform (prototype). "
                 "Every numeric field is a Measure with provenance. Decision support only.",

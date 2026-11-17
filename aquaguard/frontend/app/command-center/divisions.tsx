@@ -46,22 +46,17 @@ export function ClassChip({ c }: { c: IndicatorClass | null | undefined }) {
 
 function Legend({ def }: { def: IndicatorDef }) {
   return (
-    <div className="space-y-1.5">
-      <ul className="flex flex-wrap gap-x-3 gap-y-1" aria-label={`Legend: ${def.label}`}>
-        {def.classes.map((c) => (
-          <li key={c.label} className="inline-flex items-center gap-1.5 text-[12px] text-ink">
-            <span className="h-3 w-3 rounded-sm border border-black/10" style={{ background: TONE_COLOR[c.tone] }} aria-hidden />
-            {c.label} <span className="text-muted">({range(c, def.unit)})</span>
-          </li>
-        ))}
-        <li className="inline-flex items-center gap-1.5 text-[12px] text-ink">
-          <span className="h-3 w-3 rounded-sm border border-black/10" style={{ background: NO_CLASS }} aria-hidden /> No class / no data
+    <ul className="flex flex-wrap gap-x-3 gap-y-1" aria-label={`Legend: ${def.label}`}>
+      {def.classes.map((c) => (
+        <li key={c.label} className="inline-flex items-center gap-1.5 text-[12px] text-ink">
+          <span className="h-3 w-3 rounded-sm border border-black/10" style={{ background: TONE_COLOR[c.tone] }} aria-hidden />
+          {c.label} <span className="text-muted">({range(c, def.unit)})</span>
         </li>
-      </ul>
-      <p className="text-[11.5px] text-muted">
-        Classes: {def.classSource}{def.assumption ? " — assumption, not an official classification" : ""}. Method: {def.method}.
-      </p>
-    </div>
+      ))}
+      <li className="inline-flex items-center gap-1.5 text-[12px] text-ink">
+        <span className="h-3 w-3 rounded-sm border border-black/10" style={{ background: NO_CLASS }} aria-hidden /> No class / no data
+      </li>
+    </ul>
   );
 }
 
@@ -163,7 +158,6 @@ export function DivisionTable({ data, selected, onSelect }: { data: DivisionIndi
           </tbody>
         </table>
       </div>
-      <p className="mt-2 text-[12px] text-muted">{data.note}</p>
     </Card>
   );
 }

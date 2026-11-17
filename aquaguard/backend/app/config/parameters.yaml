@@ -1,4 +1,4 @@
-# AquaGuard parameters — the ONLY place model/engine assumptions live.
+# BlueSense parameters — the ONLY place model/engine assumptions live.
 # Each entry: value, unit, source, assumption (true = a modelling choice, not a published figure).
 # Values "derived" from a dataset are re-checked against data/processed by backend/tests/test_parameters.py.
 
@@ -40,7 +40,7 @@ water_balance:
   distribution_loss_rate:
     value: 0.20
     unit: "fraction of conveyed volume"
-    source: "Assumption — no national distribution-loss statistic in AquaGuard's sources. Replace with utility non-revenue-water data."
+    source: "Assumption — no national distribution-loss statistic in BlueSense's sources. Replace with utility non-revenue-water data."
     assumption: true
     note: "Applied to piped domestic and industrial conveyance. Irrigation losses are inside irrigation_efficiency."
   irrigation_efficiency:
@@ -51,7 +51,7 @@ water_balance:
   balance_tolerance_mcm:
     value: 0.01
     unit: "MCM"
-    source: "AquaGuard specification (water budgets must balance within 0.01 MCM)"
+    source: "BlueSense specification (water budgets must balance within 0.01 MCM)"
     assumption: false
   dry_season_months:
     value: [12, 1, 2, 3, 4]
@@ -83,7 +83,7 @@ risk:
   stress_level: {"Low": 0, "Low-medium": 1, "Medium-high": 2, "High": 3, "Extremely high": 4}
   dryness_level: {"Near normal or wet": 0, "Moderately dry": 2, "Severely dry": 3, "Extremely dry": 4}
   labels: ["Low", "Low-medium", "Medium-high", "High", "Extremely high"]
-  source: "AquaGuard rule (assumption): the higher of the WRI stress level and the SPEI-style dryness level"
+  source: "BlueSense rule (assumption): the higher of the WRI stress level and the SPEI-style dryness level"
   assumption: true
 
 alerts:
@@ -241,7 +241,7 @@ fao56:
     clay:            {label: "Clay",            theta_fc: 0.36, theta_wp: 0.22}
 
 flow_sim:
-  source: "AquaGuard hypothetical demonstration network (all values Simulated)"
+  source: "BlueSense hypothetical demonstration network (all values Simulated)"
   hazen_williams_c: {value: 130, unit: "-", source: "Typical Hazen-Williams C for ductile iron / PVC mains (assumption)", assumption: true}
   leakage_exponent_n1: {value: 1.0, unit: "-", source: "FAVAD N1 default 1.0 (Thornton & Lambert 2005); configurable 0.5-1.5", assumption: true}
   default_pump_flow_m3s: {value: 0.50, unit: "m3/s", source: "Hypothetical", assumption: true}

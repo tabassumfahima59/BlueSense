@@ -1,6 +1,6 @@
 """FAO AQUASTAT adapter (national statistics for Bangladesh).
 
-* Queries the AQUASTAT dissemination API (same query as ``ml/fetch_static.py``) for the indicators AquaGuard uses.
+* Queries the AQUASTAT dissemination API (same query as ``ml/fetch_static.py``) for the indicators BlueSense uses.
 * Stores only genuine reference-year records (AQUASTAT symbol other than ``I`` = imputed) in ``water_statistics``,
   with original symbols, units and indicator names. Nothing is carried forward.
 * Revisions: when AQUASTAT changes a value for an existing indicator and year, the previous row gets
@@ -25,7 +25,7 @@ SQL_URL = ("https://data.apps.fao.org/catalog/dataset/945666e6-7803-4621-b8ef-cf
 FIRST_YEAR = 1990
 REQUIRED_COLUMNS = {"VariableCode", "Variable", "Year", "Value", "Unit", "Symbol"}
 
-# AQUASTAT variable code -> AquaGuard key (must match ml/fetch_static.AQUASTAT_VARS; checked by tests)
+# AQUASTAT variable code -> BlueSense key (must match ml/fetch_static.AQUASTAT_VARS; checked by tests)
 VARIABLES = {
     4150: "precip_volume_km3", 4151: "precip_depth_mm", 4155: "surface_internal_km3",
     4154: "groundwater_internal_km3", 4187: "groundwater_renewable_km3", 4176: "surface_external_km3",

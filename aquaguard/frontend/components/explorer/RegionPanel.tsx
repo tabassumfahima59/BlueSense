@@ -5,7 +5,7 @@
  * national GRACE context and the JRC note. Districts: geography only (reference boundary) and the parent division.
  * Weather points, GRACE cells, rivers and water bodies: what is (and is not) known about them.
  */
-import { Bot, Droplets, Layers3, MapPin, Sparkles, Waves, X } from "lucide-react";
+import { Droplets, Layers3, MapPin, Sparkles, Waves, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { DataStatusBadge, fromMeasure, fromMeta } from "@/components/ui/DataStatus";
 import { RiskPill } from "@/components/ui/Risk";
@@ -131,13 +131,12 @@ function DivisionBody({ id, onIntel }: { id: string; onIntel: () => void }) {
   );
 }
 
-export function RegionPanel({ sel, values, cellsPeriod, onClose, onIntel, onAsk, onSelectDivision, className = "", headingId }: {
+export function RegionPanel({ sel, values, cellsPeriod, onClose, onIntel, onSelectDivision, className = "", headingId }: {
   sel: MapSelection;
   values: MapLayersResponse["values"] | undefined;
   cellsPeriod?: string | null;
   onClose: () => void;
   onIntel: () => void;
-  onAsk: () => void;
   onSelectDivision: (id: string) => void;
   className?: string;
   headingId: string;
@@ -170,7 +169,7 @@ export function RegionPanel({ sel, values, cellsPeriod, onClose, onIntel, onAsk,
               <Row k="Division" v={divName ?? "—"} />
             </dl>
             <p className="rounded-lg bg-[#fffaeb] px-2 py-1.5 text-[12px] text-[#6b4a07]">
-              No district-level water data exists in AquaGuard. Weather, risk and analysis are available for {divName} division.
+              No district-level water data exists in BlueSense. Weather, risk and analysis are available for {divName} division.
             </p>
             {sel.divisionId && (
               <button type="button" onClick={() => onSelectDivision(sel.divisionId!)} className="w-full rounded-lg border border-control px-3 py-1.5 text-[12.5px] hover:bg-light">
@@ -214,15 +213,11 @@ export function RegionPanel({ sel, values, cellsPeriod, onClose, onIntel, onAsk,
               <Row k="Source" v="OpenStreetMap (CARTO basemap)" />
             </dl>
             <p className="text-[12px] text-muted">
-              Geography only: AquaGuard has no discharge, water level or flow data for {sel.kind === "river" ? "rivers" : "water bodies"}.
+              Geography only: BlueSense has no discharge, water level or flow data for {sel.kind === "river" ? "rivers" : "water bodies"}.
               Historical water presence is shown by the JRC surface-water layer (1984–2021).
             </p>
           </>
         )}
-        <button type="button" onClick={onAsk}
-                className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-primary/50 px-3 py-1.5 text-[12.5px] font-medium text-primary hover:bg-primary-soft">
-          <Bot size={14} aria-hidden /> Ask the map assistant
-        </button>
         <p className="flex items-center gap-1 text-[11px] text-muted"><span className="h-2 w-2 rounded-full bg-[#F59E0B]" aria-hidden />Selected on the map (amber outline)</p>
       </div>
     </section>

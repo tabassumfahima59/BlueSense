@@ -1,4 +1,5 @@
 """P1: versioned migration runner — fresh DB, existing DB copy, idempotency, rollback, recovery, integrity."""
+import os
 import shutil
 import sqlite3
 import threading
@@ -26,11 +27,9 @@ def _copy(src: Path, dest: Path) -> Path:
 
 
 def _existing_source() -> Path | None:
-    backups = sorted((ROOT / "data" / "backups").glob("aquaguard-pre-p1-*.db"))
-    if backups:
-        return backups[-1]  # unmigrated snapshot of the real data
-    real = ROOT / "data" / "aquaguard.db"
-    return real if real.exists() else None
+    # The session seed is isolated and reproducible; never inspect a developer DB or ignored backups.
+    seed = os.environ.get("AQUAGUARD_DB_PATH")
+    return Path(seed) if seed and Path(seed).exists() else None
 
 
 def _schema(conn, tables):
@@ -103,7 +102,8 @@ def test_existing_database_is_preserved(tmp_path):
     assert conn.execute("SELECT COUNT(*) FROM water_statistics").fetchone()[0] >= counts_before["water_resources"]
     # values identical to the legacy source (spot check: sums)
     s_legacy = conn.execute("SELECT ROUND(SUM(precip_mm), 3) FROM weather_daily").fetchone()[0]
-    s_new = conn.execute("SELECT ROUND(SUM(value), 3) FROM weather_values WHERE variable='precipitation_sum'").fetchone()[0]
+    s_new = conn.execute("SELECT ROUND(SUM(value), 3) FROM weather_values "
+                         "WHERE variable='precipitation_sum' AND data_kind='reanalysis'").fetchone()[0]
     assert s_legacy == s_new
     assert conn.execute("SELECT COUNT(*) FROM water_storage WHERE uncertainty_cm IS NOT NULL").fetchone()[0] == 0
     imputed = conn.execute("SELECT COUNT(*) FROM water_statistics WHERE symbol='I' AND imputed=0").fetchone()[0]

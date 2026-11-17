@@ -146,9 +146,10 @@ def search(q: str = Query(..., min_length=1, max_length=100), limit: int = Query
             found.append((sc - 5, SearchItem(type="indicator", id=iid, label=label, description=desc,
                                              href=f"/{module}")))
     for sid, name, cadence in conn.execute("SELECT id, name, cadence FROM data_sources"):
+        name = catalog.display_name(sid, name)
         if sc := _score(query, name, sid):
             found.append((sc - 10, SearchItem(type="source", id=sid, label=name, description=f"Data source ({cadence})",
-                                              href=f"/data-sources#{sid}")))
+                                              href="/settings#data-sources-status")))
     for aid, rule_id, loc, message in conn.execute(
             "SELECT id, rule_id, location_id, message FROM alerts WHERE resolved_at IS NULL"):
         r = alert_engine.rule(rule_id) or {}

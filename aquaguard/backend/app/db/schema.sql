@@ -1,7 +1,7 @@
 -- SUPERSEDED (P1): kept for reference only. The schema is now defined by versioned migrations in
 -- backend/app/db/migrations/ (0001_baseline records these tables); PRAGMAs are set in backend/app/db/connection.py.
 -- Do not execute this file against a database.
--- AquaGuard SQLite schema. Every data record carries source_id, retrieved_at, provenance, is_sample.
+-- BlueSense SQLite schema. Every data record carries source_id, retrieved_at, provenance, is_sample.
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS regions (

@@ -27,18 +27,6 @@ export function Card({ title, subtitle, actions, children, className = "", id }:
 /** Glass surface (master prompt §5). `Card` is kept as the name used across the existing pages. */
 export const GlassCard = Card;
 
-export function PageHeader({ title, description, children }: { title: string; description: ReactNode; children?: ReactNode }) {
-  return (
-    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-      <div className="max-w-3xl">
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">{title}</h1>
-        <p className="mt-1 text-[14px] text-muted">{description}</p>
-      </div>
-      {children}
-    </div>
-  );
-}
-
 export function Button({ children, onClick, variant = "primary", disabled, type = "button", ariaLabel, className = "" }: {
   children: ReactNode;
   onClick?: () => void;

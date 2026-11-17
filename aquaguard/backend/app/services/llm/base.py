@@ -18,10 +18,11 @@ ErrorCode = Literal["quota_exhausted", "llm_rate_limited", "llm_unavailable", "l
 class LLMError(Exception):
     """A provider failure with a stable code and a message that is safe to show (never contains a key)."""
 
-    def __init__(self, code: ErrorCode, detail: str):
+    def __init__(self, code: ErrorCode, detail: str, *, retry_after: float | None = None):
         super().__init__(detail)
         self.code = code
         self.detail = detail
+        self.retry_after = retry_after
 
 
 @dataclass

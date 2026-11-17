@@ -285,6 +285,14 @@ def water_balance_3m_z(conn, division: str) -> dict | None:
     (normal-distribution z, not a gamma-fitted SPI)."""
     rows = conn.execute("SELECT year, month, d_mm FROM weather_monthly WHERE division = ? AND d_mm IS NOT NULL "
                         "ORDER BY year DESC, month DESC LIMIT 3", (division,)).fetchall()
+    baseline = {(y, m): v for y, m, v in conn.execute(
+        "SELECT year, month, d_mm FROM weather_monthly WHERE division = ? AND year BETWEEN ? AND ?",
+        (division, NORMAL_YEARS[0], NORMAL_YEARS[1] + 1))}
+    return _water_balance_3m_score(rows, baseline)
+
+
+def _water_balance_3m_score(rows, baseline: dict) -> dict | None:
+    """Shared existing normal z-score calculation; rows are newest first, with no gap filling."""
     if len(rows) < 3:
         return None
     (y2, m2, _), (y1, m1, _), (y0, m0, _) = rows
@@ -294,10 +302,9 @@ def water_balance_3m_z(conn, division: str) -> dict | None:
     months = [(m0, 0), (m1, (y1 - y0)), (m2, (y2 - y0))]
     sums = []
     for y in range(NORMAL_YEARS[0], NORMAL_YEARS[1] + 1):
-        vals = [conn.execute("SELECT d_mm FROM weather_monthly WHERE division = ? AND year = ? AND month = ?",
-                             (division, y + off, mo)).fetchone() for mo, off in months]
-        if all(v and v[0] is not None for v in vals):
-            sums.append(sum(v[0] for v in vals))
+        vals = [baseline.get((y + off, mo)) for mo, off in months]
+        if all(v is not None for v in vals):
+            sums.append(sum(vals))
     if len(sums) < 25:
         return None
     mean = sum(sums) / len(sums)
@@ -306,6 +313,29 @@ def water_balance_3m_z(conn, division: str) -> dict | None:
         return None
     return {"value": value, "z": (value - mean) / sd, "mean": mean, "sd": sd,
             "window": f"{y0:04d}-{m0:02d} to {y2:04d}-{m2:02d}", "end": f"{y2:04d}-{m2:02d}"}
+
+
+def water_balance_3m_history(conn, reg: dict, months: list[str]) -> list[float | None]:
+    """Historical versions of the existing dryness indicator, read only and weighted exactly as current scores.
+
+    Each point needs three consecutive stored months and >=25 complete baseline windows. National values need
+    all eight representative points; they are area-weighted point z-scores, not a new national standardization.
+    """
+    points = points_for(conn, reg)
+    per = {}
+    for division in points:
+        lookup = {(y, m): v for y, m, v in conn.execute(
+            "SELECT year, month, d_mm FROM weather_monthly WHERE division = ?", (division,))}
+        scores = {}
+        for month in months:
+            year, mo = map(int, month.split("-"))
+            index = year * 12 + mo - 1
+            keys = [divmod(index - offset, 12) for offset in range(3)]
+            rows = [(y, m + 1, lookup.get((y, m + 1))) for y, m in keys]
+            score = _water_balance_3m_score(rows, lookup) if all(r[2] is not None for r in rows) else None
+            scores[month] = score["z"] if score else None
+        per[division] = scores
+    return [weighted({p: per[p].get(month) for p in points}, points) for month in months]
 
 
 SPI_CLASSES = [(-2.0, "Extremely dry", 3), (-1.5, "Severely dry", 2), (-1.0, "Moderately dry", 1)]

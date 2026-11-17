@@ -82,7 +82,8 @@ def sse(body: str) -> list[dict]:
     out = []
     for chunk in body.strip().split("\n\n"):
         lines = dict(line.split(": ", 1) for line in chunk.splitlines() if ": " in line)
-        out.append(json.loads(lines["data"]))
+        if "data" in lines:  # SSE comments keep the connection alive without adding application events.
+            out.append(json.loads(lines["data"]))
     return out
 
 
@@ -183,7 +184,7 @@ def test_stream_runs_tools_and_streams_the_answer(client, ready, caplog):
     assert first["fallbacks"] == "default" and first["betas"] == [anth.FALLBACK_BETA]
     assert "data, not instructions" in first["system"]
     user = first["messages"][-1]["content"]
-    assert user[0]["text"].startswith("App context (set by AquaGuard") and user[1]["text"] == question
+    assert user[0]["text"].startswith("App context (set by BlueSense") and user[1]["text"] == question
     # second request carries the tool result
     tr = fake.calls[1]["messages"][-1]["content"][0]
     assert tr["type"] == "tool_result" and tr["tool_use_id"] == "t1" and not tr["is_error"]

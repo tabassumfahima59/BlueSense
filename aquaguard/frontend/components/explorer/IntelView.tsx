@@ -1,10 +1,9 @@
 "use client";
 /**
  * Spatial Intelligence: the evidence-based report for the selected division (or Bangladesh): summary, findings with
- * their values, risk analysis, data quality and coverage, suggested next investigation, limitations, and the map
- * assistant for follow-up questions. Everything comes from /api/explorer/intelligence.
+ * their values, risk analysis, data quality and coverage. Everything comes from /api/explorer/intelligence.
  */
-import { CheckCircle2, CircleAlert, CircleHelp, Info, TriangleAlert } from "lucide-react";
+import { CheckCircle2, CircleAlert, Info, TriangleAlert } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { DATA_KIND_LABEL, DataStatusBadge, fromMeasure, fromMeta } from "@/components/ui/DataStatus";
 import { RiskPill } from "@/components/ui/Risk";
@@ -15,7 +14,6 @@ import { num } from "@/lib/explorer/analysis";
 import type { MapSelection } from "@/lib/explorer/store";
 import { fmtMeasure } from "@/lib/format";
 import type { RegionIntel } from "@/lib/types/contract";
-import { MapAssistant } from "./MapAssistant";
 
 const TONE = {
   good: { Icon: CheckCircle2, cls: "text-[#166534]", label: "favourable" },
@@ -23,11 +21,6 @@ const TONE = {
   warn: { Icon: TriangleAlert, cls: "text-[#92400e]", label: "attention" },
   bad: { Icon: CircleAlert, cls: "text-[#b42318]", label: "high" },
 } as const;
-
-const SOURCE_NAME: Record<string, string> = {
-  openmeteo_archive: "Open-Meteo Historical (ERA5)", openmeteo_forecast: "Open-Meteo Forecast", grace_csr: "GRACE CSR RL06.3",
-  fao_aquastat: "FAO AQUASTAT", jrc_gsw: "JRC Global Surface Water", aquaguard_engine: "AquaGuard engine", aquaguard_ml: "AquaGuard ML",
-};
 
 function kindLabel(k: string) {
   return (DATA_KIND_LABEL as Record<string, string>)[k] ?? k;
@@ -84,7 +77,7 @@ export function IntelView({ region, regionName, sel, divisionName }: { region: s
           {sel.name} is a district (reference boundary). No district-level water data exists, so this analysis is for {divisionName} division.
         </p>
       )}
-      <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid gap-4">
         <div className="min-w-0 space-y-4">
           <Card title={`Regional overview — ${regionName}`} subtitle="Evidence-based summary; every statement below lists its values"
                 actions={<DataStatusBadge info={fromMeta(intel.data.meta)} compact />}>
@@ -132,19 +125,7 @@ export function IntelView({ region, regionName, sel, divisionName }: { region: s
               <li>Weather: {q.weatherMonths} months stored ({q.weatherFirst} – {q.weatherLast}); {q.weatherIncompleteMonths} incomplete month(s) carry no value; {q.completeYears} complete years.</li>
               <li>GRACE: {q.grace.months ?? 0} months ({q.grace.first} – {q.grace.last}); {q.grace.missingMonths ?? 0} missing months
                 {q.grace.longestGap ? `, longest gap ${q.grace.longestGap[0]} – ${q.grace.longestGap[1]} (${q.grace.longestGap[2]} months)` : ""}; baseline {q.grace.baseline}; uncertainty {q.grace.uncertaintyStored ? "stored" : "not in the stored product"}.</li>
-              <li>Sources: {Object.entries(q.sources).map(([k, v]) => `${SOURCE_NAME[k] ?? k} ${v.replace("_", " ")}`).join(" · ")}.</li>
             </ul>
-          </Card>
-        </div>
-        <div className="min-w-0 space-y-4">
-          <Card title="Suggested next investigation" subtitle="Rule-based from the findings; suggestions, not conclusions">
-            <ul className="list-disc space-y-1 pl-4 text-[12.5px]" data-testid="suggestions">{d.suggestions.map((s) => <li key={s}>{s}</li>)}</ul>
-          </Card>
-          <Card title="AI insights" subtitle="Ask follow-up questions; answers are grounded in AquaGuard's read-only tools">
-            <MapAssistant sel={sel} region={region} regionName={regionName} divisionName={divisionName} idPrefix="intel-assistant" />
-          </Card>
-          <Card title="Limitations">
-            <ul className="space-y-1 text-[12px] text-muted">{d.limitations.map((l) => <li key={l} className="flex gap-1.5"><CircleHelp size={13} className="mt-0.5 shrink-0" aria-hidden />{l}</li>)}</ul>
           </Card>
         </div>
       </div>

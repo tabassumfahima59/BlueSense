@@ -3,13 +3,14 @@ import { Globe2, RotateCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Plot } from "@/components/charts/Plot";
 import { axisTitle, baseLayout, NEUTRAL, SERIES } from "@/components/charts/theme";
-import { Button, Card, Note, PageHeader, Segmented } from "@/components/ui/Card";
+import { Button, Card, Segmented } from "@/components/ui/Card";
 import { DataStatusBadge, fromMeasure } from "@/components/ui/DataStatus";
 import { RiskPill, RiskRule } from "@/components/ui/Risk";
 import { ErrorCard, LoadingCard } from "@/components/ui/States";
 import { api } from "@/lib/api/client";
-import { fmtMeasure, MONTHS } from "@/lib/format";
+import { displayUnit, fmtMeasure, MONTHS } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
+import { useVolumeUnit } from "@/lib/store/hooks";
 import { describeScenario, isBaseline, RANGES, scenarioToParams } from "@/lib/store/scenario";
 import { BASELINE, type Compare, type Scenario, type WhatIf } from "@/lib/types/contract";
 
@@ -58,6 +59,7 @@ function CompareCard({ c }: { c: Compare }) {
 }
 
 export default function WhatIf() {
+  useVolumeUnit();
   const region = useAppStore((s) => s.selectedRegion);
   const active = useAppStore((s) => s.activeScenario);
   const setScenario = useAppStore((s) => s.setScenario);
@@ -86,10 +88,13 @@ export default function WhatIf() {
     if (url !== `${window.location.pathname}${window.location.search}`) window.history.replaceState(window.history.state, "", url);
   }, [local]);
   useEffect(() => {
+    let cancelled = false;
     const t = setTimeout(() => {
-      api.whatif({ region: region || "bd", params: local, basis }).then((r) => { setData(r.data); setErr(null); }).catch((e: Error) => setErr(e));
+      api.whatif({ region: region || "bd", params: local, basis }).then((r) => {
+        if (!cancelled) { setData(r.data); setErr(null); }
+      }).catch((e: Error) => { if (!cancelled) setErr(e); });
     }, 250);
-    return () => clearTimeout(t);
+    return () => { cancelled = true; clearTimeout(t); };
   }, [region, local, nonce, basis]);
 
   const applied = JSON.stringify(active) === JSON.stringify(local);
@@ -97,7 +102,7 @@ export default function WhatIf() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="What-if Scenario Simulator" description="Deterministic national water-balance model: change the levers and compare the baseline (latest real data) with the scenario. Every result is labelled Scenario. 'Apply across platform' carries the levers to the other modules.">
+      <div className="flex flex-wrap items-center gap-2">
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" onClick={() => { setLocal({ ...BASELINE }); resetGlobal(); }}><RotateCcw size={14} aria-hidden /> Reset to baseline</Button>
           <Button onClick={() => setScenario(local)} disabled={applied}><Globe2 size={14} aria-hidden /> {applied && !isBaseline(local) ? "Applied across platform" : "Apply across platform"}</Button>
@@ -105,13 +110,12 @@ export default function WhatIf() {
             <span className="self-center text-[12.5px] text-muted" data-testid="apply-hint">Change a lever below to apply a scenario across the platform.</span>
           )}
         </div>
-      </PageHeader>
+      </div>
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[340px_minmax(0,1fr)]">
-        <div className="space-y-4">
+        <div className="flex min-w-0 flex-col gap-4">
           <Card title="Baseline" subtitle={data?.basisPeriod ? `Weather: ${data.basisPeriod}` : "Loading…"}>
             <Segmented label="Baseline weather" value={basis} onChange={setBasis}
                        options={[{ value: "latest", label: "Latest 12 months" }, { value: "normal", label: "1991–2020 normal" }]} />
-            <p className="mt-2 text-[12px] text-muted">Statistics are the latest genuine AQUASTAT reference years. Results are for Bangladesh as a whole.</p>
           </Card>
           <Card title="Scenario levers">
             <div className="space-y-4">
@@ -134,7 +138,7 @@ export default function WhatIf() {
               })}
             </div>
           </Card>
-          <Card title="Presets">
+          <Card title="Presets" className="flex flex-1 flex-col">
             <div className="flex flex-wrap gap-1.5">
               {PRESETS.map((p) => (
                 <button key={p.label} onClick={() => setLocal({ ...BASELINE, ...p.s })} className="rounded-full border border-border bg-white px-2.5 py-1 text-[12px] hover:border-primary hover:text-primary">
@@ -145,7 +149,6 @@ export default function WhatIf() {
           </Card>
         </div>
         <div className="space-y-5">
-          {region !== "bd" && <Note>National model: results are for Bangladesh. National statistics cannot be split into divisions (decision 1).</Note>}
           {err && <ErrorCard error={err} onRetry={() => setNonce((n) => n + 1)} />}
           {!res && !err && <LoadingCard rows={3} label="Running scenario" />}
           {res && (
@@ -166,8 +169,8 @@ export default function WhatIf() {
                   </div>
                   {res.riskSimulated && <div className="mt-2"><RiskRule risk={res.riskSimulated} /></div>}
                 </Card>
-                <Card title="Allocation (delivered, dry season)" subtitle="MCM by sector">
-                  <Plot filename="scenario-allocation" ariaLabel="Delivered water by sector, baseline versus simulated" height={220}
+                <Card title="Allocation (delivered, dry season)" subtitle={`${displayUnit("MCM")} by sector`}>
+                  <Plot filename="scenario-allocation" volumeUnit="MCM" ariaLabel="Delivered water by sector, baseline versus simulated" height={220}
                     data={[
                       { type: "bar", name: "Baseline", x: res.allocation.map((c) => c.label), y: res.allocation.map((c) => c.baseline.value), marker: { color: NEUTRAL.reference }, hovertemplate: "%{y:,.0f} MCM" },
                       { type: "bar", name: "Simulated", x: res.allocation.map((c) => c.label), y: res.allocation.map((c) => c.simulated.value), marker: { color: SERIES[0] }, hovertemplate: "%{y:,.0f} MCM" },
@@ -175,8 +178,8 @@ export default function WhatIf() {
                     layout={baseLayout({ barmode: "group", bargap: 0.3, bargroupgap: 0.08, yaxis: { ...(baseLayout().yaxis as object), type: "log", title: axisTitle("MCM (log scale)") } })} />
                 </Card>
               </div>
-              <Card title="Monthly demand and unmet demand" subtitle="Consumptive demand (lines) and unmet demand (bars), MCM per month">
-                <Plot filename="scenario-monthly" ariaLabel="Monthly demand and unmet demand, baseline versus simulated" height={300}
+              <Card title="Monthly demand and unmet demand" subtitle={`Consumptive demand (lines) and unmet demand (bars), ${displayUnit("MCM")} per month`}>
+                <Plot filename="scenario-monthly" volumeUnit="MCM" ariaLabel="Monthly demand and unmet demand, baseline versus simulated" height={300}
                   data={[
                     { type: "scatter", mode: "lines+markers", name: "Demand — baseline", x: months, y: res.monthlyBaseline.map((p) => p.consumptiveDemand.value), line: { color: NEUTRAL.reference, width: 2 }, marker: { size: 8 }, hovertemplate: "%{y:,.0f} MCM" },
                     { type: "scatter", mode: "lines+markers", name: "Demand — simulated", x: months, y: res.monthlySimulated.map((p) => p.consumptiveDemand.value), line: { color: SERIES[0], width: 2 }, marker: { size: 8 }, hovertemplate: "%{y:,.0f} MCM" },
@@ -185,24 +188,6 @@ export default function WhatIf() {
                   ]}
                   layout={baseLayout({ barmode: "group", bargap: 0.25, yaxis: { ...(baseLayout().yaxis as object), title: axisTitle("MCM per month") } })} />
               </Card>
-              <Card title="All comparisons">
-                <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Scrollable table">
-                  <table className="w-full min-w-[520px] text-[13px]">
-                    <thead className="text-left text-[12px] text-muted"><tr className="border-b border-border"><th className="py-1.5 font-medium">Output</th><th className="text-right font-medium">Baseline</th><th className="text-right font-medium">Simulated</th><th className="text-right font-medium">Change</th></tr></thead>
-                    <tbody>
-                      {[...res.comparisons, ...res.sectorDemand.map((c) => ({ ...c, label: `${c.label} demand (annual)` }))].map((c) => (
-                        <tr key={c.label} className="border-b border-border/60"><td className="py-1.5">{c.label}</td><td className="text-right tabular-nums">{fmtMeasure(c.baseline)}</td><td className="text-right tabular-nums">{fmtMeasure(c.simulated)}</td><td className="text-right tabular-nums">{fmtMeasure(c.change, { signed: true })}</td></tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </Card>
-              {data?.method && data.method.length > 0 && (
-                <Card title="Model and method" subtitle="Deterministic; the same inputs always give the same result">
-                  <ul className="list-disc space-y-1 pl-5 text-[12.5px] text-ink">{data.method.map((m) => <li key={m}>{m}</li>)}</ul>
-                </Card>
-              )}
-              <Note>Every result is labelled Scenario and every baseline value Derived. Rainfall changes act on local runoff and effective rainfall, not on transboundary inflow.</Note>
             </>
           )}
         </div>

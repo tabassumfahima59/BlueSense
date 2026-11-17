@@ -1,6 +1,6 @@
 # Data sources
 
-The live registry (with retrieval times read from `data/processed/sources_retrieved.json`) is served at `GET /api/sources` and shown on the Data Sources page. Times below are from the build of 12 Nov 2026.
+The source registry is served at `GET /api/sources`; synchronization status is available at `GET /api/data/sources`. The former Data Sources screen is disabled. Times below are historical retrieval times from the build of 12 Nov 2026, not a claim of current freshness.
 
 | Source | Used for | URL | Licence | Resolution | Period | Retrieved (UTC) | Label |
 |---|---|---|---|---|---|---|---|
@@ -32,4 +32,4 @@ station_id,station_name,division,lon,lat,variable,date,value,unit
 SW46.9L,Bahadurabad,mymensingh,89.70,25.15,water_level_m,2024-07-01,19.42,m
 ```
 
-`variable` ∈ `water_level_m` (m), `discharge_m3s` (m3/s), `groundwater_depth_m` (m), `rainfall_mm` (mm); `division` is an AquaGuard division id. Rows are validated (columns, ids, units) and stored with provenance **Observed**. (The example row illustrates the format only; it is not data.)
+`variable` ∈ `water_level_m` (m), `discharge_m3s` (m3/s), `groundwater_depth_m` (m), `rainfall_mm` (mm); `division` is an BlueSense division id. Rows are validated (columns, ids, units) and stored with provenance **Observed**. (The example row illustrates the format only; it is not data.)

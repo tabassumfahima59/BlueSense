@@ -32,7 +32,7 @@ sources:
     spatialResolution: "national (Bangladesh)"
     temporalResolution: "annual; many Bangladesh values are 2008 or 2018 figures carried forward by AQUASTAT"
     provenance: historical
-    notes: "Renewable resources, withdrawals by sector, irrigated areas, environmental flow requirement. Division splits made by AquaGuard are Estimated."
+    notes: "Renewable resources, withdrawals by sector, irrigated areas, environmental flow requirement. Division splits made by BlueSense are Estimated."
   - id: grace_csr
     name: "CSR GRACE/GRACE-FO RL06.3 Mascon Solutions (all corrections)"
     url: "https://www2.csr.utexas.edu/grace/RL0603_mascons.html"
@@ -45,10 +45,10 @@ sources:
     name: "geoBoundaries (gbOpen) — Bangladesh ADM0/ADM1/ADM2"
     url: "https://www.geoboundaries.org/"
     license: "ADM1: CC0 1.0; ADM2: CC BY 3.0 IGO (source BBS, OCHA ROAP)"
-    spatialResolution: "simplified polygons (further simplified by AquaGuard, ~300 m tolerance)"
+    spatialResolution: "simplified polygons (further simplified by BlueSense, ~300 m tolerance)"
     temporalResolution: "static (boundary years: ADM1 2015, ADM2 2020)"
     provenance: historical
-    notes: "Runfola et al. (2020) geoBoundaries, PLoS ONE 15(4): e0231866. Areas computed by AquaGuard are Estimated."
+    notes: "Runfola et al. (2020) geoBoundaries, PLoS ONE 15(4): e0231866. Areas computed by BlueSense are Estimated."
   - id: hdx_cod_ps
     name: "HDX COD-PS Bangladesh subnational population statistics 2022"
     url: "https://data.humdata.org/dataset/cod-ps-bgd"
@@ -64,7 +64,7 @@ sources:
     spatialResolution: "national"
     temporalResolution: "annual, 2000-2050"
     provenance: historical
-    notes: "Projected years are third-party projections; AquaGuard's demand projection using them is labelled Estimated (projection)."
+    notes: "Projected years are third-party projections; BlueSense's demand projection using them is labelled Estimated (projection)."
   - id: bwdb_import
     name: "Bangladesh Water Development Board (BWDB) station data — CSV importer"
     url: "https://www.hydrology.bwdb.gov.bd/"
@@ -98,7 +98,7 @@ sources:
     provenance: historical
     notes: "Base map only; rivers and canals shown come from the OpenStreetMap-based basemap labels and waterway layer."
   - id: aquaguard_engine
-    name: "AquaGuard engines (water balance, FAO-56, scenario, flow simulation)"
+    name: "BlueSense engines (water balance, FAO-56, scenario, flow simulation)"
     url: "docs/METHODS.md"
     license: "Project code"
     spatialResolution: "division (district = parent division)"
@@ -106,7 +106,7 @@ sources:
     provenance: estimated
     notes: "Calculated values are Estimated; scenario and network outputs are Simulated."
   - id: aquaguard_ml
-    name: "AquaGuard ML pipeline (climatic water balance forecasts)"
+    name: "BlueSense ML pipeline (climatic water balance forecasts)"
     url: "docs/MODEL_CARD.md"
     license: "Project code"
     spatialResolution: "division"

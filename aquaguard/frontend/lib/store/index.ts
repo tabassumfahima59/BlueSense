@@ -17,7 +17,7 @@ export interface Prefs {
 }
 
 export const DEFAULT_PREFS: Prefs = { defaultRegion: "bd", volumeUnit: "native", motion: "system", reduceTransparency: false };
-const PREFS_KEY = "aquaguard.prefs.v1";
+export const PREFS_KEY = "aquaguard.prefs.v1";
 const SIDEBAR_KEY = "aquaguard.sidebar.collapsed";
 const CLIENT_KEY = "aquaguard.clientId";
 
@@ -113,7 +113,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   paletteOpen: false,
   prefs: { ...DEFAULT_PREFS },
   dataVersion: 0,
-  setRegion: (id) => set({ selectedRegion: id, lastUpdated: new Date().toISOString() }),
+  setRegion: (id) => {
+    const prefs = { ...get().prefs, defaultRegion: id };
+    storageSet(PREFS_KEY, JSON.stringify(prefs));
+    set({ selectedRegion: id, prefs, lastUpdated: new Date().toISOString() });
+  },
   setScenario: (s) => set({ activeScenario: { ...s }, lastUpdated: new Date().toISOString() }),
   resetScenario: () => set({ activeScenario: { ...BASELINE }, lastUpdated: new Date().toISOString() }),
   setDateRange: (r) => set({ dateRange: { ...r } }),
@@ -128,7 +132,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   setPrefs: (p) => {
     const prefs = { ...get().prefs, ...p };
     storageSet(PREFS_KEY, JSON.stringify(prefs));
-    set({ prefs });
+    set({ prefs, ...(p.defaultRegion !== undefined ? {
+      selectedRegion: prefs.defaultRegion,
+      lastUpdated: new Date().toISOString(),
+    } : {}) });
   },
   bumpData: () => set((s) => ({ dataVersion: s.dataVersion + 1 })),
 }));

@@ -6,7 +6,10 @@
 | `openmeteo_forecast_rangpur.json` | Same request for the Rangpur weather point (25.7439, 89.2752), recorded 2026-11-13 | CC BY 4.0 — Weather data by Open-Meteo.com |
 | `openmeteo_archive_dhaka.json` | Open-Meteo Historical Weather API response, same point, 2026-10-30 → 2026-11-12 (14 days), recorded 2026-11-13 | CC BY 4.0 — Weather data by Open-Meteo.com; contains modified Copernicus C3S information |
 | `aquastat_bgd_subset.csv` | Rows of the AQUASTAT download for Bangladesh (`data/raw/aquastat/aquastat_bgd.csv`, retrieved 2026-11-12) for variables 4188 (TRWR), 4253 (total withdrawal) and 4550 (SDG 6.4.2), unmodified, including imputed (`I`) rows | CC BY-NC-SA 4.0 — Source: FAO AQUASTAT |
+| `aquastat_bgd_recorded.csv` | Full response recorded 2026-11-17 for the 25 platform indicators, Bangladesh, query years 1990–2026; 706 records, including 403 non-imputed rows. Exact recording metadata and SHA-256 are in `aquastat_bgd_recorded.metadata.json`. | CC BY-NC-SA 4.0 — Source: FAO AQUASTAT |
 | `grace_csr_bgd_subset.h5` | Subset of `CSR_GRACE_GRACE-FO_RL0603_Mascons_all-corrections.nc` (retrieved 2026-11-12): lat 20–27°N, lon 87.5–93°E, the first three and last three solutions, with the original `Units`, `product_version` and `time_mean_removed` attributes | Save, H., Bettadpur, S., Tapley, B.D. (2016), CSR RL06.3 mascons |
 
 Tests that need a changed provider value (revisions, newest-run-replaces, NULL never overwrites) copy one of these
 files in memory and alter a single value; such altered copies exist only inside the test.
+
+`bluesense_test_db.py` builds a temporary database from committed processed data, stores genuine AQUASTAT fixture records, extracts the 206 Bangladesh GRACE cells for the six recorded solutions, and stores recorded point forecasts. Pytest and Playwright use this seed without reading the local application database, ignored raw downloads or `backend/.env`. These fixtures are never used by the production bootstrap or runtime service.

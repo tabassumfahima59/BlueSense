@@ -1,7 +1,7 @@
 {
  "openapi": "3.1.0",
  "info": {
-  "title": "AquaGuard API",
+  "title": "BlueSense API",
   "description": "AI-Powered Water Intelligence, Prediction & Resource Optimization Platform (prototype). Every numeric field is a Measure with provenance. Decision support only.",
   "version": "0.1.0"
  },
@@ -1852,6 +1852,16 @@
        "type": "boolean",
        "default": false,
        "title": "Normals"
+      }
+     },
+     {
+      "name": "dryness",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean",
+       "default": false,
+       "title": "Dryness"
       }
      }
     ],

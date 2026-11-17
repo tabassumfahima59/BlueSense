@@ -2,15 +2,13 @@ import { expect, test } from "@playwright/test";
 
 /** P5 check 9: controls that had no dedicated test yet. Each must visibly do what it says. */
 
-test("header: data-label help and the floating Copilot panel open and close", async ({ page }) => {
+test("header data-label help is removed and the floating Copilot panel opens and closes", async ({ page }) => {
   await page.goto("/command-center");
-  await expect(page.locator("main h1").first()).toBeVisible();
-  await page.getByRole("button", { name: "What the data labels mean" }).click();
-  await expect(page.getByText("Open-Meteo weather-model estimate of current conditions (not a station reading)")).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(page.getByText("Open-Meteo weather-model estimate of current conditions (not a station reading)")).toBeHidden();
-  await page.getByRole("button", { name: "Open AquaGuard Copilot" }).first().click();
-  const panel = page.getByRole("dialog", { name: "AquaGuard Copilot" });
+  await expect(page.locator("header.glass-bar").getByText("Welcome to BlueSense", { exact: true })).toBeVisible();
+  await expect(page.locator("main > div").first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "What the data labels mean" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Open BlueSense Copilot" }).first().click();
+  const panel = page.getByRole("dialog", { name: "BlueSense Copilot" });
   await expect(panel).toBeVisible();
   await expect(panel.getByLabel("Ask the Copilot")).toBeVisible();
   await panel.getByRole("button", { name: "Close Copilot" }).click();

@@ -2,7 +2,7 @@ import { expect, type Page, test } from "@playwright/test";
 
 async function open(page: Page, path = "/command-center") {
   await page.goto(path);
-  await expect(page.getByRole("heading", { name: "Command Center", level: 1 })).toBeVisible();
+  await expect(page.locator("header").getByText("Command Center", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: /Water availability: show details/ })).toBeVisible();
 }
 
@@ -12,7 +12,7 @@ test("region change refetches with the region and updates the KPIs", async ({ pa
   await page.locator("#region-select").selectOption("dhaka");
   const body = await (await req).json();
   await expect(page.getByRole("button", { name: /Irrigation demand \(weather-based\): show details/ })).toBeVisible();
-  await expect(page.getByText(/are national data/)).toBeVisible();
+  await expect(page.getByText(/are national data/)).toHaveCount(0);
   // decision 1: national statistics are never division values
   const byKey = Object.fromEntries(body.data.kpis.map((k: { key: string }) => [k.key, k]));
   expect(byKey.availability.value.spatialLevel).toBe("national");
@@ -47,13 +47,17 @@ test("potential saving follows the efficiency slider", async ({ page }) => {
   await expect(drawer.locator("span.text-\\[28px\\]")).not.toHaveText(before!);
 });
 
-test("map category filter changes the legend and its source", async ({ page }) => {
+test("map category filter changes the legend without method helper text", async ({ page }) => {
   await open(page);
-  await expect(page.getByText(/SPI classes \(McKee/)).toBeVisible();
+  const legend = page.getByRole("list", { name: /^Legend:/ });
+  await expect(legend).toContainText("Extremely dry");
+  await expect(page.getByText(/SPI classes \(McKee/)).toHaveCount(0);
   await page.getByRole("radio", { name: "Rain vs normal" }).click();
-  await expect(page.getByText(/India Meteorological Department rainfall departure categories/)).toBeVisible();
+  await expect(legend).toContainText("Large deficient");
+  await expect(page.getByText(/India Meteorological Department rainfall departure categories/)).toHaveCount(0);
   await page.getByRole("radio", { name: "Next 7 days" }).click();
-  await expect(page.getByText(/assumption, not an official classification/).first()).toBeVisible();
+  await expect(legend).toContainText("Strong deficit");
+  await expect(page.getByText(/assumption, not an official classification/)).toHaveCount(0);
 });
 
 test("regional table selects a division", async ({ page }) => {

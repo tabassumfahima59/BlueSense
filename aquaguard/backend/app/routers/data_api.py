@@ -207,7 +207,7 @@ def _normals(conn, reg: dict, months: list[str]) -> list[SeriesValues]:
 @router.get("/weather/history", response_model=Envelope[WeatherSeries])
 def weather_history(region: str = "bd", start: str | None = None, end: str | None = None,
                     step: Literal["daily", "monthly"] = "monthly", normals: bool = False,
-                    conn=Depends(db)) -> Envelope[WeatherSeries]:
+                    dryness: bool = False, conn=Depends(db)) -> Envelope[WeatherSeries]:
     reg = resolve(conn, region)
     pattern = DAY_RE if step == "daily" else MONTH_RE
     for name, v in (("start", start), ("end", end)):
@@ -235,11 +235,19 @@ def weather_history(region: str = "bd", start: str | None = None, end: str | Non
         note += " No data in this range."
     observed = max((s.t[-1] for s in series if s.t), default=None)
     norm: list[SeriesValues] = []
-    if normals:
+    if normals or dryness:
         if step != "monthly":
-            raise ApiError(422, "invalid_parameter", "normals are available for step=monthly only.")
+            raise ApiError(422, "invalid_parameter", "normals and dryness are available for step=monthly only.")
         months = sorted({t for s in series for t in s.t})
-        norm = _normals(conn, reg, months)
+        if normals:
+            norm = _normals(conn, reg, months)
+        if dryness:
+            z = store.water_balance_3m_history(conn, reg, months)
+            series.append(SeriesValues(variable="dryness_3m", label="Seasonal dryness (3-month P - ET0 z-score)",
+                                       unit="z-score", t=months, v=[None if v is None else round(v, 3) for v in z]))
+            note += (" Dryness uses the existing 3-month P - ET0 normal z-score, with at least 25 complete "
+                     "reference windows in 1991-2020; it is not a gamma-fitted SPI. "
+                     "National dryness is the area-weighted mean of all eight point z-scores.")
     return Envelope(data=WeatherSeries(region=ref(reg), step=step, timezone=store.TIMEZONE, start=start, end=end,
                                        series=series, normals=norm),
                     meta=catalog.meta(["openmeteo_archive"], ["reanalysis"] + (["derived"] if step == "monthly" else []),

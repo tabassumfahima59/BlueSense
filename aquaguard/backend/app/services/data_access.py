@@ -287,7 +287,7 @@ def forecast(lat: float, lon: float, cache_key: str) -> Forecast:
                   "past_days": 7, "forecast_days": 16, "timezone": "Asia/Dhaka"}
         try:
             req = urllib.request.Request(f"{FORECAST_URL}?{urlencode(params)}",
-                                         headers={"User-Agent": "AquaGuard-prototype/0.1"})
+                                         headers={"User-Agent": "BlueSense-prototype/0.1"})
             with urllib.request.urlopen(req, timeout=12) as resp:
                 js = json.loads(resp.read())
             js["_retrievedAt"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat()

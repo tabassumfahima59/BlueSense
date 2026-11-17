@@ -14,7 +14,7 @@ from .data_api import db
 
 router = APIRouter(tags=["3D Water Flow"])
 SRC = "aquaguard_engine"
-DISCLAIMER = ("CONCEPTUAL ILLUSTRATION (SIMULATED hypothetical network). AquaGuard has no IoT sensors, no real-time "
+DISCLAIMER = ("CONCEPTUAL ILLUSTRATION (SIMULATED hypothetical network). BlueSense has no IoT sensors, no real-time "
               "pipe pressure and no pump or valve control; it does not detect physical leaks. The network uses no real "
               "data; the national AQUASTAT magnitudes are shown beside it for scale only.")
 NOTE = "Conceptual illustration: hypothetical network, not a real system."

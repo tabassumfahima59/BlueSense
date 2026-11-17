@@ -29,7 +29,7 @@ Stress_ratio    = (Agriculture + Domestic + Industry demand) / (Supply − envir
 
 National and division values are sums over divisions; districts show their parent division. Annual and dry-season (Dec–Apr) values are sums of months.
 
-**Stress ratio form.** The specification wrote ΣDemand/Supply including the environment. Including the environmental reserve in the numerator double-counts it (it is ~50% of surface supply), so AquaGuard uses the SDG 6.4.2 / WRI Aqueduct form — consumptive demand over renewable supply minus environmental flow requirements (see ASSUMPTIONS A-10). The Command Center shows the result next to FAO's SDG 6.4.2 value for Bangladesh as a check.
+**Stress ratio form.** The specification wrote ΣDemand/Supply including the environment. Including the environmental reserve in the numerator double-counts it (it is ~50% of surface supply), so BlueSense uses the SDG 6.4.2 / WRI Aqueduct form — consumptive demand over renewable supply minus environmental flow requirements (see ASSUMPTIONS A-10). The Command Center shows the result next to FAO's SDG 6.4.2 value for Bangladesh as a check.
 
 **Stress classes** (WRI Aqueduct 4.0 baseline water stress; Kuzma et al., 2023): < 10% Low, 10–20% Low-medium, 20–40% Medium-high, 40–80% High, > 80% Extremely high.
 
@@ -40,6 +40,7 @@ National and division values are sums over divisions; districts show their paren
 | Rainfall change % | P × (1 + r) → local runoff and FAO-56 effective rainfall |
 | Temperature change °C | ET0 × (Tmean + ΔT + 17.8)/(Tmean + 17.8) (Hargreaves temperature term) → ETc → agricultural demand |
 | Demand change % | domestic and industrial demand × (1 + d) |
+| Agricultural consumption change % | gross agricultural demand × (1 + a) |
 | Groundwater availability % | groundwater supply × (1 + g) |
 | Irrigation efficiency | GIR = NIR / efficiency |
 | Pipeline loss % | loss_rate in the water balance and the flow-simulation background leakage |

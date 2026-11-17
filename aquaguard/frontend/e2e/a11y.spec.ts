@@ -2,12 +2,12 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 const ROUTES = ["/", "/command-center", "/explorer", "/prediction-lab", "/water-flow", "/water-budget", "/what-if",
-  "/irrigation", "/copilot", "/data-sources", "/settings"];
+  "/irrigation", "/copilot", "/settings"];
 
 for (const route of ROUTES) {
   test(`axe: no serious or critical WCAG 2.1 A/AA violations on ${route}`, async ({ page }) => {
     await page.goto(route);
-    await expect(page.locator("main h1").first()).toBeVisible();
+    await expect(page.locator("header.glass-bar").getByText("Welcome to BlueSense", { exact: true })).toBeVisible();
     await page.waitForTimeout(1500); // let data views settle
     const result = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])

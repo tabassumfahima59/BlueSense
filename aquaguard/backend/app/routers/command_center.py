@@ -150,7 +150,7 @@ def overview(region: str = "bd", scenario: ScenarioParams = Depends(scenario_que
         if "sdg642_water_stress_pct" in wr:
             ref = wr["sdg642_water_stress_pct"]
             validation.append(ValidationCheck(
-                label="Annual stress ratio: AquaGuard vs FAO SDG 6.4.2 water stress",
+                label="Annual stress ratio: BlueSense vs FAO SDG 6.4.2 water stress",
                 model=engine(ann["stressRatio"] * 100, "%", sc, smp, 2),
                 reference=m(ref["value"], "%", "historical", "fao_aquastat", sample=wsmp,
                             as_of=f"{int(ref['year'])}-12-31", digits=2),

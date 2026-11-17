@@ -266,7 +266,7 @@ def _why(req, crop, a: dict, fc, planting: date, assumed_today: bool, eff: float
     ret = fc.retrieved_at
     why = [
         WhyItem(label="Weather point", value=f"{point_name} representative point (one of eight divisional points)",
-                source="geoBoundaries / AquaGuard locations", dataKind="reference"),
+                source="geoBoundaries / BlueSense locations", dataKind="reference"),
         WhyItem(label="Reference ET0", value=f"{a['et0MeanMmDay']:.1f} mm/day mean, {a['periodFrom']} to {a['periodTo']}",
                 source=f"Open-Meteo forecast ({fc.mode})", dataKind="forecast", observedAt=a["periodFrom"],
                 retrievedAt=ret, age=_age(ret), status=fstatus),
