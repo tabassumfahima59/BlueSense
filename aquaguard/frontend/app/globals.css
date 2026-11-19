@@ -7,7 +7,7 @@
  * text, icons and fills. Green/amber/orange/red are used only for status or risk and always with a text label.
  */
 @theme {
-  --color-bg: #f0f7ff;
+  --color-bg: #000000;
   --color-card: #ffffff;
   --color-surface: #ffffff;
   --color-light: #eaf5ff;
