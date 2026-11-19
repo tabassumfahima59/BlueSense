@@ -10,7 +10,7 @@
 | Eight prompt sections | MASTER_PROMPT_RECONSTRUCTED.md | Draft covers all eight; newly written and not executed |
 | Core product and user journey | Root README, VIDEO_SCRIPT.md, source modules | Local prototype verified; final public deployment remains unverified |
 | Data schemas/pipelines | Migrations, sync adapters, ../DATA_SOURCES.md | Implemented; genuine AQUASTAT/GRACE source coverage incomplete |
-| Vector store / contextual or semantic RAG | `backend/app/rag/` (chunking.py, embeddings.py, search.py, docs_index.json, docs_embeddings.npy), `backend/scripts/build_docs_index.py`, Copilot tool `search_docs`, `backend/tests/test_rag.py` | Implemented and tested locally: section-based contextual chunks (32) of METHODS, DATA_SOURCES, MODEL_CARD, LIMITATIONS, ASSUMPTIONS; `gemini-embedding-2` 768-dim index built offline (one batch call) and committed; hybrid cosine + BM25 retrieval with keyword-only fallback; no vector database (NumPy file). Local Copilot run called `search_docs` and cited METHODS.md. Live deployment: see "Live backend deployment" below |
+| Vector store / contextual or semantic RAG | `backend/app/rag/` (chunking.py, embeddings.py, search.py, docs_index.json, docs_embeddings.npy), `backend/scripts/build_docs_index.py`, Copilot tool `search_docs`, `backend/tests/test_rag.py` | Implemented and tested locally: section-based contextual chunks (32) of METHODS, DATA_SOURCES, MODEL_CARD, LIMITATIONS, ASSUMPTIONS; `gemini-embedding-2` 768-dim index built offline (one batch call) and committed; hybrid cosine + BM25 retrieval with keyword-only fallback; no vector database (NumPy file). Local Copilot run called `search_docs` and cited METHODS.md. Live on the shared link's backend (`blue-sense-32jw-oidp8i5d3`): a methods question called `search_docs` in hybrid mode and cited MODEL_CARD.md sections, and a limitations question through the link's backend address cited LIMITATIONS.md; see "Live backend deployment" below |
 | Admin/user management/RBAC | Current admin-token sync and guest interface | Full required admin module not established |
 | Authentication/encryption/security | Validation, server-side secrets and rate limits | Partial; full identity, at-rest protection and authorization need evidence |
 | Architecture/API/install docs | Root README, ../ARCHITECTURE.md, ../API.md | Prepared; publish final reviewed revision |
@@ -33,7 +33,10 @@
 
 The shared frontend is a Vercel Preview deployment whose build-time `NEXT_PUBLIC_API_URL` is the alias
 `bluesense-api-preview-ca2-2uju3.vercel.app`. That alias points to a **Vercel Preview CLI upload** of the backend
-(project `blue-sense-32jw`), not to a build from Git. The upload is a staged bundle that contains the backend code,
+(project `blue-sense-32jw`), not to a build from Git. Current deployment: `blue-sense-32jw-oidp8i5d3` (adds the
+Phase 2 RAG files to the previous bundle). Rollback target: `blue-sense-32jw-ivg6xhk8g`, the previous working
+bundle without RAG (`vercel alias set blue-sense-32jw-ivg6xhk8g-code-alchemist2.vercel.app
+bluesense-api-preview-ca2-2uju3.vercel.app --scope code-alchemist2`). The upload is a staged bundle that contains the backend code,
 the ML artifacts, a packaged read-only SQLite seed database (`data/preview-seed.db`, about 108 MB, with a SHA-256
 file) and a wrapper, `preview_runtime.py`. At start-up the wrapper verifies the seed's checksum and integrity,
 copies it to instance-local `/tmp`, and runs the API read-only with migrations, bootstrap and the scheduler
@@ -41,8 +44,8 @@ switched off. A copy of the wrapper, taken unchanged from the working deployment
 `aquaguard/deploy/vercel-preview/preview_runtime.py`; no build uses that folder. The bundle's entry point imports it
 before the API (`from preview_runtime import configure; configure()`). The seed database is not in this repository.
 Production builds from `main` have no
-database and report `degraded`; the alias was removed from the project's production domains, so pushes to `main` do
-not move it. Runtime settings: `CORS_ORIGINS` (the shared frontend origin, set per deployment), `GEMINI_API_KEY`,
+database and report `degraded`; the alias was removed from the project's production domains, and Git is
+disconnected from all three Vercel projects, so pushes to `main` neither deploy nor move it. Runtime settings: `CORS_ORIGINS` (the shared frontend origin, set per deployment), `GEMINI_API_KEY`,
 `LLM_MODEL=gemini-3.5-flash-lite`, `LLM_MAX_RETRIES=3`, `LLM_RETRY_BACKOFF_S=2` (project Preview environment).
 A new backend version reaches the shared link only by uploading a new bundle and re-pointing the alias.
 
