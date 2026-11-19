@@ -31,8 +31,16 @@ ARTIFACTS = [
 MANIFEST = BASE / "artifact_manifest.json"
 
 
+TEXT_SUFFIXES = {".md", ".json", ".py", ".txt", ".mmd", ".yaml", ".yml", ".csv"}
+
+
 def digest(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    """SHA-256 of a file. Text files are hashed with CRLF normalized to LF, so a Windows (core.autocrlf) checkout and
+    an LF checkout of the same revision give the same digest; other files are hashed byte for byte."""
+    data = path.read_bytes()
+    if path.suffix.lower() in TEXT_SUFFIXES:
+        data = data.replace(b"\r\n", b"\n")
+    return hashlib.sha256(data).hexdigest()
 
 
 def valid_url(value: object, key: str = "") -> bool:
