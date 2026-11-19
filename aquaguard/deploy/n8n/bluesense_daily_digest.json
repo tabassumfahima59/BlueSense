@@ -1,0 +1,166 @@
+{
+  "name": "BlueSense daily water-risk digest",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 8,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "6f0c1a52-3d1e-4b8a-9a51-0b1c2d3e4f01",
+      "name": "Every day at 08:00 (Dhaka)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://bluesense-api-preview-ca2-2uju3.vercel.app/api/dashboard/summary?region=bd",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "6f0c1a52-3d1e-4b8a-9a51-0b1c2d3e4f02",
+      "name": "Get dashboard summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://bluesense-api-preview-ca2-2uju3.vercel.app/api/copilot/stream",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "text/event-stream"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"message\": \"Give a 5-line water-risk summary for Bangladesh today, using BlueSense data.\",\n  \"region\": \"bd\",\n  \"clientId\": \"n8n-daily-digest\"\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "text",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "id": "6f0c1a52-3d1e-4b8a-9a51-0b1c2d3e4f03",
+      "name": "Ask Copilot (stream)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Builds the digest from the Copilot stream (this node's input) and the dashboard summary.\n// Copilot stream: server-sent events \"event: <type>\" + \"data: <json>\"; types tool, delta (answer text), done, error.\nconst raw = String($input.first().json.data ?? '');\nconst summary = $('Get dashboard summary').first().json;\nconst base = 'https://bluesense-api-preview-ca2-2uju3.vercel.app';\n\n// 1. Copilot answer: join the text of every delta event.\nconst events = [];\nfor (const block of raw.replace(/\\r\\n/g, '\\n').split('\\n\\n')) {\n  let type = null;\n  const data = [];\n  for (const line of block.split('\\n')) {\n    if (line.startsWith('event:')) type = line.slice(6).trim();\n    else if (line.startsWith('data:')) data.push(line.slice(5).replace(/^ /, ''));\n  }\n  if (!data.length) continue;\n  try {\n    const ev = JSON.parse(data.join('\\n'));\n    events.push({ ...ev, type: ev.type ?? type });\n  } catch (e) { /* ignore a malformed event */ }\n}\nconst answer = events.filter(e => e.type === 'delta').map(e => e.text ?? '').join('').trim();\nconst done = events.find(e => e.type === 'done');\nlet problem = events.find(e => e.type === 'error');\nif (!events.length) {\n  // Not a stream: an HTTP error body such as {\"code\": \"site_daily_limit\", \"detail\": \"...\"}\n  try {\n    const j = JSON.parse(raw);\n    problem = { code: j.code ?? j.error?.code ?? 'http_error', detail: j.detail ?? j.error?.detail ?? j.message ?? raw.slice(0, 200) };\n  } catch (e) {\n    problem = { code: 'no_response', detail: raw ? raw.slice(0, 200) : 'Empty response from the Copilot.' };\n  }\n}\nconst copilotOk = Boolean(answer) && !problem;\n\n// 2. Key KPIs from /api/dashboard/summary.\nconst d = summary.data ?? {};\nconst meta = summary.meta ?? {};\nconst kpi = key => (d.kpis ?? []).find(k => k.key === key);\nconst num = (x, signed = false) => {\n  const r = Math.round(Number(x) * 10) / 10;\n  return (signed && r > 0 ? '+' : '') + r;\n};\nconst kpiLine = (key, name) => {\n  const k = kpi(key);\n  if (!k || k.value?.value == null) return `- ${name}: not available`;\n  let s = `- ${name}: ${num(k.value.value, key === 'groundwater')} ${k.value.unit ?? ''}`.trimEnd();\n  if (k.value.observedAt) s += ` (${k.value.observedAt})`;\n  if (k.classLabel) s += `, ${k.classLabel}`;\n  if (k.comparison?.value != null && k.comparisonLabel && Number(k.comparison.value) !== 0) {\n    s += `, ${num(k.comparison.value, true)} ${k.comparison.unit ?? ''} ${k.comparisonLabel}`.replace(/ +/g, ' ');\n  }\n  return s;\n};\nconst kpiLines = [\n  kpiLine('utilization', 'Water stress (SDG 6.4.2)'),\n  kpiLine('groundwater', 'Water storage anomaly (GRACE)'),\n  `- Open alerts: ${d.openAlerts ?? 'n/a'}`,\n  `- Data status: ${meta.status ?? 'unknown'}${meta.retrieved_at ? `, last refreshed ${String(meta.retrieved_at).slice(0, 16).replace('T', ' ')} UTC` : ''}`,\n];\n\n// 3. Subject and body.\nconst today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Dhaka' });\nconst subject = `BlueSense water-risk digest: Bangladesh, ${today}${copilotOk ? '' : ' (Copilot unavailable)'}`;\nconst body = [\n  `BlueSense daily water-risk digest for Bangladesh, ${today}`,\n  '',\n  'Copilot summary:',\n  copilotOk ? answer : `The Copilot gave no answer today (${problem?.code ?? 'empty'}: ${problem?.detail ?? 'no text'}).`,\n  '',\n  'Key indicators:',\n  ...kpiLines,\n  '',\n  `Source: BlueSense API (${base})${done ? `; answer written by ${done.provider} ${done.model}` : ''}.`,\n  'BlueSense is a decision-support prototype; AI answers can contain errors. Check the dashboard before acting.',\n].join('\\n');\n\nreturn [{ json: { subject, body, copilotOk, copilotError: problem ?? null, model: done?.model ?? null } }];\n"
+      },
+      "id": "6f0c1a52-3d1e-4b8a-9a51-0b1c2d3e4f04",
+      "name": "Build digest",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "recipient@example.com",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.body }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "6f0c1a52-3d1e-4b8a-9a51-0b1c2d3e4f05",
+      "name": "Send a message",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        960,
+        0
+      ],
+      "webhookId": "6f0c1a52-3d1e-4b8a-9a51-0b1c2d3e4f06"
+    }
+  ],
+  "connections": {
+    "Every day at 08:00 (Dhaka)": {
+      "main": [
+        [
+          {
+            "node": "Get dashboard summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get dashboard summary": {
+      "main": [
+        [
+          {
+            "node": "Ask Copilot (stream)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ask Copilot (stream)": {
+      "main": [
+        [
+          {
+            "node": "Build digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build digest": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Dhaka"
+  },
+  "tags": []
+}

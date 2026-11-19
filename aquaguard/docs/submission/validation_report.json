@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-11-17T20:57:00.336651+06:00",
+  "checked_at": "2026-11-20T02:04:22.410578+06:00",
   "scope": "Local draft structure, lengths, URL shape, paths and file integrity; no live link or eligibility certification",
   "draft_integrity_passed": true,
   "submission_ready": false,
@@ -16,7 +16,7 @@
       "minimum": 100
     },
     "agent_orchestration": {
-      "characters": 329,
+      "characters": 432,
       "minimum": 80
     },
     "fine_tuning_adaptation": {
