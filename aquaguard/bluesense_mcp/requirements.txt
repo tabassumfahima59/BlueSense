@@ -1,0 +1,3 @@
+# bluesense-mcp (local stdio MCP server). Not installed on Vercel: the backend's requirements.txt is unchanged.
+-r ../backend/requirements.txt
+mcp==2.3.0

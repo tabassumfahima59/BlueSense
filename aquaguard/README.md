@@ -19,7 +19,7 @@ API measures distinguish observations, historical data, predictions, estimates a
 | Water Budget Sankey | `/water-budget` | D3 Sankey, balance check (0.01 MCM), LP allocation optimizer, custom shares |
 | What-if Simulator | `/what-if` | Seven levers, presets, baseline vs simulated, "Apply across platform" |
 | Smart Irrigation | `/irrigation` | FAO-56 with Open-Meteo forecast: requirement, timing, quantity, assumptions |
-| AI Copilot | `/copilot` + floating panel | Gemini by default, optional Anthropic, read-only BlueSense tools, streamed answers and number checks; `not_configured` without a server-side key |
+| AI Copilot | `/copilot` + floating panel | Gemini by default, optional Anthropic, 15 read-only BlueSense tools (14 data tools + `search_docs` documentation RAG), streamed answers and number checks; `not_configured` without a server-side key |
 | Settings | `/settings` | Region, units, motion and transparency preferences |
 
 The former `/data-sources` screen is disabled. See [DATA_SOURCES](docs/DATA_SOURCES.md) and `GET /api/sources` for attribution and parameters. The Command Center also includes the historical Water Rhythm timeline described below.
@@ -148,6 +148,85 @@ cd frontend && npm run e2e   # Playwright + axe: builds into .next-e2e, starts a
 ```
 
 First e2e run only: `cd frontend && npx playwright install chromium`.
+
+### Copilot documentation search (RAG)
+
+The Copilot tool `search_docs(query)` answers "how does BlueSense work" questions from five documents:
+[METHODS](docs/METHODS.md), [DATA_SOURCES](docs/DATA_SOURCES.md), [MODEL_CARD](docs/MODEL_CARD.md),
+[LIMITATIONS](docs/LIMITATIONS.md) and [ASSUMPTIONS](docs/ASSUMPTIONS.md). Code: `backend/app/rag/`.
+
+- **Chunking**: one chunk per markdown section (split at headings, so sizes vary); a section over 1,800 characters
+  is split at paragraphs/lines into numbered parts, and split tables repeat their header row. Each chunk is prefixed
+  with its document title and section path (contextual chunks). Currently 32 chunks.
+- **Embeddings**: `gemini-embedding-2`, 768 dimensions, called over REST with httpx like the Gemini chat adapter.
+  The index (`backend/app/rag/docs_index.json` + `docs_embeddings.npy`, about 135 KB) is built once, offline, with
+  one `batchEmbedContents` call and committed. At run time only the query is embedded.
+- **Retrieval**: hybrid score = 0.6 × cosine similarity (rescaled 0–1) + 0.4 × BM25 (relative to the best match),
+  top 4 sections. If the query cannot be embedded (no key, quota, 503, timeout) the search uses BM25 alone, so the
+  Copilot keeps working. No vector database, ML framework or new runtime dependency (NumPy is already required).
+- Results carry document and section names; the system prompt tells the Copilot to cite them, e.g.
+  `[METHODS.md > 3. FAO-56 irrigation (...)]`, and to keep using the data tools for numbers.
+
+Rebuild the index after editing any of the five documents (the test suite fails while it is out of date):
+
+```bash
+cd aquaguard && .venv/Scripts/python backend/scripts/build_docs_index.py          # needs GEMINI_API_KEY
+.venv/Scripts/python backend/scripts/build_docs_index.py --check                  # is the committed index current?
+```
+
+### MCP server (`bluesense-mcp`)
+
+`bluesense_mcp/` exposes the Copilot's tools to any Model Context Protocol client, built with the official MCP Python
+SDK (`mcp==2.3.0`). **Transport: stdio. Tools: 15**, all read-only: the 14 Copilot data tools
+(`get_current_weather`, `get_weather_forecast`, `get_dashboard_kpis`, `get_division_indicators`,
+`get_water_statistics`, `get_national_water_budget`, `get_groundwater_trend`, `get_alerts`, `get_prediction`,
+`estimate_irrigation`, `get_regional_intelligence`, `compare_divisions`, `compare_periods`, `run_what_if`) plus
+`search_docs`. It reuses `copilot.TOOLS`, `copilot.tool_specs()` and `copilot.run_tool()` (same input validation,
+read-only database connection), so there is no second copy of the logic. It calls no language model. It runs
+locally against your SQLite database and is not part of the Vercel deployment; it has its own requirements file.
+
+```bash
+cd aquaguard
+.venv/Scripts/python -m pip install -r bluesense_mcp/requirements.txt
+.venv/Scripts/python -m bluesense_mcp        # waits for an MCP client on stdin/stdout; logs go to stderr
+```
+
+The database is `data/aquaguard.db` (override with `AQUAGUARD_DB_PATH`). `search_docs` uses hybrid search when
+`GEMINI_API_KEY` is set (environment or `backend/.env`) and keyword search otherwise.
+
+**Claude Desktop** — add to `claude_desktop_config.json` (Settings → Developer → Edit Config), using absolute paths:
+
+```json
+{
+  "mcpServers": {
+    "bluesense": {
+      "command": "C:\\path\\to\\BlueSense\\aquaguard\\.venv\\Scripts\\python.exe",
+      "args": ["-m", "bluesense_mcp"],
+      "cwd": "C:\\path\\to\\BlueSense\\aquaguard"
+    }
+  }
+}
+```
+
+If your client ignores `cwd`, add `"env": {"PYTHONPATH": "C:\\path\\to\\BlueSense\\aquaguard"}`.
+
+**VS Code** (GitHub Copilot agent mode) — create `.vscode/mcp.json` in the workspace:
+
+```json
+{
+  "servers": {
+    "bluesense": {
+      "type": "stdio",
+      "command": "${workspaceFolder}/aquaguard/.venv/Scripts/python.exe",
+      "args": ["-m", "bluesense_mcp"],
+      "cwd": "${workspaceFolder}/aquaguard"
+    }
+  }
+}
+```
+
+On macOS/Linux use `.venv/bin/python`. Tests: `backend/tests/test_mcp_server.py` (tool list and calls through the
+SDK's in-memory client; skipped if `mcp` is not installed).
 
 ## Deploy
 

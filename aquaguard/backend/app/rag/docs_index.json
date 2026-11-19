@@ -1,0 +1,239 @@
+{
+ "builtAt": "2026-11-19T16:58:43+00:00",
+ "embeddingModel": "gemini-embedding-2",
+ "dimensions": 768,
+ "maxChunkChars": 1800,
+ "sources": {
+  "METHODS.md": "fa5edcabe2735f39c4fadbc15dc0eb5415ea2ff73984d41626dd4e80508dac24",
+  "DATA_SOURCES.md": "c9f9fa084400edb8fcf1dcb2f819742a7b6d62964865031e87c8d7ec8ac986ac",
+  "MODEL_CARD.md": "bdf7a4fac1d88da02b89155a4d376fd9b3740da63923a67026e310ea81bf4b80",
+  "LIMITATIONS.md": "ee4cde9d2f2dd7c849617abdbaa067fdfb2a874f5e284b3427ec35dd7a88fbf6",
+  "ASSUMPTIONS.md": "43428405549c3a8fbef99c707b204bccae20f471ff016f28f083b978818c0cda"
+ },
+ "chunks": [
+  {
+   "id": "METHODS.md#1",
+   "doc": "METHODS.md",
+   "doc_title": "Methods",
+   "section": "Introduction",
+   "text": "Every equation below is implemented once in `backend/app/engine/` (water balance, scenario, FAO-56, flow simulation, risk, optimizer) and every parameter lives in `backend/app/config/parameters.yaml` with its value, unit, source and an assumption flag."
+  },
+  {
+   "id": "METHODS.md#2",
+   "doc": "METHODS.md",
+   "doc_title": "Methods",
+   "section": "1. Water balance (`engine/water_balance.py`) (part 1/2)",
+   "text": "Per division, per month of a climatological year (1991–2020 normals), volumes in MCM:\n\n```\nSupply_total    = Surface_supply + Groundwater_supply\nSurface_supply  = Inflow_component + Local_runoff\nInflow_component= AQUASTAT external surface inflow (1,122 km³/yr) × area share × GloFAS monthly share\nLocal_runoff    = runoff_coefficient × rainfall × area          (mm × km² × 10⁻³ = MCM)\nGroundwater     = AQUASTAT renewable groundwater (21.12 km³/yr) × area share,\n                  usable in each month in proportion to that month's consumptive need (aquifer buffer)\nDemand_agriculture = Σ_crops irrigated area × GIR (FAO-56, §3)\nDemand_domestic    = population × per-capita demand × days\nDemand_industry    = AQUASTAT industrial withdrawal × population share × days/365\nDemand_environment = environmental reserve share × surface supply\nNeed_s          = Demand_s / (1 − loss_rate) for piped sectors (domestic, industry); Demand_s otherwise\nAllocation      = Need_s if Σ Need ≤ Supply, else pro-rata (current-practice proxy)\nDelivered_s     = Allocation_s × (1 − loss_rate) for piped sectors; Allocation_s otherwise\nLosses          = Σ_piped Allocation_s × loss_rate\nΔStorage        = Supply − Σ Allocation      (unallocated: retained in storage or flowing out)\nBalance check:  Supply = Σ Delivered + Losses + ΔStorage   (|error| ≤ 0.01 MCM; unit-tested)\nUnmet_s         = max(0, Demand_s − Delivered_s)\nStress_ratio    = (Agriculture + Domestic + Industry demand) / (Supply − environmental reserve)\n```\n\nNational and division values are sums over divisions; districts show their parent division. Annual and dry-season (Dec–Apr) values are sums of months."
+  },
+  {
+   "id": "METHODS.md#3",
+   "doc": "METHODS.md",
+   "doc_title": "Methods",
+   "section": "1. Water balance (`engine/water_balance.py`) (part 2/2)",
+   "text": "**Stress ratio form.** The specification wrote ΣDemand/Supply including the environment. Including the environmental reserve in the numerator double-counts it (it is ~50% of surface supply), so BlueSense uses the SDG 6.4.2 / WRI Aqueduct form — consumptive demand over renewable supply minus environmental flow requirements (see ASSUMPTIONS A-10). The Command Center shows the result next to FAO's SDG 6.4.2 value for Bangladesh as a check.\n\n**Stress classes** (WRI Aqueduct 4.0 baseline water stress; Kuzma et al., 2023): < 10% Low, 10–20% Low-medium, 20–40% Medium-high, 40–80% High, > 80% Extremely high."
+  },
+  {
+   "id": "METHODS.md#4",
+   "doc": "METHODS.md",
+   "doc_title": "Methods",
+   "section": "2. Scenario engine (`engine/scenario.py`)",
+   "text": "| Input | Effect |\n|---|---|\n| Rainfall change % | P × (1 + r) → local runoff and FAO-56 effective rainfall |\n| Temperature change °C | ET0 × (Tmean + ΔT + 17.8)/(Tmean + 17.8) (Hargreaves temperature term) → ETc → agricultural demand |\n| Demand change % | domestic and industrial demand × (1 + d) |\n| Agricultural consumption change % | gross agricultural demand × (1 + a) |\n| Groundwater availability % | groundwater supply × (1 + g) |\n| Irrigation efficiency | GIR = NIR / efficiency |\n| Pipeline loss % | loss_rate in the water balance and the flow-simulation background leakage |\n\nAll scenario outputs are labelled Simulated. All-zero changes reproduce the baseline exactly (tested)."
+  },
+  {
+   "id": "METHODS.md#5",
+   "doc": "METHODS.md",
+   "doc_title": "Methods",
+   "section": "3. FAO-56 irrigation (`engine/fao56.py`)",
+   "text": "```\nETc = Kc × ET0                    (ET0 = Open-Meteo et0_fao_evapotranspiration, FAO-56 Penman–Monteith)\nKc  : Kc_ini through the initial stage, linear to Kc_mid through development, Kc_mid in mid-season,\n      linear to Kc_end in the late stage (FAO-56 Table 12 values; Fig. 25 shape)\nPe  : USDA-SCS monthly method   P ≤ 250 mm: Pe = P(125 − 0.2P)/125 ;  P > 250 mm: Pe = 125 + 0.1P\n      (for periods other than a month the rule is applied to the 30.4-day-equivalent total and scaled back)\nNIR = max(0, ETc − Pe) + rice land preparation + percolation/seepage\nGIR = NIR / irrigation_efficiency\nVolume (m³) = GIR (mm) × area (ha) × 10\nTAW = 1000 (θFC − θWP) Zr ;  RAW = p × TAW   (θ from FAO-56 Table 19 midpoints; Zr, p from Table 22)\nInterval ≈ trigger / daily loss; trigger = RAW (upland crops) or the AWD ponding depth (rice)\n```\n\nAdvisor: a daily root-zone depletion balance over the next 16 days. Starting depletion comes from Open-Meteo model soil moisture (3–9 cm) when present, Dr0 = (θFC − θ) × 1000 × Zr; otherwise RAW/2 (assumption). Rice is assumed flooded at the start (AWD). Outputs are Estimated (\"validate locally\")."
+  },
+  {
+   "id": "METHODS.md#6",
+   "doc": "METHODS.md",
+   "doc_title": "Methods",
+   "section": "3b. Spatial intelligence (`services/spatial_intel.py`)",
+   "text": "Monthly weather per division comes from `weather_monthly` (ERA5 reanalysis at the representative point); a month counts only when all its days are present, and a national month only when all eight divisions have it (area-weighted mean, the platform's national weather method). Last 12 months = the latest 12 consecutive complete months; their rainfall total and mean temperature are compared with the 1991–2020 climatology of the same calendar months (departure % for rainfall, °C anomaly for temperature). Annual series use complete calendar years only; trends are OLS slopes per decade with a 95 % t-interval (autocorrelation ignored, stated); a trend is called clear only when the interval excludes zero. Thresholds of the wording: rainfall ±10 % (\"below / above normal\"), temperature ±0.5 °C, suggestions at ≤ −15 % rainfall, dryness z ≤ −1 or estimated risk ≥ Medium-high. The risk driver is the component (engine stress class or ML dryness class) whose level equals the combined level. GRACE: national series only; missing months are counted and the longest gap reported; period means use the months present. Period comparison: means over complete years, missing years listed, percentage change for rainfall only."
+  },
+  {
+   "id": "METHODS.md#7",
+   "doc": "METHODS.md",
+   "doc_title": "Methods",
+   "section": "4. Flow simulation (`engine/flow_sim.py`)",
+   "text": "```\nHazen–Williams (SI): hf = 10.67 L Q^1.852 / (C^1.852 D^4.87)\nLeakage (FAVAD):     Q_leak = k × P^N1     (N1 default 1.0, 0.5–1.5)\nMass balance:        Q_pump = Σ Q_delivered + Σ Q_leak\nLoss %               = Σ Q_leak / Q_pump × 100\n```\n\nSteady state solved by fixed-point iteration on pipe-mean pressures. Background k (per metre of pipe) is calibrated by bisection so that loss % equals the platform loss rate at the default set-point and pump flow. Burst leaks add k = 2.5×10⁻⁴ × severity. **Optimisation** = pressure management: burst leaks isolated for repair, then the minimum set-point meeting each destination's minimum service pressure is found by bisection (+0.05 m margin). Everything is Simulated.\n\n**Operating controls (3D Water Flow).** Pump flow = min(requested, capacity, water available at the source), 0 when the pump is off or no path is open. The junction flow is split by the allocation shares, renormalised over open branches (a closed valve takes its branch out). Demand per zone = hypothetical demand × demand factor. Zone status: no supply (0 delivered), valve closed, low pressure (below its minimum service pressure), under-supplied (< 98 % of demand) or served. Efficiency = delivered ÷ pumped. Balance status compares delivered with demand (±2 % = balanced, otherwise surplus or deficit). Accounting boundary pump outlet → delivery points: pumped = delivered + leakage (storage change not modelled, steady state); the residual is reported and must be ~0."
+  },
+  {
+   "id": "METHODS.md#8",
+   "doc": "METHODS.md",
+   "doc_title": "Methods",
+   "section": "5. Risk and alerts (`engine/risk.py`, `services/alerts.py`)",
+   "text": "```\nz = (D_pred − mean_D(month)) / sd_D(month)             (training-period climatology)\ndryness: z ≤ −2 Extremely dry, ≤ −1.5 Severely dry, ≤ −1 Moderately dry (McKee et al., 1993; SPEI classes,\n         Vicente-Serrano et al., 2010)\nrisk level = max(stress level of the dry-season stress ratio, dryness level)\n             dryness levels: moderately 2, severely 3, extremely 4\n```\n\nAlerts are rules over these outputs with thresholds in `parameters.yaml` (`alerts.*`); each alert returns the rule text and the Measures that fired it."
+  },
+  {
+   "id": "METHODS.md#9",
+   "doc": "METHODS.md",
+   "doc_title": "Methods",
+   "section": "6. Allocation optimizer (`engine/optimizer.py`)",
+   "text": "Per month, `scipy.optimize.linprog` (HiGHS): maximise Σ w_s × delivered_s subject to Σ allocation ≤ supply, allocation ≤ need, environment ≥ its reserve. Weights: domestic 100, agriculture 10, industry 5 (domestic first). Custom shares are normalised to 100% and capped at need. Every proposal is re-settled by the water-balance engine and passes the 0.01 MCM check."
+  },
+  {
+   "id": "METHODS.md#10",
+   "doc": "METHODS.md",
+   "doc_title": "Methods",
+   "section": "7. Machine learning (section 8 of the specification)",
+   "text": "See `docs/MODEL_CARD.md` (generated from `ml/artifacts/metrics.json`). Target D = P − ET0 at t + h, h ∈ {1, 3, 6}; time split train ≤ 2016, validation 2017–2020, test 2021–latest; baselines climatology and persistence; Random Forest and XGBoost; 90% intervals from per-month validation residual quantiles; SHAP TreeExplainer.\n\n**Demand** is a transparent projection (Estimated): domestic scaled by World Bank projected population, agriculture held at the FAO-56 requirement, industry constant.\n\n**GRACE trend**: area-weighted (cos φ) mean of CSR RL06.3 mascon cells inside Bangladesh; OLS with annual + semi-annual harmonics; 95% CI from the OLS standard error (autocorrelation ignored → CI likely too narrow); 12-month projection with a 95% prediction interval, labelled Predicted."
+  },
+  {
+   "id": "METHODS.md#11",
+   "doc": "METHODS.md",
+   "doc_title": "Methods",
+   "section": "References",
+   "text": "- Allen, R.G., Pereira, L.S., Raes, D., Smith, M. (1998). *Crop evapotranspiration*. FAO Irrigation and Drainage Paper 56.\n- USDA Soil Conservation Service (1970/1993). Effective rainfall method, as implemented in FAO CROPWAT.\n- Brouwer, C., Heibloem, M. (1986). *Irrigation Water Management: Irrigation Water Needs*. FAO Training Manual No. 3.\n- Williams, G.S., Hazen, A. (1905). *Hydraulic Tables*. Hazen–Williams equation (SI form).\n- Thornton, J., Lambert, A. (2005). Progress in practical prediction of pressure: leakage... (FAVAD N1).\n- Kuzma, S. et al. (2023). *Aqueduct 4.0: Updated decision-relevant global water risk indicators*. WRI Technical Note.\n- McKee, T.B., Doesken, N.J., Kleist, J. (1993). The relationship of drought frequency and duration to time scales.\n- Vicente-Serrano, S.M., Beguería, S., López-Moreno, J.I. (2010). A multiscalar drought index sensitive to global warming: SPEI. *J. Climate*.\n- Save, H., Bettadpur, S., Tapley, B.D. (2016). High-resolution CSR GRACE RL05 mascons. *JGR Solid Earth*, doi:10.1002/2016JB013007.\n- Pekel, J.-F. et al. (2016). High-resolution mapping of global surface water and its long-term changes. *Nature* 540.\n- Lundberg, S.M., Lee, S.-I. (2017). A unified approach to interpreting model predictions (SHAP). *NeurIPS*."
+  },
+  {
+   "id": "DATA_SOURCES.md#1",
+   "doc": "DATA_SOURCES.md",
+   "doc_title": "Data sources",
+   "section": "Introduction (part 1/3)",
+   "text": "The source registry is served at `GET /api/sources`; synchronization status is available at `GET /api/data/sources`. The former Data Sources screen is disabled. Times below are historical retrieval times from the build of 12 Nov 2026, not a claim of current freshness."
+  },
+  {
+   "id": "DATA_SOURCES.md#2",
+   "doc": "DATA_SOURCES.md",
+   "doc_title": "Data sources",
+   "section": "Introduction (part 2/3)",
+   "text": "| Source | Used for | URL | Licence | Resolution | Period | Retrieved (UTC) | Label |\n|---|---|---|---|---|---|---|---|\n| Open-Meteo Historical Weather API (ERA5/ERA5-Land) | Daily precipitation, Tmax/Tmin/Tmean, FAO-56 ET0, 0–7 cm soil moisture → monthly aggregates, climatology, ML target | https://open-meteo.com/en/docs/historical-weather-api | CC BY 4.0; contains modified Copernicus C3S information | ERA5 ~25 km / ERA5-Land ~9 km; one point per division | 1991-01-01 → 2026-11-05 | 2026-11-12 16:34 | Historical |\n| Open-Meteo Forecast API | 7 past + 16 forecast days for the Irrigation Advisor; hourly soil moisture 3–9 cm | https://open-meteo.com/en/docs | CC BY 4.0 | best-match models | rolling | live (cached 3 h); snapshot 2026-11-12 16:23 | Predicted |\n| Open-Meteo Flood API (GloFAS v4) | Monthly shape of transboundary inflow (Ganges, Brahmaputra-Jamuna, Upper Meghna cells) | https://open-meteo.com/en/docs/flood-api | CC BY 4.0; GloFAS © Copernicus EMS | 0.05° cells | 1991–2026 (shape from 1991–2020) | 2026-11-12 16:24 | Historical |\n| FAO AQUASTAT Dissemination System | Renewable resources, withdrawals by sector, irrigated crop areas, environmental flow requirement, SDG 6.4.2 | https://data.apps.fao.org/aquastat/ | CC BY-NC-SA 4.0 | national | values 2008/2018 carried forward to 2023 | 2026-11-12 16:25 | Historical (division splits Estimated) |\n| CSR GRACE/GRACE-FO RL06.3 mascons | Terrestrial water storage anomaly over Bangladesh, trend | https://www2.csr.utexas.edu/grace/RL0603_mascons.html | free with citation (Save et al. 2016; Save 2020) | 0.25° grid, ~300 km effective | 2002-04 → 2026-09 (gap 2017–18) | 2026-11-12 16:35 | Historical; projection Predicted |"
+  },
+  {
+   "id": "DATA_SOURCES.md#3",
+   "doc": "DATA_SOURCES.md",
+   "doc_title": "Data sources",
+   "section": "Introduction (part 3/3)",
+   "text": "| Source | Used for | URL | Licence | Resolution | Period | Retrieved (UTC) | Label |\n|---|---|---|---|---|---|---|---|\n| geoBoundaries gbOpen BGD | Division (ADM1) and district (ADM2) polygons, areas | https://www.geoboundaries.org/ | ADM1 CC0 1.0; ADM2 CC BY 3.0 IGO (BBS, OCHA ROAP) | simplified polygons | ADM1 2015, ADM2 2020 | 2026-11-12 16:24 | reference (areas Estimated) |\n| HDX COD-PS Bangladesh | 2022 population by division and district | https://data.humdata.org/dataset/cod-ps-bgd | CC BY-IGO (UNFPA, US Census Bureau) | ADM1/ADM2 | 2022 | 2026-11-12 16:24 | Historical |\n| World Bank Population Estimates & Projections | National population 2000–2050 for the demand projection | https://databank.worldbank.org/source/population-estimates-and-projections | CC BY 4.0 | national | 2000–2050 | 2026-11-12 16:30 | Historical (projection Estimated) |\n| JRC Global Surface Water | Surface-water occurrence map layer (browser tiles) | https://global-surface-water.appspot.com/ | free, attribution (Pekel et al. 2016) | 30 m | 1984–2021 | tiles loaded live | Historical |\n| AWS Terrain Tiles (Terrarium) | 3D terrain + hillshade | https://registry.opendata.aws/terrain-tiles/ | open; attribution per tilezen/joerd | zoom-dependent | static | tiles loaded live | reference |\n| CARTO Positron (OpenStreetMap) | Basemap, rivers and canals | https://carto.com/basemaps/ | © OpenStreetMap contributors (ODbL), © CARTO; non-commercial | vector tiles | continuous | loaded live | reference |\n| BWDB station data (importer) | Observed water level, discharge, groundwater depth, rainfall | https://www.hydrology.bwdb.gov.bd/ | BWDB terms; request/registration | station | — | not bundled | Observed |"
+  },
+  {
+   "id": "DATA_SOURCES.md#4",
+   "doc": "DATA_SOURCES.md",
+   "doc_title": "Data sources",
+   "section": "Storage and fallback",
+   "text": "- Raw responses: `data/raw/` (git-ignored; re-download with `make fetch`).\n- Cleaned tables: `data/processed/` → SQLite `data/aquaguard.db` (tables: regions, sources, weather_daily, weather_monthly, climatology, water_resources, inflow_shape, population_projection, storage_anomaly, station_observations, predictions, scenarios, alerts_log). Every record carries `source_id`, `retrieved_at`, `provenance`, `is_sample`.\n- No sample fallback (P2, decision 5): every table is read from the database; when the database is missing at startup it is bootstrapped from `data/processed` (original dates, reported `stale` until the first sync). Point forecasts: live request → 3-hour cache → forecast stored by the scheduled sync for the nearest divisional point → unavailable. `data/sample/` is no longer read by the API."
+  },
+  {
+   "id": "DATA_SOURCES.md#5",
+   "doc": "DATA_SOURCES.md",
+   "doc_title": "Data sources",
+   "section": "BWDB CSV schema",
+   "text": "Place files in `data/raw/bwdb/` and run `python ml/import_bwdb.py`:\n\n```\nstation_id,station_name,division,lon,lat,variable,date,value,unit\nSW46.9L,Bahadurabad,mymensingh,89.70,25.15,water_level_m,2024-07-01,19.42,m\n```\n\n`variable` ∈ `water_level_m` (m), `discharge_m3s` (m3/s), `groundwater_depth_m` (m), `rainfall_mm` (mm); `division` is an BlueSense division id. Rows are validated (columns, ids, units) and stored with provenance **Observed**. (The example row illustrates the format only; it is not data.)"
+  },
+  {
+   "id": "MODEL_CARD.md#1",
+   "doc": "MODEL_CARD.md",
+   "doc_title": "Model card — BlueSense scarcity forecast",
+   "section": "Introduction",
+   "text": "_Generated by `ml/model_card.py` from `ml/artifacts/metrics.json`; do not edit by hand._"
+  },
+  {
+   "id": "MODEL_CARD.md#2",
+   "doc": "MODEL_CARD.md",
+   "doc_title": "Model card — BlueSense scarcity forecast",
+   "section": "What it predicts",
+   "text": "The monthly **climatic water balance D = P − ET0 (mm/month)** per division, 1, 3 and 6 months ahead. P and ET0 come from ERA5 reanalysis (Open-Meteo, one point per division). D is a measurable quantity; BlueSense does not train on a synthetic 'scarcity index'."
+  },
+  {
+   "id": "MODEL_CARD.md#3",
+   "doc": "MODEL_CARD.md",
+   "doc_title": "Model card — BlueSense scarcity forecast",
+   "section": "Data and split",
+   "text": "- Data period: 1991-01 to 2026-10 (8 divisions, monthly).\n- Split by target date, never random: train: target year <= 2016; validation: 2017-2020; test: 2021+.\n- Samples per horizon: h=1: train 2400, validation 384, test 560; h=3: train 2384, validation 384, test 560; h=6: train 2360, validation 384, test 560.\n- Trained: 2026-11-12T16:42:28+00:00. Evaluated: 2026-11-12T16:42:52+00:00.\n- Features (no information from the forecast period): lags 0–11 of P, ET0 and D; Tmean lags 0–2; soil moisture (ERA5-Land model data); rolling means; D anomaly vs training-period climatology; target-month sin/cos; training-period normal and spread of D for the target month; division id."
+  },
+  {
+   "id": "MODEL_CARD.md#4",
+   "doc": "MODEL_CARD.md",
+   "doc_title": "Model card — BlueSense scarcity forecast",
+   "section": "Models",
+   "text": "Random Forest and XGBoost are fit on the training years; the one with the lower validation RMSE is kept, refit on train + validation and scored on the test years. The operational model is then refit on all labelled data. Baselines: climatology (training-period mean of that month) and persistence (last observed D)."
+  },
+  {
+   "id": "MODEL_CARD.md#5",
+   "doc": "MODEL_CARD.md",
+   "doc_title": "Model card — BlueSense scarcity forecast",
+   "section": "Test-period metrics",
+   "text": "| Horizon | Test period | n | Model | MAE (mm) | RMSE (mm) | R² |\n|---|---|---|---|---|---|---|\n| 1 mo | 2021-01 to 2026-10 | 560 | Climatology (baseline) | 83.53 | 125.791 | 0.6113 |\n| 1 mo | 2021-01 to 2026-10 | 560 | Persistence (baseline) | 117.485 | 171.145 | 0.2804 |\n| 1 mo | 2021-01 to 2026-10 | 560 | Random Forest **(selected)** | 79.789 | 118.542 | 0.6548 |\n| 1 mo | 2021-01 to 2026-10 | 560 | XGBoost | 80.552 | 120.757 | 0.6418 |\n| 3 mo | 2021-01 to 2026-10 | 560 | Climatology (baseline) | 83.53 | 125.791 | 0.6113 |\n| 3 mo | 2021-01 to 2026-10 | 560 | Persistence (baseline) | 209.192 | 279.177 | -0.9147 |\n| 3 mo | 2021-01 to 2026-10 | 560 | Random Forest **(selected)** | 81.984 | 121.09 | 0.6398 |\n| 3 mo | 2021-01 to 2026-10 | 560 | XGBoost | 83.842 | 124.371 | 0.62 |\n| 6 mo | 2021-01 to 2026-10 | 560 | Climatology (baseline) | 83.53 | 125.791 | 0.6113 |\n| 6 mo | 2021-01 to 2026-10 | 560 | Persistence (baseline) | 296.001 | 351.578 | -2.0366 |\n| 6 mo | 2021-01 to 2026-10 | 560 | Random Forest **(selected)** | 84.712 | 125.108 | 0.6155 |\n| 6 mo | 2021-01 to 2026-10 | 560 | XGBoost | 88.892 | 131.795 | 0.5733 |\n\n| Horizon | Dryness-class macro-F1 | Climatology macro-F1 | 90% interval test coverage |\n|---|---|---|---|\n| 1 mo | 0.2274 | 0.2274 | 0.8393 |\n| 3 mo | 0.2274 | 0.2274 | 0.8161 |\n| 6 mo | 0.2271 | 0.2274 | 0.8321 |"
+  },
+  {
+   "id": "MODEL_CARD.md#6",
+   "doc": "MODEL_CARD.md",
+   "doc_title": "Model card — BlueSense scarcity forecast",
+   "section": "Reading these numbers honestly",
+   "text": "- The selected model improves on climatology only modestly at 1 month and roughly matches it at longer horizons; monthly rainfall in Bangladesh is weakly predictable months ahead.\n- Dryness classes: the model rarely predicts the dry classes, so its macro-F1 is close to the climatology baseline. The risk class therefore leans on the engine's stress ratio (rule: level = max(stress, dryness)).\n- Interval coverage below the nominal 90% means the per-month residual intervals are too narrow on the test years."
+  },
+  {
+   "id": "MODEL_CARD.md#7",
+   "doc": "MODEL_CARD.md",
+   "doc_title": "Model card — BlueSense scarcity forecast",
+   "section": "Uncertainty and explainability",
+   "text": "90% intervals from 5th–95th percentiles of validation residuals per target month. SHAP TreeExplainer on the operational model: global mean |SHAP| over test rows and a local explanation of each division's latest forecast (ml/artifacts/shap.json)."
+  },
+  {
+   "id": "MODEL_CARD.md#8",
+   "doc": "MODEL_CARD.md",
+   "doc_title": "Model card — BlueSense scarcity forecast",
+   "section": "Intended use and limits",
+   "text": "Decision support and education: indicating whether the coming months are likely drier or wetter than normal for a division. Not for operational drought declaration, not station-level, and not a forecast of water availability or groundwater. Under a What-if scenario the model is re-run with perturbed recent inputs plus the scenario's direct effect on the target month; that output is Simulated, not a forecast."
+  },
+  {
+   "id": "LIMITATIONS.md#1",
+   "doc": "LIMITATIONS.md",
+   "doc_title": "Limitations",
+   "section": "Introduction (part 1/3)",
+   "text": "1. **Not real-time, no sensors.** No IoT sensors, no real-time pipe pressure, no pump or valve control. Pipeline pressure, flow and leakage are simulated on a hypothetical network. BlueSense does not detect physical leaks.\n2. **Decision support only.** It does not replace field monitoring, laboratory testing or government water systems.\n3. **Weather inputs** are ERA5 reanalysis (Historical) at one point per division, not station observations or division averages.\n4. **Old national statistics.** AQUASTAT withdrawals and irrigated areas have 2008 reference years; resource figures have 2018 reference years. Current national-statistics endpoints use genuine records and preserve their reference years rather than carrying them forward. The processed bootstrap snapshot contains imputed latest-year rows for some indicators; until genuine history is ingested, affected values can be unavailable. Legacy derived-model calculations still use the processed inputs and assumptions.\n5. **Spatial splits are estimates.** Inflow, groundwater, crop area and industry are split to divisions by area or population; real access to river water differs strongly (e.g. Barind tract of Rajshahi). Division stress ratios are therefore similar to each other.\n6. **No district hydrology.** Districts are reference boundaries, not water-data observation areas. Some legacy calculations inherit a parent division; current Explorer district selections do not provide district water measurements.\n7. **Forecast skill is modest.** The model beats climatology by ~6% RMSE at 1 month and roughly matches it at 3–6 months; it rarely predicts dry classes (macro-F1 ≈ climatology). Interval coverage on the test years is 82–84% for nominal 90%."
+  },
+  {
+   "id": "LIMITATIONS.md#2",
+   "doc": "LIMITATIONS.md",
+   "doc_title": "Limitations",
+   "section": "Introduction (part 2/3)",
+   "text": "8. **GRACE** resolves ~300 km: one Bangladesh-wide storage signal, not groundwater depth or well level. The trend CI ignores autocorrelation.\n9. **No observed groundwater levels.** The BWDB importer is ready but no station data are bundled.\n10. **Demand projection** is not an ML forecast and holds irrigated area, climate and industry constant.\n11. **Irrigation advice** uses forecast weather, FAO-56 table values and model soil moisture: estimate only — validate locally.\n12. **Copilot** needs a server-side key for the configured provider (`GEMINI_API_KEY` by default); without one it gives no answers. On Gemini's free tier, Google may use questions and looked-up data to improve its products and human reviewers may read them; the free tier is for users aged 18+ and may not be offered in the EEA, the UK or Switzerland. Usage counters are in memory and reset when free hosting restarts; Google's own quota is the hard limit and is reported as an error when used up. The number check flags unmatched numbers but cannot prove an answer correct.\n13. **Licences.** AQUASTAT data are CC BY-NC-SA 4.0 (non-commercial); CARTO basemaps are free for non-commercial use. Commercial use would need other sources.\n14. **3D Water Flow is a conceptual simulation.** The network, its geometry, demands, pump and valves are hypothetical; values are steady-state results, not measurements. Reservoir inflow, storage level and treatment losses are not modelled (the reservoir level and treatment plant are illustrative), pump speed is not modelled (flow is set directly), and storage change in the water balance is zero by definition. Scenarios are illustrations, not recorded events."
+  },
+  {
+   "id": "LIMITATIONS.md#3",
+   "doc": "LIMITATIONS.md",
+   "doc_title": "Limitations",
+   "section": "Introduction (part 3/3)",
+   "text": "15. **Water Explorer intelligence is descriptive.** Findings and patterns are rule-based summaries of stored values (thresholds documented in METHODS §3b); they describe, they do not explain causes. Rivers, water bodies and wetlands come from OpenStreetMap via the CARTO basemap (names and coverage as mapped); there is no discharge, water level or per-region surface-water statistic. Terrain heights are exaggerated (×1–40, default ×25) and labelled."
+  },
+  {
+   "id": "ASSUMPTIONS.md#1",
+   "doc": "ASSUMPTIONS.md",
+   "doc_title": "Assumptions",
+   "section": "Introduction (part 1/5)",
+   "text": "Every modelling assumption, with its ID. Parameter values and sources are in `backend/app/config/parameters.yaml` and on the Data Sources page."
+  },
+  {
+   "id": "ASSUMPTIONS.md#2",
+   "doc": "ASSUMPTIONS.md",
+   "doc_title": "Assumptions",
+   "section": "Introduction (part 2/5)",
+   "text": "| ID | Assumption | Why | How to replace |\n|---|---|---|---|\n| A-01 | One representative point per division (divisional HQ) for Open-Meteo weather | Specification default; limits API calls | Average several grid points per division in `ml/fetch_openmeteo.py` |\n| A-02 | Climate normal = 1991–2020 (WMO standard) for the water balance and climatology | Engines describe a typical year, not a specific one | Change `CLIM_START/END` in `ml/process_weather.py` |\n| A-03 | AQUASTAT values are used as published even when carried forward (withdrawals 2008, resources 2018) | Most recent available national values | Re-run `ml/fetch_static.py aquastat` when AQUASTAT updates |\n| A-04 | Runoff coefficient 0.2133 = AQUASTAT internal surface water / precipitation volume, applied uniformly to all divisions | Calibrated to national totals; no division-level runoff data | Division coefficients from BWDB/hydrological models |\n| A-05 | Transboundary inflow split across divisions by area share | No per-division access data | BWDB discharge via the importer, assigned to receiving divisions |\n| A-06 | Industrial withdrawal split by 2022 population share | No division industrial-water data | BBS/industrial survey data |\n| A-07 | Annual renewable groundwater usable in any month in proportion to monthly consumptive need (aquifer storage buffer) | Bangladesh's dry-season irrigation draws on storage recharged in the monsoon | Monthly groundwater model or BWDB well data |\n| A-08 | AQUASTAT irrigated crop areas split to divisions by area share | No division irrigated-area data in sources | BBS Yearbook of Agricultural Statistics |\n| A-09 | All AQUASTAT irrigated rice assigned to Boro; Aman/Aus treated as rain-fed in the budget | Boro is the dominant irrigated rice | Season-specific irrigated areas |"
+  },
+  {
+   "id": "ASSUMPTIONS.md#3",
+   "doc": "ASSUMPTIONS.md",
+   "doc_title": "Assumptions",
+   "section": "Introduction (part 3/5)",
+   "text": "| ID | Assumption | Why | How to replace |\n|---|---|---|---|\n| A-10 | Stress ratio = consumptive demand / (supply − environmental reserve) (SDG 6.4.2 / Aqueduct form) instead of ΣDemand incl. environment / supply | Avoids double-counting the ~50% environmental reserve | — (documented deviation from the specification text) |\n| A-11 | Distribution loss rate 20% applied to piped domestic and industrial conveyance only | No national statistic in sources; irrigation losses are inside irrigation efficiency | Utility non-revenue-water data |\n| A-12 | Irrigation efficiency 0.78 = AQUASTAT irrigation requirement / agricultural withdrawal (2008) | Derived from cited figures | Scheme-level efficiencies |\n| A-13 | Crop stage lengths and planting dates are typical values (flagged in config) | Varieties and dates vary | BRRI/BARI variety calendars |\n| A-14 | Rice land preparation 200 mm, percolation 2 mm/day, AWD saving 15% | Indicative values within published ranges | Local field data |\n| A-15 | 'Current' allocation = pro-rata rationing | No observed allocation data | Observed abstraction records |\n| A-16 | Monthly inflow shape from summed GloFAS discharge at three river cells (Ganges, Brahmaputra-Jamuna, Upper Meghna), 1991–2020 | Real modelled discharge; only the shape is used, volumes come from AQUASTAT | BWDB gauged discharge |\n| A-17 | District values = parent division values | No district hydrology in sources | District-level data adapters |\n| A-18 | Scenario forecast = model re-run with last 3 months perturbed + direct effect on the target month (r × P_normal − (ratio − 1) × ET0_normal) | Model features are lagged, so a perturbation of only past months would ignore the scenario's own month | — (labelled Simulated) |"
+  },
+  {
+   "id": "ASSUMPTIONS.md#4",
+   "doc": "ASSUMPTIONS.md",
+   "doc_title": "Assumptions",
+   "section": "Introduction (part 4/5)",
+   "text": "| ID | Assumption | Why | How to replace |\n|---|---|---|---|\n| A-19 | Prediction intervals = per-calendar-month validation residual quantiles | Errors are strongly seasonal | Quantile regression (computed coverage shown) |\n| A-20 | National forecast = area-weighted mean of division forecasts | Model is per division | National model |\n| A-21 | Irrigation advisor: if the configured season is over, sowing/transplanting today is assumed (stated in the output) | Gives a usable estimate any day of the year | Enter the real date |\n| A-22 | Starting soil-water depletion = RAW/2 when soil moisture is unavailable; flooded field for rice | Neutral starting point | Field measurement |\n| A-23 | Flow network geometry, demand split, minimum service pressures and leak coefficients are hypothetical | No real network data (and no sensors) by design | — (Simulated demonstration) |\n| A-23b | Water Flow zone demands (0.19 / 0.115 / 0.055 / 0.035 m³/s), default allocation 45/30/15/10 %, pump capacity 0.8 m³/s and an illustrative 20,000 m³ reservoir are hypothetical; served = at least 98 % of demand at or above the minimum service pressure; the balance counts as balanced within ±2 % of demand | Demonstration values chosen so normal operation is served and balanced | — (conceptual simulation) |\n| A-24 | Mode A architecture (Next.js + FastAPI + Python ML) | Python runtime available | — |\n| A-25 | Development backend runs on port 8001 locally (a Windows socket on 8000 was held by a dead process); configurable via `NEXT_PUBLIC_API_URL` | Environment quirk | Any port |\n| A-26 | Vitest pinned to 3.2.4 (Vitest 5 crashed on load in this Node 24 environment) | Tooling compatibility | Upgrade when fixed |"
+  },
+  {
+   "id": "ASSUMPTIONS.md#5",
+   "doc": "ASSUMPTIONS.md",
+   "doc_title": "Assumptions",
+   "section": "Introduction (part 5/5)",
+   "text": "| ID | Assumption | Why | How to replace |\n|---|---|---|---|\n| A-27 | The Copilot uses an external language model behind a provider interface (`services/llm`): Google Gemini by default (`LLM_PROVIDER=gemini`, `GEMINI_API_KEY`, `LLM_MODEL` default `gemini-3.6-flash`, free tier) or Anthropic Claude (`LLM_PROVIDER=anthropic`, `ANTHROPIC_API_KEY`). Eleven read-only tools over the backend; numbers in an answer that cannot be matched to the tool results are flagged, not rewritten. Without a key it is `not_configured` and answers nothing; it never switches provider or falls back to prepared answers (decision 3) | Grounding and honesty | Ollama or another provider as a further adapter |"
+  }
+ ]
+}

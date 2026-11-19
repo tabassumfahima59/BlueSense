@@ -1,3 +1,4 @@
 -r ml/requirements.txt
+mcp==2.3.0  # bluesense-mcp (bluesense_mcp/requirements.txt); not a backend runtime dependency
 pytest==9.2.0
 ruff==0.17.4

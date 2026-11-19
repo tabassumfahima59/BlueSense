@@ -10,7 +10,7 @@
 | Eight prompt sections | MASTER_PROMPT_RECONSTRUCTED.md | Draft covers all eight; newly written and not executed |
 | Core product and user journey | Root README, VIDEO_SCRIPT.md, source modules | Local prototype verified; final public deployment remains unverified |
 | Data schemas/pipelines | Migrations, sync adapters, ../DATA_SOURCES.md | Implemented; genuine AQUASTAT/GRACE source coverage incomplete |
-| Vector store / contextual or semantic RAG | Completion section in reconstruction | Planned only; no verified retrieval implementation |
+| Vector store / contextual or semantic RAG | `backend/app/rag/` (chunking.py, embeddings.py, search.py, docs_index.json, docs_embeddings.npy), `backend/scripts/build_docs_index.py`, Copilot tool `search_docs`, `backend/tests/test_rag.py` | Implemented and tested locally: section-based contextual chunks (32) of METHODS, DATA_SOURCES, MODEL_CARD, LIMITATIONS, ASSUMPTIONS; `gemini-embedding-2` 768-dim index built offline (one batch call) and committed; hybrid cosine + BM25 retrieval with keyword-only fallback; no vector database (NumPy file). Local Copilot run called `search_docs` and cited METHODS.md. Live deployment: see "Live backend deployment" below |
 | Admin/user management/RBAC | Current admin-token sync and guest interface | Full required admin module not established |
 | Authentication/encryption/security | Validation, server-side secrets and rate limits | Partial; full identity, at-rest protection and authorization need evidence |
 | Architecture/API/install docs | Root README, ../ARCHITECTURE.md, ../API.md | Prepared; publish final reviewed revision |
@@ -26,8 +26,25 @@
 | Note-field minimum lengths | submission_form.json and validator | Check exact draft strings; length does not establish feature points |
 | Cloud LLM | Gemini/Anthropic adapters, COPILOT_SYSTEM_PROMPT.txt | Configured Gemini completed a live frontend weather question; public deployment remains unverified |
 | Agent frameworks/local runtimes/automation selections | Technology disclosures in form JSON | Do not claim absent named tools; custom loop/APScheduler are disclosed accurately |
-| Custom/product MCP integration | Development-only CloudCamp resource retrieval | No team-built product server verified; scoring of development use unresolved |
+| Custom/product MCP integration | `bluesense_mcp/` (server.py, requirements.txt), `backend/tests/test_mcp_server.py`, README section "MCP server" | Team-built `bluesense-mcp` implemented and tested locally: official MCP Python SDK (`mcp==2.3.0`), stdio transport, 15 read-only tools (14 Copilot data tools + `search_docs`) reusing `copilot.run_tool`. A local stdio session listed 15 tools and ran `search_docs` and `get_dashboard_kpis`. Runs locally only; not deployed and not called by the product runtime. Use from a named MCP client (Claude Desktop / VS Code) not yet recorded. Development-only CloudCamp resource use remains separate |
 | Tunneling | No actual tunnel record | Not verified; ordinary hosting does not qualify as tunneling |
+
+## Live backend deployment
+
+The shared frontend is a Vercel Preview deployment whose build-time `NEXT_PUBLIC_API_URL` is the alias
+`bluesense-api-preview-ca2-2uju3.vercel.app`. That alias points to a **Vercel Preview CLI upload** of the backend
+(project `blue-sense-32jw`), not to a build from Git. The upload is a staged bundle that contains the backend code,
+the ML artifacts, a packaged read-only SQLite seed database (`data/preview-seed.db`, about 108 MB, with a SHA-256
+file) and a wrapper, `preview_runtime.py`. At start-up the wrapper verifies the seed's checksum and integrity,
+copies it to instance-local `/tmp`, and runs the API read-only with migrations, bootstrap and the scheduler
+switched off. A copy of the wrapper, taken unchanged from the working deployment, is kept for reference in
+`aquaguard/deploy/vercel-preview/preview_runtime.py`; no build uses that folder. The bundle's entry point imports it
+before the API (`from preview_runtime import configure; configure()`). The seed database is not in this repository.
+Production builds from `main` have no
+database and report `degraded`; the alias was removed from the project's production domains, so pushes to `main` do
+not move it. Runtime settings: `CORS_ORIGINS` (the shared frontend origin, set per deployment), `GEMINI_API_KEY`,
+`LLM_MODEL=gemini-3.5-flash-lite`, `LLM_MAX_RETRIES=3`, `LLM_RETRY_BACKOFF_S=2` (project Preview environment).
+A new backend version reaches the shared link only by uploading a new bundle and re-pointing the alias.
 
 ## Final evidence to capture
 

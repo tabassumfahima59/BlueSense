@@ -114,7 +114,7 @@ def test_tool_registry_is_read_only_and_strictly_described():
     assert names == {"get_current_weather", "get_weather_forecast", "get_dashboard_kpis", "get_division_indicators",
                      "get_water_statistics", "get_national_water_budget", "get_groundwater_trend", "get_alerts",
                      "get_prediction", "estimate_irrigation", "run_what_if", "get_regional_intelligence",
-                     "compare_divisions", "compare_periods"}
+                     "compare_divisions", "compare_periods", "search_docs"}
     specs = copilot.tool_specs()
     for spec in specs:
         assert not any(w in spec.name for w in ("sql", "write", "delete", "update", "insert", "exec", "set_"))
@@ -140,7 +140,8 @@ def test_bad_tool_calls_become_error_results(name, inp, needle):
 def test_every_tool_returns_labelled_data_within_the_size_limit():
     conn = connection.connect(get_settings().db_path, read_only=True)
     samples = {"get_prediction": {"region": "sylhet", "horizon": 3}, "estimate_irrigation": {"crop": "potato"},
-               "run_what_if": {"rainfallChangePct": -20}, "get_weather_forecast": {"region": "bd", "days": 3}}
+               "run_what_if": {"rainfallChangePct": -20}, "get_weather_forecast": {"region": "bd", "days": 3},
+               "search_docs": {"query": "water balance"}}
     for t in copilot.TOOLS:
         out, is_error, summary = copilot.run_tool(conn, t.name, samples.get(t.name, {}))
         assert not is_error, (t.name, out[:200])

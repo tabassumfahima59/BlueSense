@@ -94,11 +94,11 @@ Evidence: [aquaguard-plan.md](../aquaguard-plan.md), [SUBMISSION_AUDIT.md](../SU
 
 ## Agent / Orchestration Notes
 
-The Copilot uses a custom provider-independent tool loop: it validates model-requested tool arguments, invokes allowlisted read-only backend functions, returns tool results and streams the answer within configured call/deadline limits. This is tool orchestration, not evidence of multi-agent execution or a named agent framework.
+The Copilot uses a custom provider-independent tool loop: it validates model-requested tool arguments, invokes 15 allowlisted read-only tools and streams the answer within configured call/deadline limits. One tool, search_docs, is hybrid RAG (Gemini embeddings plus BM25) over five project documents. The same tools are exposed by a stdio MCP server. This is tool orchestration, not multi-agent execution or a named agent framework.
 
-Character count: **329**; stated minimum: **80**.
+Character count: **432**; stated minimum: **80**.
 
-Evidence: [copilot.py](../../backend/app/services/copilot.py)
+Evidence: [copilot.py](../../backend/app/services/copilot.py), [rag](../../backend/app/rag/), [server.py](../../bluesense_mcp/server.py)
 
 ## Fine-Tuning / Adaptation Notes
 
@@ -166,8 +166,10 @@ Evidence: [copilot.py](../../backend/app/services/copilot.py), [copilot_limits.p
   ],
   "configured_live_provider_verified": true,
   "custom_tool_loop": true,
-  "document_rag_verified": false,
-  "custom_mcp_server_verified": false,
+  "document_rag_verified": true,
+  "document_rag": "Copilot tool search_docs (backend/app/rag/). Knowledge base: METHODS, DATA_SOURCES, MODEL_CARD, LIMITATIONS, ASSUMPTIONS. Section-based chunks split at markdown headings (over 1,800 characters split into numbered parts), each prefixed with document title and section path; 32 chunks. Embeddings: gemini-embedding-2, 768 dimensions, built offline with one batchEmbedContents call and committed as docs_index.json plus docs_embeddings.npy; only the query is embedded at run time. Retrieval: hybrid 0.6 x cosine + 0.4 x BM25, top 4; keyword-only BM25 fallback when query embedding fails. No vector database. Verified by backend tests (test_rag.py) and a local Copilot run that called search_docs and cited METHODS.md.",
+  "custom_mcp_server_verified": true,
+  "custom_mcp_server": "bluesense-mcp (bluesense_mcp/server.py), official MCP Python SDK mcp==2.3.0, stdio transport, 15 read-only tools (the 14 Copilot data tools plus search_docs) that reuse copilot.TOOLS, tool_specs() and run_tool(). Local only; not deployed. Verified by test_mcp_server.py (in-memory client) and a local stdio session that listed 15 tools and called search_docs and get_dashboard_kpis. Not used by the product runtime.",
   "development_mcp_resource_used": "cloudcamp-bd / cloudcamp://knowledge-base",
   "product_runtime_external_mcp_verified": false,
   "named_agent_frameworks_verified": [],
@@ -175,7 +177,8 @@ Evidence: [copilot.py](../../backend/app/services/copilot.py), [copilot_limits.p
   "automation": "APScheduler; not evidence of a named scored automation tool",
   "local_llm_runtimes_verified": [],
   "local_llm_models_run_verified": [],
-  "tunneling_verified": false
+  "tunneling_verified": false,
+  "live_backend_deployment": "The shared frontend calls the alias bluesense-api-preview-ca2-2uju3.vercel.app, which points to a Vercel Preview CLI upload of the backend: a bundle with the backend code, ML artifacts, a packaged read-only SQLite seed database (about 108 MB) and preview_runtime.py, which verifies the seed and runs the API read-only. The seed is not in the repository; a reference copy of the wrapper is in aquaguard/deploy/vercel-preview/ (used by no build). Builds from main have no database. Details: EVIDENCE_MATRIX.md, section Live backend deployment."
 }
 ```
 

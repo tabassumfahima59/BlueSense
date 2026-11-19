@@ -5,7 +5,8 @@
   switch to another provider or to canned / rule-based text; without a key the Copilot is ``not_configured`` and
   gives no answers (decision 3).
 * Tools: each one calls an existing backend function (weather, KPIs, GRACE, AQUASTAT, alerts, predictions,
-  irrigation, what-if) on a read-only database connection. There is no SQL tool and no tool that writes anything.
+  irrigation, what-if) on a read-only database connection; ``search_docs`` searches the committed documentation
+  index (``app/rag``: hybrid embedding + BM25 retrieval). There is no SQL tool and no tool that writes anything.
   Every tool input is validated (pydantic, extra fields forbidden) before it runs; invalid input, unknown tools and
   backend errors go back to the model as error results.
 * User text, conversation history and tool results are untrusted data, never instructions (system prompt + no
@@ -58,6 +59,11 @@ that provided it, e.g. [Command Center], [Prediction Lab], [Water Budget], [What
 - For questions about a region on the map, or comparisons of divisions or time periods, use the Water Explorer \
 tools (get_regional_intelligence, compare_divisions, compare_periods). Districts have no water data in \
 BlueSense: say so and offer the parent division. Never present a pattern or correlation as a cause.
+- For questions about how BlueSense works (methods and formulas, data sources and licences, the forecast model, its \
+training and evaluation, assumptions and limitations), call search_docs and answer from the sections it returns. \
+Cite each section you use with its "cite" value, e.g. [METHODS.md > 3. FAO-56 irrigation]. If search_docs returns \
+nothing relevant, say the documentation does not cover it. Keep using the data tools for current values and \
+numbers about places; the documentation describes methods, not today's data.
 - Be concise (normally under 180 words). Give practical, clearly hedged recommendations when asked.
 - Write plain text for a chat window: short paragraphs and simple "- " lists. No Markdown headings, no bold or italic \
 markers, no tables and no LaTeX; write formulas in words or plain characters (for example P - ET0).
@@ -175,6 +181,11 @@ class WhatIfArgs(_Args):
     pipelineLossPct: float | None = Field(None, ge=0, le=50)
     basis: Literal["latest", "normal"] = Field("latest", description="baseline weather: latest 12 months or 1991-2020 "
                                                                      "normal")
+
+
+class SearchDocsArgs(_Args):
+    query: str = Field(min_length=2, max_length=300, description="what to look up in the BlueSense documentation, "
+                                                                 "e.g. 'how is the stress ratio calculated'")
 
 
 DROP_KEYS = {"provenance", "isSample", "asOf", "attribution", "retrievedAt"}
@@ -302,6 +313,22 @@ def _t_whatif(conn, a: WhatIfArgs) -> dict:
     return out
 
 
+def _t_search_docs(conn, a: SearchDocsArgs) -> dict:
+    """Hybrid search (Gemini embeddings + BM25) over the committed documentation index; keyword-only if the query
+    cannot be embedded. The database connection is not used."""
+    from ..rag.search import search_docs
+    res = search_docs(a.query)
+    return {
+        "meta": {"data_kind": ["documentation"], "source": sorted({h.chunk.doc for h in res.hits})},
+        "query": a.query,
+        "retrieval": res.retrieval,
+        "results": [{"cite": f"[{h.chunk.doc} > {h.chunk.section}]", "document": h.chunk.doc,
+                     "documentTitle": h.chunk.doc_title, "section": h.chunk.section, "score": round(h.score, 3),
+                     "text": h.chunk.text} for h in res.hits],
+        **({} if res.hits else {"note": "No documentation section matched this query."}),
+    }
+
+
 @dataclass(frozen=True)
 class Tool:
     name: str
@@ -351,6 +378,11 @@ TOOLS: list[Tool] = [
          PeriodArgs, _t_compare_periods, "Water Explorer"),
     Tool("run_what_if", "Run the national what-if water-balance model with scenario levers (computes only, stores "
          "nothing). Returns baseline vs scenario.", WhatIfArgs, _t_whatif, "What-if"),
+    Tool("search_docs", "Search BlueSense's own documentation (Methods, Data sources, Model card, Limitations, "
+         "Assumptions) for how something is calculated, which sources and assumptions are used, how the forecast "
+         "model was trained and evaluated, and what BlueSense cannot do. Returns the best-matching sections with "
+         "their document and section names. Not for current values: use the data tools for numbers.",
+         SearchDocsArgs, _t_search_docs, "Documentation"),
 ]
 TOOL_BY_NAME = {t.name: t for t in TOOLS}
 
