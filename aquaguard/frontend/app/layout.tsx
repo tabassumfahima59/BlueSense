@@ -3,6 +3,7 @@ import { Hind_Siliguri, Inter } from "next/font/google";
 import { CopilotPanel } from "@/components/copilot/CopilotPanel";
 import { CommandPalette } from "@/components/layout/CommandPalette";
 import { Header } from "@/components/layout/Header";
+import { HideOnDocs } from "@/components/layout/HideOnDocs";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { UrlSync } from "@/components/layout/UrlSync";
 import { Toaster } from "@/components/ui/Toast";
@@ -25,18 +26,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-white focus:px-3 focus:py-2 focus:text-primary">
           Skip to content
         </a>
-        <UrlSync />
+        <HideOnDocs><UrlSync /></HideOnDocs>
         <div className="flex min-h-screen">
-          <Sidebar />
+          <HideOnDocs><Sidebar /></HideOnDocs>
           <div className="app-content flex min-w-0 flex-1 flex-col">
             <div className="app-ambient" aria-hidden="true" />
-            <Header />
+            <HideOnDocs><Header /></HideOnDocs>
             <main id="main" className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-5 sm:px-6 sm:py-6">
               {children}
             </main>
           </div>
         </div>
-        <CopilotPanel />
+        <HideOnDocs><CopilotPanel /></HideOnDocs>
         <CommandPalette />
         <Toaster />
       </body>

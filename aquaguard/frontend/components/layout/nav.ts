@@ -1,5 +1,5 @@
 import {
-  Bot, BrainCircuit, Globe2, LayoutDashboard, Settings, Sprout, Waves, Workflow, SlidersHorizontal,
+  BookOpen, Bot, BrainCircuit, Globe2, LayoutDashboard, Settings, Sprout, Waves, Workflow, SlidersHorizontal,
 } from "lucide-react";
 
 export const MODULES = [
@@ -14,6 +14,9 @@ export const MODULES = [
 ] as const;
 
 export const SETTINGS = { href: "/settings", label: "Settings", short: "Settings", icon: Settings };
+
+/** Pitch deck + technical docs + live system view (its own layout, outside the module list). */
+export const DOCS = { href: "/docs", label: "Docs & Pitch", short: "Docs", icon: BookOpen };
 
 export function titleFor(pathname: string): string {
   const m = MODULES.find((x) => pathname.startsWith(x.href));

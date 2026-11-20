@@ -1,0 +1,55 @@
+/* /docs: readable long-form text (no typography plugin is installed) and print-to-PDF layout. */
+
+.docs-prose {
+  color: var(--color-ink);
+  font-size: 15px;
+  line-height: 1.65;
+}
+.docs-prose > * + * { margin-top: 0.75rem; }
+.docs-prose h3 { font-size: 16px; font-weight: 600; margin-top: 1.25rem; }
+.docs-prose h4 { font-size: 15px; font-weight: 600; margin-top: 1rem; }
+.docs-prose ul { list-style: disc; padding-left: 1.25rem; }
+.docs-prose ol { list-style: decimal; padding-left: 1.4rem; }
+.docs-prose li + li { margin-top: 0.3rem; }
+.docs-prose li > ul, .docs-prose li > ol { margin-top: 0.3rem; }
+.docs-prose a { color: var(--color-primary); text-decoration: underline; text-underline-offset: 2px; }
+.docs-prose strong { font-weight: 600; }
+.docs-prose code {
+  background: var(--color-light);
+  border-radius: 6px;
+  padding: 0.05rem 0.35rem;
+  font-size: 0.9em;
+}
+.docs-prose pre {
+  background: #0f2742;
+  color: #e7f1ff;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  overflow-x: auto;
+  font-size: 13px;
+}
+.docs-prose pre code { background: transparent; padding: 0; color: inherit; }
+.docs-prose blockquote {
+  border-left: 3px solid var(--color-sky);
+  background: var(--color-primary-soft);
+  border-radius: 0 10px 10px 0;
+  padding: 0.6rem 0.9rem;
+  color: var(--color-muted);
+}
+.docs-prose table { width: 100%; border-collapse: collapse; font-size: 14px; display: block; overflow-x: auto; }
+.docs-prose th, .docs-prose td { border-bottom: 1px solid var(--color-border); padding: 0.45rem 0.6rem; text-align: left; vertical-align: top; }
+.docs-prose th { font-weight: 600; background: var(--color-light); }
+
+.docs-mermaid svg { max-width: 100%; height: auto; }
+
+.docs-search-hit mark { background: #fff2b3; color: inherit; border-radius: 3px; padding: 0 1px; }
+
+@media print {
+  @page { margin: 14mm; }
+  html, body, .app-content { background: #fff !important; background-image: none !important; }
+  .app-ambient, .docs-no-print { display: none !important; }
+  .docs-layout { display: block !important; }
+  .docs-section { break-inside: avoid-page; box-shadow: none !important; border: 1px solid #d3e4f5 !important; background: #fff !important; backdrop-filter: none !important; }
+  .docs-section[hidden] { display: block !important; }
+  a { color: #0755b8 !important; }
+}

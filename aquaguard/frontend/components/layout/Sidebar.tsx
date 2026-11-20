@@ -10,7 +10,7 @@ import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { focusables } from "@/components/ui/Overlay";
 import { useAppStore } from "@/lib/store";
-import { MODULES, SETTINGS } from "./nav";
+import { DOCS, MODULES, SETTINGS } from "./nav";
 import { useShareQuery } from "./UrlSync";
 
 function NavItem({ href, label, Icon, active, collapsed, onNavigate }: {
@@ -72,6 +72,8 @@ export function SidebarContent({ collapsed, onNavigate, onToggle }: {
         ))}
         <div className="my-2 border-t border-white/20" />
         <NavItem href={`${SETTINGS.href}${qs}`} label={SETTINGS.label} Icon={SETTINGS.icon} active={pathname.startsWith(SETTINGS.href)}
+                 collapsed={collapsed} onNavigate={onNavigate} />
+        <NavItem href={DOCS.href} label={DOCS.label} Icon={DOCS.icon} active={pathname.startsWith(DOCS.href)}
                  collapsed={collapsed} onNavigate={onNavigate} />
       </nav>
     </div>

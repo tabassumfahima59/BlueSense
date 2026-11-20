@@ -228,6 +228,29 @@ If your client ignores `cwd`, add `"env": {"PYTHONPATH": "C:\\path\\to\\BlueSens
 On macOS/Linux use `.venv/bin/python`. Tests: `backend/tests/test_mcp_server.py` (tool list and calls through the
 SDK's in-memory client; skipped if `mcp` is not installed).
 
+### Live `/docs` module (pitch deck, technical docs, live system view)
+
+`/docs` on the frontend is a YC-style pitch deck, technical documentation and live system view in one page. The
+code is in `frontend/app/docs/`, `frontend/app/api/docs/` and `frontend/lib/docs/`.
+
+- **Content:**
+  - 12 pitch sections and 15 technical sections (organiser items A–O), seeded from facts in this repository (`frontend/lib/docs/seed.json`);
+  - a team grid;
+  - Mermaid architecture and data-flow diagrams;
+  - a feature matrix and a changelog.
+- **Live data:** read server-side from the BlueSense API (60 s cache): `/health`, `/copilot/status`, `/data/sources`, `/data/last-updated`, `/models/metrics`, `/alerts` and `/openapi.json`. An unreachable block shows "unavailable", never a guess. There are no user accounts, so no user metrics are shown.
+- **Access control** (`/docs/admin`):
+  - **Super Admin:** turns the page ON/OFF, schedules a window (start + end, or start + duration, in Asia/Dhaka), manages the team, and restores versions;
+  - **Admin:** edits sections and publishes.
+
+  When the page is closed, visitors see "not available" (the Markdown export and photos return 403).
+- **Admin features:** Markdown editor with live preview, drag-and-drop or arrow reordering, show/hide, save draft / publish, the last 30 published versions, and team photos (centre-cropped and resized to 512×512 WebP in the browser).
+- **Storage:**
+  - a private Vercel Blob store connected to the frontend project (`docs/config.json`, `draft.json`, `published.json`, `versions/`, `team/`);
+  - local development uses `frontend/.docs-data/` (git-ignored).
+- **Secrets** (frontend project, server-side only): `DOCS_SESSION_SECRET` (32+ characters), `DOCS_SUPERADMIN_PASSWORD` and optionally `DOCS_ADMIN_PASSWORD` (16+ characters each). Without them the admin area is disabled and the public page still works. The login throttle is in memory, so on serverless hosting it is best-effort.
+- **Search and export:** `/` focuses the search box; "Download Markdown" (`/api/docs/export`); "Download PDF" uses the browser's Save as PDF with a print stylesheet.
+
 ## Deploy
 
 - **Backend**: Docker (`backend/Dockerfile`, build context `aquaguard/`) on Render (Blueprint `render.yaml` at the repository root), Railway or Fly.io. Set `CORS_ORIGINS` to the frontend URL. Copilot: `GEMINI_API_KEY` as a secret in the host's dashboard (never in the repository or the frontend); `LLM_PROVIDER=gemini`, `LLM_MODEL`, and the `COPILOT_*` limits are in `render.yaml`. The container runs uvicorn with `--proxy-headers`, so per-visitor limits see the real client address. Health check `/api/health`.

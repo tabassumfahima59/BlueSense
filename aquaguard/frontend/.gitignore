@@ -43,3 +43,6 @@ public/maplibre/
 /.next-e2e/
 /test-results/
 /playwright-report/
+
+# /docs module: local storage used in development (Vercel Blob in production)
+/.docs-data/

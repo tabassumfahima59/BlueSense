@@ -1,0 +1,480 @@
+{
+ "schemaVersion": 1,
+ "title": "BlueSense",
+ "tagline": "Predict water risk, protect every drop.",
+ "summary": "BlueSense is a water-intelligence and decision-support prototype for Bangladesh. It joins ERA5 weather, FAO AQUASTAT statistics and GRACE satellite storage in one workspace. It forecasts each division's water balance 1–6 months ahead with Random Forest models (90% intervals, SHAP), tests what-if scenarios, balances and optimises a water budget, and plans irrigation with FAO-56. A grounded AI Copilot answers only through 15 read-only tools and cites the project's own documents. Every number shows its source and date.",
+ "links": {
+  "liveApp": "https://blue-sense.vercel.app",
+  "repo": "https://github.com/tabassumfahima59/BlueSense",
+  "video": "",
+  "design": ""
+ },
+ "sections": [
+  {
+   "id": "problem",
+   "slug": "problem",
+   "title": "Problem",
+   "group": "pitch",
+   "kind": "markdown",
+   "order": 1,
+   "visible": true,
+   "body": "Bangladesh plans water use on information that is **scattered, mixed in time and hard to turn into decisions**.\n\n- **Scattered.** Weather reanalysis, forecasts, FAO national statistics and satellite water-storage data sit in separate portals and formats.\n- **Mixed in time and space.** National withdrawal statistics date from 2008 and resource figures from 2018, weather comes from point data, and GRACE resolves about 300 km. These are easy to misread as current, local measurements.\n- **Hard to act on.** Turning weather into crop water need (FAO-56), or testing \"what if rainfall falls 20%?\", needs models most advisers cannot run.\n- **Risky with generic AI.** A chatbot can invent numbers or present a simulation as a fact.\n\nThe stakes are real:\n- In the latest FAO AQUASTAT record (2008), agriculture took **87.8%** of withdrawals (31.5 of 35.87 km³/yr), and **79%** of all withdrawals came from groundwater.\n- The national GRACE storage trend is **−0.53 cm/yr** for 2002–2026.\n\n> The user problem is a *proposed* problem with a *hypothetical* persona (an extension adviser in Rajshahi). It has not been validated with customer research yet.\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "solution",
+   "slug": "solution",
+   "title": "Solution",
+   "group": "pitch",
+   "kind": "markdown",
+   "order": 2,
+   "visible": true,
+   "body": "**BlueSense** is one web workspace that turns public water data into decisions, with the source and date beside every number.\n\n- **Monitor:** Command Center KPIs, alerts, a division map and the Water Rhythm timeline.\n- **Predict:** Random Forest forecasts of the monthly climatic water balance (P − ET0), 1, 3 and 6 months ahead, with 90% intervals and SHAP explanations.\n- **Simulate:** a What-if simulator with seven levers, a balanced water budget (Sankey), an LP allocation optimiser and a conceptual 3D distribution network.\n- **Recommend:** Smart Irrigation (FAO-56) gives the next irrigation date and volume, with every input listed.\n- **Explain:** an AI Copilot that answers only through 15 read-only tools. It cites the project's own method documents (RAG) and flags any number it cannot verify.\n\nBlueSense is decision support. It does not replace field monitoring, laboratory testing or government systems.\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "why-now",
+   "slug": "why-now",
+   "title": "Why Now",
+   "group": "pitch",
+   "kind": "markdown",
+   "order": 3,
+   "visible": true,
+   "body": "- **Open data has matured.** ERA5 reanalysis and forecasts (Open-Meteo), GRACE/GRACE-FO storage (2002–2026) and FAO AQUASTAT are freely available through APIs.\n- **AI can now be grounded.** LLMs with tool calling and retrieval can answer from a system's own data and documents instead of from memory. BlueSense uses this to keep answers checkable.\n- **Low cost to run.** The whole stack runs on free tiers: Vercel hosting, the Gemini free tier, Open-Meteo, and n8n for automation. A pilot needs no hardware.\n- **The water-storage signal is moving.** GRACE shows a long-term national decline (−0.53 cm/yr), while farms keep relying on stored water in the dry season.\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "demo",
+   "slug": "demo",
+   "title": "Product Demo",
+   "group": "pitch",
+   "kind": "markdown",
+   "order": 4,
+   "visible": true,
+   "body": "**Try it:** [the live app](https://blue-sense.vercel.app). The Copilot answers on the live link; the 2:54 pitch video link will be added here once it is uploaded.\n\nA 6-step journey through the working prototype:\n\n1. **Command Center → Rajshahi:** KPIs with source and date, alerts, and the division map. Replay rainfall anomalies in **Water Rhythm**.\n2. **What-if:** apply \"Dry year: rainfall −20%\" and compare baseline vs simulated stress and unmet demand.\n3. **Water Budget:** check that the balance closes, then run the optimiser.\n4. **Prediction Lab:** read the 1/3/6-month forecast, its interval, test metrics against baselines, and SHAP.\n5. **Smart Irrigation:** get the next irrigation date and volume, with a \"why\" list.\n6. **AI Copilot:** ask \"How is the forecast made?\". It calls `search_docs` and cites `[MODEL_CARD.md > Models]`.\n\nThe 3D Water Flow module is a **conceptual simulation** on a hypothetical network and is labelled as such.\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "market",
+   "slug": "market",
+   "title": "Market Opportunity",
+   "group": "pitch",
+   "kind": "markdown",
+   "order": 5,
+   "visible": true,
+   "body": "**First users (proposed pilot candidates):**\n- agricultural advisory and extension teams;\n- regional water-planning groups;\n- universities and training institutions teaching water balance and climate risk.\n\n**Why they would care:** they already combine weather, crop-water and storage data by hand. BlueSense puts these in one place, with the source and date kept beside each value.\n\n> **Honest status:** no TAM, customer count, interviews or procurement approval exist yet. These segments are hypotheses to test in a pilot. Some data licences (FAO AQUASTAT CC BY-NC-SA, the CARTO free tier) restrict commercial use, and a commercial version would need other sources.\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "business-model",
+   "slug": "business-model",
+   "title": "Business Model",
+   "group": "pitch",
+   "kind": "markdown",
+   "order": 6,
+   "visible": true,
+   "body": "These are hypotheses to test, not results:\n\n- **Institutional pilot → hosted service** for advisory or planning teams, with training and support.\n- **Education licence:** BlueSense as a teaching tool, since every equation and parameter is exposed.\n- **Custom deployments:** adding a partner's own station data through the existing BWDB importer.\n\nEvery option must respect the source licences; the non-commercial terms on some inputs are a known constraint. There is no revenue today.\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "traction",
+   "slug": "traction",
+   "title": "Traction",
+   "group": "pitch",
+   "kind": "markdown",
+   "order": 7,
+   "visible": true,
+   "body": "Real, verifiable progress (no users or revenue are claimed):\n\n- **Live on Vercel:** the frontend plus the backend. The AI Copilot answers on the shared link.\n- **Documentation RAG is live:** on the website, \"How is the forecast made?\" cited `MODEL_CARD.md > Models`.\n- **Team-built MCP server** (`bluesense-mcp`, 15 tools), used from Claude Code in VS Code and from the Claude Desktop app.\n- **n8n daily digest:** published. A test run on 20 Nov 2026 succeeded and the email arrived.\n- **Engineering depth:**\n  - 274 backend test functions, 65 Vitest cases and 79 Playwright cases in source;\n  - 45 API operations;\n  - 25 database tables with checksummed migrations.\n- **Data coverage:**\n  - ERA5 daily weather for 8 divisions from 1991 to Nov 2026 (104,744 rows);\n  - GRACE storage for 259 months;\n  - 25 AQUASTAT indicators.\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "competition",
+   "slug": "competition",
+   "title": "Competition",
+   "group": "pitch",
+   "kind": "markdown",
+   "order": 8,
+   "visible": true,
+   "body": "Today, planners use the original **source portals** (FAO AQUASTAT, Open-Meteo/ERA5, GRACE data centres), **spreadsheets**, and **specialist modelling tools**.\n\nHow BlueSense differs, as a design choice and not a benchmark result:\n- **one place** for weather, statistics, storage, forecasts and scenarios;\n- the **source, date and data kind on every number**, so an old statistic never looks current;\n- **AI that cannot invent numbers:** read-only tools, cited documentation and a number check.\n\n> No head-to-head comparison with other products has been run yet. A side-by-side exercise is part of the proposed pilot.\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "advantage",
+   "slug": "advantage",
+   "title": "Unique Advantage",
+   "group": "pitch",
+   "kind": "markdown",
+   "order": 9,
+   "visible": true,
+   "body": "1. **Provenance on every value.** A first-class `Measure` type carries unit, data kind, source, observation and retrieval dates, spatial level and freshness, across all 45 API operations.\n2. **One calculation path.** The UI, the Copilot and the MCP server call the same functions, so they always show the same numbers.\n3. **Honest ML.** Chronological splits, two baselines, measured interval coverage, SHAP, and a model card that states its weak points.\n4. **Grounded AI.** 15 read-only tools, hybrid RAG with citations, a number check, and no canned or invented answers.\n5. **Bangladesh-specific modelling.** Transboundary inflow shaped by GloFAS, Boro/Aman/Aus rice with AWD advice, Bangla names, and Bangla Copilot replies.\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "go-to-market",
+   "slug": "go-to-market",
+   "title": "Go-To-Market",
+   "group": "pitch",
+   "kind": "markdown",
+   "order": 10,
+   "visible": true,
+   "body": "**Proposed pilot plan:**\n1. Observe one real planning or advisory workflow and pick one decision BlueSense supports, for example dry-season irrigation timing.\n2. Run a side-by-side exercise: the current method vs BlueSense.\n3. Measure task completion, time to find the right source and date, understanding of uncertainty, and error reports.\n4. Iterate, then offer a supervised pilot to an advisory team and a university course.\n\n**Channels:** agricultural extension networks, university water and climate programmes, and competition and incubator showcases.\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "team",
+   "slug": "team",
+   "title": "Team",
+   "group": "pitch",
+   "kind": "team",
+   "order": 11,
+   "visible": true,
+   "body": "The people behind BlueSense. Team details are maintained by the admin.\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "vision",
+   "slug": "vision",
+   "title": "Vision",
+   "group": "pitch",
+   "kind": "markdown",
+   "order": 12,
+   "visible": true,
+   "body": "**Predict water risk, protect every drop.**\n\nBlueSense aims to become the trusted, transparent water-intelligence layer for Bangladesh. It would follow the chain **Predict → Analyze → Visualize → Optimize → Recommend** and keep it honest about what each number is and where it comes from.\n\nNext milestones:\n- an advisory-team pilot;\n- observed BWDB station data;\n- sharper forecasts (seasonal climate inputs, calibrated intervals);\n- a self-refreshing live deployment.\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "live-system",
+   "slug": "live-system",
+   "title": "Live System Status",
+   "group": "technical",
+   "kind": "live",
+   "order": 13,
+   "visible": true,
+   "body": "Live values read from the running BlueSense backend each time this page loads (cached for up to 60 seconds). Any block that cannot be reached says \"unavailable\" and is never filled with placeholder numbers.\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "overview",
+   "slug": "overview",
+   "title": "Product Overview",
+   "group": "technical",
+   "kind": "markdown",
+   "order": 14,
+   "visible": true,
+   "body": "**What it does:** BlueSense combines public weather reanalysis and forecasts, FAO AQUASTAT statistics, GRACE satellite water storage and administrative boundaries in one web workspace. It adds ML forecasts, deterministic engines, rule-based monitoring and a grounded AI Copilot.\n\n**Geography:** Bangladesh, its 8 divisions (one representative weather point each) and 64 districts. Districts are map reference boundaries only.\n\n**Target users:** agricultural extension advisers, regional water planners and educators (proposed).\n\n**Core use cases:**\n- see current and recent conditions;\n- forecast the water balance 1–6 months ahead;\n- test scenarios;\n- balance and optimise a water budget;\n- plan irrigation;\n- ask grounded questions in English or Bangla.\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "features",
+   "slug": "features",
+   "title": "Feature Matrix",
+   "group": "technical",
+   "kind": "features",
+   "order": 15,
+   "visible": true,
+   "body": "Status of every major capability. Items marked **live** are checked against the running backend each time this page loads.\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "architecture",
+   "slug": "architecture",
+   "title": "Architecture",
+   "group": "technical",
+   "kind": "architecture",
+   "order": 16,
+   "visible": true,
+   "body": "A **modular monolith**: one Next.js frontend and one FastAPI backend, with layered routers, services and pure engines over SQLite. An offline ML pipeline produces model artifacts. The Copilot reaches Gemini only from the server.\n\n- **Shared tool registry:** the MCP server reuses the Copilot's tools.\n- **n8n:** calls the public API on a schedule.\n- **Live hosting:** both apps are on Vercel. The backend runs a checksum-verified, read-only database snapshot.\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "data-flow",
+   "slug": "data-flow",
+   "title": "Data Flow",
+   "group": "technical",
+   "kind": "dataflow",
+   "order": 17,
+   "visible": true,
+   "body": "How data moves from public sources and user input to decisions, and back as feedback.\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "stack",
+   "slug": "stack",
+   "title": "Technology Stack",
+   "group": "technical",
+   "kind": "markdown",
+   "order": 18,
+   "visible": true,
+   "body": "| Layer | Technologies |\n|---|---|\n| Frontend | Next.js 15, React 19, TypeScript, Tailwind CSS 4, Zustand, Plotly, D3 + d3-sankey, MapLibre GL, React Three Fiber |\n| Backend | Python, FastAPI, Pydantic 2, pandas, NumPy, SciPy (HiGHS LP), httpx, APScheduler |\n| Database | SQLite (WAL, 8 checksummed migrations, verified backups); live: read-only seed |\n| AI / ML | scikit-learn Random Forest (selected over XGBoost), SHAP, Google Gemini (Copilot), `gemini-embedding-2` + BM25 (RAG), MCP Python SDK |\n| Automation | n8n Cloud (Schedule, HTTP, Code, Gmail) |\n| Infra | Vercel (frontend, and backend as a Preview upload behind a stable alias); Docker/Render blueprint kept for self-hosting |\n| Quality | pytest, Ruff, ESLint, `tsc`, Vitest, Playwright + axe |\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "api",
+   "slug": "api",
+   "title": "API Documentation",
+   "group": "technical",
+   "kind": "api",
+   "order": 19,
+   "visible": true,
+   "body": "**APIs exposed:** the BlueSense REST API under `/api` (45 operations, OpenAPI at `/api/openapi.json`, interactive docs at `/api/docs`).\n- Every number is a `Measure` with its unit, data kind, source, dates and freshness.\n- Newer endpoints return `{data, meta}`.\n- Errors are `{detail, code}`.\n\n**Other interfaces:**\n- the MCP server `bluesense-mcp` (stdio, 15 read-only tools);\n- the Copilot stream `POST /api/copilot/stream` (server-sent events).\n\n**APIs used:** Open-Meteo (forecast, ERA5 archive, GloFAS flood), FAO AQUASTAT, CSR GRACE/GRACE-FO, Google Gemini (chat and embeddings); map tiles from CARTO/OpenStreetMap, AWS Terrain and JRC Global Surface Water.\n\n**Auth model:**\n- data endpoints are public (no login needed);\n- admin sync uses a bearer token;\n- the Copilot has per-IP, per-client and site-wide limits;\n- there are no user accounts.\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "data-layer",
+   "slug": "data-layer",
+   "title": "Data Layer",
+   "group": "technical",
+   "kind": "markdown",
+   "order": 20,
+   "visible": true,
+   "body": "| Source | What | Coverage in the repository |\n|---|---|---|\n| Open-Meteo (ERA5/ERA5-Land) | Daily rain, temperature, FAO-56 ET0, soil moisture at 8 division points | 1991-01-01 → 2026-11-05 (104,744 rows) |\n| FAO AQUASTAT | Renewable resources, withdrawals, irrigated area, SDG 6.4.2 | 25 indicators; reference years 2008/2018 kept |\n| CSR GRACE/GRACE-FO RL06.3 | Terrestrial water storage anomaly | 2002-04 → 2026-09 (259 months) |\n| geoBoundaries, HDX, World Bank | Boundaries, population 2022, projection to 2050 | Static |\n\n**Processing:** validated adapters with retries. Missing or out-of-range values are never stored and never overwrite stored data. Monthly values use complete months only.\n\n**Storage:** SQLite with 25 tables. Every record keeps its source and retrieval time.\n\n**Privacy:**\n- no personal data is collected and there are no accounts;\n- Copilot questions go to Google Gemini (free tier: Google may use them; disclosed in the app);\n- logs hash the client id and never store message text.\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "ai-layer",
+   "slug": "ai-layer",
+   "title": "AI Layer",
+   "group": "technical",
+   "kind": "markdown",
+   "order": 21,
+   "visible": true,
+   "body": "**Forecasting (ML):**\n- Random Forest per horizon (1/3/6 months) on 53 lag and climatology features, with a chronological split (train ≤ 2016, validation 2017–2020, test 2021+);\n- 1-month test RMSE **118.5 mm**, against 125.8 mm for climatology and 171.1 mm for persistence;\n- 90% intervals from validation residuals (test coverage 84%);\n- SHAP explanations.\n\n**AI Copilot (LLM):**\n- Gemini with 15 read-only JSON-schema tools that call the same functions as the UI;\n- answers are streamed;\n- numbers not found in the tool results are flagged;\n- no answers without a key.\n\n**RAG:**\n- `search_docs` searches 5 project documents (Methods, Data sources, Model card, Limitations, Assumptions), cut into 32 section chunks;\n- each chunk is prefixed with its title and section (contextual chunks);\n- vectors are `gemini-embedding-2` (768 dimensions);\n- hybrid score 0.6 cosine + 0.4 BM25, top 4, with keyword fallback;\n- answers cite `[DOC > section]`;\n- no GraphRAG.\n\n**Personalisation:** none beyond the selected region and the user's own preferences in the browser.\n\n**Explainability:** SHAP, a model card, a \"why\" list for irrigation advice, and data-kind and source badges.\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "roadmap",
+   "slug": "roadmap",
+   "title": "Product Roadmap",
+   "group": "technical",
+   "kind": "markdown",
+   "order": 22,
+   "visible": true,
+   "body": "**Short term (weeks):**\n- restore the optional packages (h5py, XGBoost, the Anthropic SDK);\n- correct stale documents;\n- a retrieval evaluation set for RAG;\n- run the advisory pilot.\n\n**Mid term (months):**\n- a self-refreshing deployment with persistent storage and scheduled sync;\n- BWDB observed station data;\n- a JPL GRACE adapter;\n- seasonal-forecast inputs and calibrated (quantile) intervals.\n\n**Long term:**\n- several grid points per division;\n- district-level hydrology;\n- user accounts and roles for institutions;\n- a remote MCP transport for partners.\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "performance",
+   "slug": "performance",
+   "title": "Performance & Scalability",
+   "group": "technical",
+   "kind": "markdown",
+   "order": 23,
+   "visible": true,
+   "body": "**Today:** a single backend instance over SQLite (WAL) with read-only connections and GZip.\n- Cache headers: 60 s for current and forecast data, 300 s otherwise.\n- The frontend keeps a 5-minute request cache.\n- Heavy visuals load lazily, and maps fall back to SVG without WebGL.\n\n**Limits:** SQLite and in-memory Copilot limits suit one instance. The live backend is a read-only snapshot, and Vercel functions on the current plan allow up to 300 s per request; the Copilot has a 240 s deadline.\n\n**To scale:** move to a managed database with a shared rate-limit store, run sync jobs separately, and add CDN caching for read-heavy endpoints.\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "security",
+   "slug": "security",
+   "title": "Security",
+   "group": "technical",
+   "kind": "markdown",
+   "order": 24,
+   "visible": true,
+   "body": "- **Auth:** there are no user accounts. Admin data sync needs a bearer token (constant-time check). This `/docs` admin uses role passwords (Super Admin, Admin) and signed, HttpOnly session cookies.\n- **RBAC:** `/docs` has two roles. The app itself has no user roles yet (planned).\n- **API hardening:**\n  - strict CORS;\n  - Pydantic validation with ranges and patterns;\n  - parameterised SQL;\n  - read-only database connections;\n  - sanitised errors.\n- **AI guardrails:**\n  - read-only tool allowlist with validated arguments;\n  - user text, history and tool output treated as data;\n  - output number check;\n  - usage limits;\n  - a provider data-use disclosure.\n- **Secrets:** server-side only, never in the browser bundle or the repository.\n- **Data protection:** checksummed migrations that reject destructive SQL, verified backups, and a checksum-verified, read-only live database.\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "analytics",
+   "slug": "analytics",
+   "title": "Analytics",
+   "group": "technical",
+   "kind": "analytics",
+   "order": 25,
+   "visible": true,
+   "body": "BlueSense has **no user tracking or product analytics**. These operational signals do exist, and some are shown live above:\n\n- data-source freshness and the last successful sync per source;\n- Copilot model calls used today against the site-wide daily limit;\n- open alerts by severity;\n- model quality: test RMSE, interval coverage and dryness-class macro-F1;\n- n8n run history (in n8n Cloud).\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "contributors",
+   "slug": "contributors",
+   "title": "Team & Contributors",
+   "group": "technical",
+   "kind": "markdown",
+   "order": 26,
+   "visible": true,
+   "body": "The team is shown in the **Team** section above.\n\n**Repository contributors** (from the git history): `tabassumfahima59` and `Nasim` (`SayadNasim-Uni-2025`).\n\n**AI-assisted development** (recorded in the submission evidence): Claude Code in VS Code, the Claude Desktop app, CodeBurn MCP for usage tracking, and Figma MCP for the design file.\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  },
+  {
+   "id": "changelog",
+   "slug": "changelog",
+   "title": "Changelog",
+   "group": "technical",
+   "kind": "changelog",
+   "order": 27,
+   "visible": true,
+   "body": "Version history, grouped by milestone (from the git log).\n",
+   "updatedAt": "2026-11-20T00:00:00Z"
+  }
+ ],
+ "team": {
+  "name": "",
+  "members": []
+ },
+ "diagrams": {
+  "architecture": "flowchart LR\n  U[\"Planner / adviser / judge\"] --> UI[\"Next.js 15 UI: 9 modules + /docs\"]\n  UI -->|\"HTTPS JSON + SSE\"| API[\"FastAPI /api: 45 operations\"]\n  API --> SVC[\"Services: regional.run, store, indicators, alerts, inference\"]\n  SVC --> ENG[\"Engines: water balance, FAO-56, scenario, LP optimiser, hydraulics, risk\"]\n  SVC --> DB[(\"SQLite: 25 tables\")]\n  SVC --> ML[(\"ML artifacts: Random Forest h1/h3/h6, SHAP\")]\n  API --> COP[\"AI Copilot: 15 read-only tools\"]\n  COP --> LLM[\"Gemini\"]\n  COP -->|\"search_docs\"| RAG[\"RAG index: 32 chunks, hybrid cosine + BM25\"]\n  MCP[\"bluesense-mcp (stdio)\"] -->|\"same tools\"| COP\n  N8N[\"n8n Cloud: daily 08:00\"] -->|\"summary + Copilot\"| API\n  SYNC[\"Sync adapters: Open-Meteo, AQUASTAT, GRACE\"] --> DB",
+  "dataflow": "flowchart LR\n  IN[\"1. Input<br/>ERA5 weather · FAO AQUASTAT · GRACE storage<br/>User: region, dates, scenario, crop, question\"]\n  PROC[\"2. Processing<br/>Validate and store with provenance<br/>Monthly water balance P - ET0<br/>Engines: budget, FAO-56, what-if, LP\"]\n  AI[\"3. AI<br/>Random Forest forecasts, 1/3/6 months, 90% interval<br/>SHAP explanations<br/>Copilot: 15 tools + RAG over project docs\"]\n  OUT[\"4. Output<br/>KPIs, maps, charts, Sankey<br/>Irrigation date and volume<br/>Cited answers · daily digest email\"]\n  FB[\"5. Feedback<br/>Number check on AI answers<br/>Source and date on every value<br/>Follow-up questions and new scenarios\"]\n  IN --> PROC --> AI --> OUT --> FB\n  FB -.->|\"next question or scenario\"| IN"
+ },
+ "features": [
+  {
+   "name": "Command Center: KPIs, alerts, division map, Water Rhythm",
+   "status": "current",
+   "area": "Monitor",
+   "evidence": "Live app",
+   "liveCheck": "health"
+  },
+  {
+   "name": "AI Prediction Lab: Random Forest 1/3/6-month forecasts with SHAP",
+   "status": "current",
+   "area": "Predict",
+   "evidence": "Model card; live metrics",
+   "liveCheck": "metrics"
+  },
+  {
+   "name": "What-if simulator (7 levers)",
+   "status": "current",
+   "area": "Simulate",
+   "evidence": "Live app",
+   "liveCheck": "health"
+  },
+  {
+   "name": "Water Budget Sankey + LP optimiser",
+   "status": "current",
+   "area": "Simulate",
+   "evidence": "Live app",
+   "liveCheck": "health"
+  },
+  {
+   "name": "Smart Irrigation (FAO-56)",
+   "status": "current",
+   "area": "Recommend",
+   "evidence": "Live app",
+   "liveCheck": "health"
+  },
+  {
+   "name": "3D Water Explorer with spatial intelligence",
+   "status": "current",
+   "area": "Visualize",
+   "evidence": "Live app",
+   "liveCheck": "health"
+  },
+  {
+   "name": "3D Water Flow (conceptual simulation)",
+   "status": "current",
+   "area": "Simulate",
+   "evidence": "Labelled as a concept",
+   "liveCheck": null
+  },
+  {
+   "name": "AI Copilot with 15 read-only tools",
+   "status": "current",
+   "area": "Explain",
+   "evidence": "Copilot status",
+   "liveCheck": "copilot"
+  },
+  {
+   "name": "Documentation RAG (search_docs)",
+   "status": "current",
+   "area": "Explain",
+   "evidence": "search_docs in the Copilot tool list",
+   "liveCheck": "rag"
+  },
+  {
+   "name": "bluesense-mcp server (15 tools, stdio)",
+   "status": "current",
+   "area": "Integrate",
+   "evidence": "Local only; used from Claude Code and Claude Desktop",
+   "liveCheck": null
+  },
+  {
+   "name": "n8n daily water-risk digest",
+   "status": "current",
+   "area": "Automate",
+   "evidence": "Published on n8n Cloud; test run 20 Nov 2026",
+   "liveCheck": null
+  },
+  {
+   "name": "Data source freshness tracking",
+   "status": "current",
+   "area": "Data",
+   "evidence": "Live source table",
+   "liveCheck": "sources"
+  },
+  {
+   "name": "Live /docs with admin scheduling",
+   "status": "current",
+   "area": "Platform",
+   "evidence": "This page",
+   "liveCheck": null
+  },
+  {
+   "name": "Observed BWDB station data",
+   "status": "upcoming",
+   "area": "Data",
+   "evidence": "Importer ready; no data bundled",
+   "liveCheck": null
+  },
+  {
+   "name": "Self-refreshing deployment (scheduled sync, persistent DB)",
+   "status": "upcoming",
+   "area": "Platform",
+   "evidence": "Scheduler built; off in the live snapshot",
+   "liveCheck": null
+  },
+  {
+   "name": "Seasonal-forecast inputs and calibrated intervals",
+   "status": "planned",
+   "area": "Predict",
+   "evidence": "Roadmap",
+   "liveCheck": null
+  },
+  {
+   "name": "User accounts and roles",
+   "status": "planned",
+   "area": "Platform",
+   "evidence": "Roadmap",
+   "liveCheck": null
+  },
+  {
+   "name": "Remote MCP transport (Streamable HTTP)",
+   "status": "planned",
+   "area": "Integrate",
+   "evidence": "Roadmap",
+   "liveCheck": null
+  }
+ ],
+ "changelog": [
+  {
+   "version": "0.6",
+   "date": "2026-11-20",
+   "notes": "Live /docs module: pitch deck, technical docs, live system view, admin publishing and scheduling, team showcase."
+  },
+  {
+   "version": "0.5",
+   "date": "2026-11-20",
+   "notes": "Evidence for MCP client use (Claude Code, Claude Desktop), CodeBurn, live RAG and the n8n daily digest."
+  },
+  {
+   "version": "0.4",
+   "date": "2026-11-19",
+   "notes": "Documentation RAG (search_docs, hybrid Gemini embeddings + BM25) and the bluesense-mcp stdio server; live backend redeployed with RAG."
+  },
+  {
+   "version": "0.3",
+   "date": "2026-11-18",
+   "notes": "Backend requirements trimmed for the Vercel function size limit; README and branding cleanup."
+  },
+  {
+   "version": "0.2",
+   "date": "2026-11-14",
+   "notes": "All eight modules (M1–M8), Copilot on the Gemini free tier, Water Flow and Water Explorer rework, final verification."
+  },
+  {
+   "version": "0.1",
+   "date": "2026-11-13",
+   "notes": "Foundation: data sync with scheduler, data API envelope, alert rules engine, Blue & White design system."
+  }
+ ],
+ "updatedAt": "2026-11-20T00:00:00Z"
+}
