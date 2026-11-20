@@ -3,8 +3,10 @@
  * Settings: only working preferences, saved in this browser (there are no accounts):
  * units (water volume display), default region, motion and transparency.
  */
+import Link from "next/link";
 import { useState } from "react";
 import { Card } from "@/components/ui/Card";
+import { DOCS } from "@/components/layout/nav";
 import { ConfirmDialog } from "@/components/ui/Overlay";
 import { toast } from "@/components/ui/Toast";
 import { api } from "@/lib/api/client";
@@ -94,6 +96,20 @@ export default function SettingsPage() {
                   className="rounded-lg border border-control bg-white px-3 py-1.5 text-[13px] font-medium text-ink transition hover:bg-light">
             Reset preferences…
           </button>
+        </Card>
+
+        <Card title="Docs & Pitch">
+          <p className="mb-3 text-[13px] text-muted">Live pitch deck, technical docs and system status.</p>
+          <div className="flex flex-wrap gap-2">
+            <Link href={DOCS.href}
+                  className="rounded-lg border border-control bg-white px-3 py-1.5 text-[13px] font-medium text-ink transition hover:bg-light">
+              Open Docs
+            </Link>
+            <Link href={`${DOCS.href}/admin`}
+                  className="rounded-lg border border-control bg-white px-3 py-1.5 text-[13px] font-medium text-ink transition hover:bg-light">
+              Docs admin
+            </Link>
+          </div>
         </Card>
       </div>
 

@@ -48,15 +48,25 @@ export function buildSearchIndex(content: DocsContent): SearchEntry[] {
 export function searchDocs(index: SearchEntry[], query: string, snippet = 70): (SearchEntry & { snippet: string })[] {
   const q = query.trim().toLowerCase();
   if (q.length < 2) return [];
+  const words = q.split(/\s+/);
   const out: (SearchEntry & { snippet: string })[] = [];
   for (const e of index) {
-    const inTitle = e.title.toLowerCase().includes(q);
-    const pos = e.text.toLowerCase().indexOf(q);
-    if (!inTitle && pos < 0) continue;
+    const title = e.title.toLowerCase();
+    const text = e.text.toLowerCase();
+    // A section matches when every word of the query appears in its title or its text.
+    if (!words.every((w) => title.includes(w) || text.includes(w))) continue;
+    // Snippet around the exact phrase if present, else around the first query word found in the text.
+    let pos = text.indexOf(q);
+    let len = q.length;
+    if (pos < 0) {
+      const first = words.find((w) => text.includes(w));
+      pos = first ? text.indexOf(first) : -1;
+      len = first ? first.length : 0;
+    }
     let snip = e.text.slice(0, snippet * 2);
     if (pos >= 0) {
       const from = Math.max(0, pos - snippet);
-      snip = (from > 0 ? "… " : "") + e.text.slice(from, pos + q.length + snippet) + (pos + q.length + snippet < e.text.length ? " …" : "");
+      snip = (from > 0 ? "… " : "") + e.text.slice(from, pos + len + snippet) + (pos + len + snippet < e.text.length ? " …" : "");
     }
     out.push({ ...e, snippet: snip });
   }

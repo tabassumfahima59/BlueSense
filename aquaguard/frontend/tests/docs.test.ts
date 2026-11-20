@@ -90,6 +90,13 @@ describe("docs content", () => {
     expect(hits.length).toBeGreaterThan(0);
     expect(searchDocs(buildSearchIndex(SEED_CONTENT), "x")).toEqual([]);
   });
+
+  it("matches a section when every query word appears, in any order", () => {
+    const index = buildSearchIndex(SEED_CONTENT);
+    expect(searchDocs(index, "live status").map((h) => h.title)).toContain("Live System Status");
+    expect(searchDocs(index, "status live").map((h) => h.title)).toContain("Live System Status");
+    expect(searchDocs(index, "live zzqqxx")).toEqual([]);
+  });
 });
 
 describe("docs admin session", () => {
