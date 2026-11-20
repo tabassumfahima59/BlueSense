@@ -1,0 +1,21 @@
+# Upload only the Next.js frontend (project Root Directory = aquaguard/frontend).
+/*
+!/aquaguard
+/aquaguard/*
+!/aquaguard/frontend
+
+# Never upload secrets, local data or build output.
+.env
+.env.*
+!.env.example
+.vercel
+**/.docs-data
+**/node_modules
+**/.next
+**/.next-*
+**/test-results
+**/playwright-report
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+*.patch
